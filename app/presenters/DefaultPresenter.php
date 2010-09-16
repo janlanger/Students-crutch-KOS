@@ -20,7 +20,8 @@ class DefaultPresenter extends BasePresenter
 
 	public function actionAnalyze()
 	{
-            NDebug::timer();
+            //NDebug::timer();
+            //echo round(memory_get_usage()/1024,2)."kB<br />";
             $xmlControl=new XML2SQL(WWW_DIR.'/rz.xml');
             $xmlControl->buildDatabase();
                 
