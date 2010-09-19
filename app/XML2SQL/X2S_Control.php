@@ -9,48 +9,57 @@
  *
  * @author Honza
  */
-class XML2SQL {
+class XML2SQLParser {
     private $filename;
     private $rootNode=null;
     private $tables=array();
     private $dom;
     public function __construct($filename) {
-       
-        
-        $this->filename=$filename;
+       $this->filename=$filename;
         $this->dom=new DOMDocument();
         $this->dom->load($this->filename);
         $this->dom->preserveWhitespace=false;
         $this->rootNode=$this->dom->documentElement;
     }
-    public function analyze() {
-        dump(ctype_digit("1080806,60741000"));
-        exit;
-        foreach($this->rootNode->childNodes as $node) {
-            if($node->nodeType==XML_ELEMENT_NODE)
-                $this->tables[$node->nodeName]=new X2S_DataTable($node);
+    //prilis pametove narocne :-(
+    /*public function analyze() {
+        $cache=NEnvironment::getCache('xml_structure');
+        if(isset($cache['data'])) {
+            $this->tables=$cache['data'];
+            return;
         }
-        
-    }
+        foreach($this->rootNode->childNodes as $node) {
+            
+            if($node->nodeType==XML_ELEMENT_NODE) {
+                $this->tables[]=X2S_DataTable::parseNode($node);
+            }            
+        }
+        $cache->save('data', $this->tables,array(
+            'expire'=> time() + 10*3600,
+            'tags' =>array('xml')
+        ));
+    }*/
 
     public function buildDatabase() {
+        //$this->analyze();
         
         $db_name=$this->rootNode->nodeName/*.'_'.date("Ymd")*/;
         dibi::query("DROP DATABASE IF EXISTS [".$db_name."]");
         dibi::query("CREATE DATABASE IF NOT EXISTS [".$db_name."] COLLATE 'utf8_czech_ci'");
         dibi::query("USE [".$db_name."]");
-        
+        $table=X2S_DataTable::parseRootNode($this->rootNode);
+        $table->createTable();
         foreach($this->rootNode->childNodes as $node) {
             
             if($node->nodeType==XML_ELEMENT_NODE) {
-                $table=new X2S_DataTable($node);
-                $table->create();
+                $table=X2S_DataTable::parseNode($node);
+                $table->createTable();
                 
                
-                unset ($table);
-            }
-            
+                //unset ($table);
+            }           
         }
+        
 
         
     }

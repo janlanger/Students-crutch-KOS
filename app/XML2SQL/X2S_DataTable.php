@@ -16,17 +16,51 @@ class X2S_DataTable {
     private $columns = array();
     private $rows=array();
     private $tableIndexes=array();
-    private $node = NULL;
 
-    public function __construct(DOMNode $node) {
-        $this->name = strtolower($node->nodeName);
-        $this->node = $node;
-        $this->loadColumns();
+    public function __construct() {
+    }
+    /**
+     *
+     * @param DOMNode $node
+     * @param bool $includeChilds
+     * @return X2S_DataTable
+     */
+    public static function parseNode(DOMNode $node) {
+        $cache=  NEnvironment::getCache('xml_structure');
+        if(isset($cache[$node->nodeName])) {
+            return $cache[$node->nodeName];
+        }
+        $_this=new self();
+        $_this->name=$node->nodeName;
+        $_this->analyzeNode($node);
+        $cache->save($node->nodeName, $_this, array(
+            'expire' => time() + 5*3600,
+            'tags' => array('xml')
+        ));
+        return $_this;
+    }
+    public static function parseRootNode(DOMNode $node) {
+        $cache=  NEnvironment::getCache('xml_structure');
+        if(isset($cache[$node->nodeName])) {
+            return $cache[$node->nodeName];
+        }
+        $_this=new self();
+        $_this->name=$node->nodeName;
+        if($node->hasAttributes()) {
+            //TODO - rozvrh table
+        }
+
+        $cache->save($node->nodeName, $_this, array(
+            'expire' => time() + 5*3600,
+            'tags' => array('xml')
+        ));
+        return $_this;
     }
 
-    private function loadColumns() {
+    
+    private function analyzeNode(DOMNode $node) {
         $row=0;
-        foreach ($this->node->childNodes as $child) {
+        foreach ($node->childNodes as $child) {
             if($child->nodeType!=XML_ELEMENT_NODE)
                 continue;
             
@@ -70,11 +104,11 @@ class X2S_DataTable {
         
     }
 
-    public function create() {
+    public function createTable() {
         if(empty($this->columns)) {
             return;
         }
-        $sql="CREATE TABLE [".$this->name."] (\n";
+        $sql="CREATE TABLE [".strtolower($this->name)."] (\n";
         $data=array();
         foreach($this->columns as $column) {
             $data[]="[".$column->name."] ".$column->type." NULL";
