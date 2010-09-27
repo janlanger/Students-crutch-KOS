@@ -26,7 +26,7 @@ class X2S_DataTable {
      * @return X2S_DataTable
      */
     public static function parseNode(DOMNode $node) {
-        $cache=  NEnvironment::getCache('xml_structure');
+        $cache=  NEnvironment::getCache('xml_structure-'.basename($node->ownerDocument->documentURI));
         if(isset($cache[$node->nodeName])) {
             return $cache[$node->nodeName];
         }
@@ -39,16 +39,22 @@ class X2S_DataTable {
         ));
         return $_this;
     }
+    
     public static function parseRootNode(DOMNode $node) {
-        $cache=  NEnvironment::getCache('xml_structure');
+        $cache=  NEnvironment::getCache('xml_structure-'.basename($node->ownerDocument->documentURI));
         if(isset($cache[$node->nodeName])) {
             return $cache[$node->nodeName];
         }
         $_this=new self();
         $_this->name=$node->nodeName;
         if($node->hasAttributes()) {
-            //TODO - rozvrh table
+            for($i=0,$attrs=$node->attributes; $i<$attrs->length; $i++) {
+                $_this->columns[$attrs->item($i)->name]=new X2S_DataColumn($attrs->item($i)->name, "varchar(255)");
+                $_this->rows[0][$attrs->item($i)->name]=$attrs->item($i)->value;
+            }
         }
+        $_this->columns['import_time']=new X2S_DataColumn('import_time', "datetime");
+        $_this->rows[0]['import_time']=date("Y-m-d H:i:s");
 
         $cache->save($node->nodeName, $_this, array(
             'expire' => time() + 5*3600,
@@ -56,6 +62,22 @@ class X2S_DataTable {
         ));
         return $_this;
     }
+
+    // TODO - dovymyslet
+    /*private static function getCachedNode($cacheKey) {
+        $cache=  NEnvironment::getCache('xml_structure');
+        if(isset($cache[$cacheKey])) {
+            return $cache[$cacheKey];
+        }
+    }
+
+    private function saveToCache($cacheKey) {
+        $cache=  NEnvironment::getCache('xml_structure');
+        $cache->save($cacheKey, $this, array(
+            'expire' => time() - 5*3600,
+            'tags' => array('xml')
+        ));
+    }*/
 
     
     private function analyzeNode(DOMNode $node) {
@@ -70,20 +92,21 @@ class X2S_DataTable {
 
                 for ($i = 0; $i < $attrs->length; $i++) {
                     $attribute = $attrs->item($i);
-                    $attribute_name=str_replace(".", "_", $attribute->name);
-                    $this->rows[$row][$attribute_name]=($attribute->value);
+                    $attributeName=str_replace(".", "_", $attribute->name);
+                    $this->rows[$row][$attributeName]=($attribute->value);
                     
-                    if (!isset($this->columns[$attribute_name]))
-                        $this->columns[$attribute_name] = new X2S_DataColumn($attribute_name);
-                    
-                    
-                    if (ctype_digit($attribute->value) && $this->columns[$attribute_name]->type != 'varchar(255)' && $this->columns[$attribute_name]->type != 'text') {
-                        $this->columns[$attribute_name]->type = 'bigint';
-                    } else {
-                        $this->columns[$attribute_name]->type = 'varchar(255)';
+                    if (!isset($this->columns[$attributeName])) {
+                        $this->columns[$attributeName] = new X2S_DataColumn($attributeName);
                     }
-                    if(NString::endsWith($attribute_name, "_id") && !in_array($attribute_name, $this->tableIndexes)) {
-                        $this->tableIndexes[]=$attribute_name;
+                    $this->columns[$attributeName]->detectType($attribute->value);
+                    
+                    /*if (ctype_digit($attribute->value) && $this->columns[$attributeName]->type != 'varchar(255)' && $this->columns[$attributeName]->type != 'text') {
+                        $this->columns[$attributeName]->type = 'bigint';
+                    } else {
+                        $this->columns[$attributeName]->type = 'varchar(255)';
+                    }*/
+                    if(NString::endsWith($attributeName, "_id") && !in_array($attributeName, $this->tableIndexes)) {
+                        $this->tableIndexes[]=$attributeName;
                     }
                     
 
@@ -105,13 +128,14 @@ class X2S_DataTable {
     }
 
     public function createTable() {
+        
         if(empty($this->columns)) {
             return;
         }
         $sql="CREATE TABLE [".strtolower($this->name)."] (\n";
         $data=array();
         foreach($this->columns as $column) {
-            $data[]="[".$column->name."] ".$column->type." NULL";
+            $data[]="[".$column->name."] ".$column->getType()." NULL";
         }
         $sql.=implode(", \n", $data);
         $pk=$this->getPrimaryKey();
@@ -120,7 +144,7 @@ class X2S_DataTable {
         $index=$this->getTableIndexes();
         if($index!="")
             $sql.=','. $index ;
-        $sql.=") ENGINE=MyIsam";
+        $sql.=") ENGINE=INNODB";
         //dump($sql);
         dibi::query($sql); //vytvoreni tabulky
         
@@ -135,7 +159,7 @@ class X2S_DataTable {
         }
 
         
-        $maxRowsPerInsert=500;
+        $maxRowsPerInsert=1000;
         $rows=array_chunk($this->rows, $maxRowsPerInsert);
         
         /*for($i=0;$i<count($rows[0]);$i++) {
@@ -145,7 +169,7 @@ class X2S_DataTable {
         for($i=0;$i<count($rows);$i++) {
             dibi::query("INSERT INTO [".$this->name."] %ex",$rows[$i]); //data
         }
-        echo "<br />";
+        
     }
 
     private function getPrimaryKey() {

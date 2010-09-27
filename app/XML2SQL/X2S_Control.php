@@ -12,7 +12,6 @@
 class XML2SQLParser {
     private $filename;
     private $rootNode=null;
-    private $tables=array();
     private $dom;
     public function __construct($filename) {
        $this->filename=$filename;
@@ -40,26 +39,35 @@ class XML2SQLParser {
         ));
     }*/
 
-    public function buildDatabase() {
+    public function buildDatabase($db_name) {
         //$this->analyze();
         
-        $db_name=$this->rootNode->nodeName/*.'_'.date("Ymd")*/;
+        //$db_name=$this->rootNode->nodeName/*.'_'.date("Ymd")*/;
         dibi::query("DROP DATABASE IF EXISTS [".$db_name."]");
         dibi::query("CREATE DATABASE IF NOT EXISTS [".$db_name."] COLLATE 'utf8_czech_ci'");
         dibi::query("USE [".$db_name."]");
+        //element <rozvrh>
         $table=X2S_DataTable::parseRootNode($this->rootNode);
         $table->createTable();
+        $total=0;
+        //vsechny vnorene elementy - tabulky
         foreach($this->rootNode->childNodes as $node) {
             
             if($node->nodeType==XML_ELEMENT_NODE) {
+                echo 'NODE: '.$node->nodeName.'<br />';
+                $time=microtime(true);
                 $table=X2S_DataTable::parseNode($node);
+                echo 'Parse - '.round(microtime(true)-$time,4).'<br />';
+                $total+=microtime(true)-$time;
+                $time=microtime(true);
                 $table->createTable();
-                
-               
-                //unset ($table);
+                echo 'Create - '.round(microtime(true)-$time,4).'<br />';
+                $total+=microtime(true)-$time;
+                echo '<br /><br />';
             }           
         }
-        
+
+        echo 'Total:'.$total;
 
         
     }

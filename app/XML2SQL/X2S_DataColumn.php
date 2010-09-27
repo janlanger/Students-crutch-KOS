@@ -11,7 +11,8 @@
  */
 class X2S_DataColumn {
     public $name;
-    public $type;
+    private $type=null;
+    private $length=0;
     
 
     public function __construct($name,$type=NULL) {
@@ -19,10 +20,37 @@ class X2S_DataColumn {
         $this->name=str_replace(".", "_", $name);
         $this->type=$type;
     }
+    
+    public function detectType($value) {
+        if($this->type=="varchar(255)") {
+            //TODO> detekce delky do $this->length
+            if(strlen(trim($value))>255) //varchar limit
+                $this->type='text';
+            return;
+        }
+        if(ctype_digit($value)) {
+            if($this->type!='bigint') {
+                if($value < 2147483647) { //mysql int limit
+                    $this->type='int';
+                }
+                else {
+                    $this->type='bigint';
+                }
+            }
+            return;
+        }
 
-    public function isPrimary() {
-        return ($this->name=='id');
+        if(strlen(trim($value))>255) {
+            $this->type='text';
+        }
+        $this->type='varchar(255)';
     }
+
+    public function getType() {
+        return $this->type;
+    }
+
+
 
     
 }
