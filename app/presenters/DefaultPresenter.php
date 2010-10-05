@@ -33,4 +33,23 @@ class DefaultPresenter extends BasePresenter
                 
 	}
 
+        public function actionDownload() {
+            
+        }
+
+        public function createComponentDownloadForm() {
+            $form=new NAppForm($this,'downloadForm');
+            $form->addText('url','URL souboru')
+                    ->setRequired();
+            $form->addText('login','Fakultní login')->setRequired();
+            $form->addPassword('password','Heslo pro service.felk.cvut.cz')->setRequired();
+            $form->addSubmit('Odeslat');
+
+            $form->setDefaults(array(
+                'url'=>'https://service.felk.cvut.cz/kos/data/rz.xml'
+            ));
+            return $form;
+
+        }
+
 }
