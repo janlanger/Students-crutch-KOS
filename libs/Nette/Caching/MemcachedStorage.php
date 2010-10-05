@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Caching
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Caching
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * Memcached storage.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Caching
+ * @author     David Grudl
  */
 class NMemcachedStorage extends NObject implements ICacheStorage
 {
@@ -32,8 +31,8 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 	/** @var string */
 	private $prefix;
 
-	/** @var ICacheJournal */
-	private $journal;
+	/** @var NContext */
+	private $context;
 
 
 
@@ -48,13 +47,14 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 
 
 
-	public function __construct($host = 'localhost', $port = 11211, $prefix = '')
+	public function __construct($host = 'localhost', $port = 11211, $prefix = '', NContext $context = NULL)
 	{
 		if (!self::isAvailable()) {
 			throw new NotSupportedException("PHP extension 'memcache' is not loaded.");
 		}
 
 		$this->prefix = $prefix;
+		$this->context = $context;
 		$this->memcache = new Memcache;
 		NDebug::tryError();
 		$this->memcache->connect($host, $port);
@@ -128,6 +128,9 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 		}
 
 		if (!empty($dp[NCache::TAGS]) || isset($dp[NCache::PRIORITY])) {
+			if (!$this->context) {
+				throw new InvalidStateException('CacheJournal has not been provided.');
+			}
 			$this->getJournal()->write($this->prefix . $key, $dp);
 		}
 
@@ -158,7 +161,7 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 		if (!empty($conds[NCache::ALL])) {
 			$this->memcache->flush();
 
-		} else {
+		} elseif ($this->context) {
 			foreach ($this->getJournal()->clean($conds) as $entry) {
 				$this->memcache->delete($entry, 0);
 			}
@@ -168,15 +171,11 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 
 
 	/**
-	 * Returns the ICacheJournal
 	 * @return ICacheJournal
 	 */
 	protected function getJournal()
 	{
-		if ($this->journal === NULL) {
-			$this->journal = NEnvironment::getService('Nette\\Caching\\ICacheJournal');
-		}
-		return $this->journal;
+		return $this->context->getService('Nette\\Caching\\ICacheJournal');
 	}
 
 }

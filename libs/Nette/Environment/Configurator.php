@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * NEnvironment helper.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette
+ * @author     David Grudl
  */
 class NConfigurator extends NObject
 {
@@ -25,7 +24,7 @@ class NConfigurator extends NObject
 
 	/** @var array */
 	public $defaultServices = array(
-		'Nette\\Application\\Application' => 'NApplication',
+		'Nette\\Application\\Application' => array(__CLASS__, 'createApplication'),
 		'Nette\\Web\\HttpContext' => 'NHttpContext',
 		'Nette\\Web\\IHttpRequest' => 'NHttpRequest',
 		'Nette\\Web\\IHttpResponse' => 'NHttpResponse',
@@ -123,17 +122,17 @@ class NConfigurator extends NObject
 
 		// process services
 		$runServices = array();
-		$locator = NEnvironment::getServiceLocator();
+		$context = NEnvironment::getContext();
 		if ($config->service instanceof NConfig) {
 			foreach ($config->service as $key => $value) {
 				$key = strtr($key, '-', '\\'); // limited INI chars
 				if (is_string($value)) {
-					$locator->removeService($key);
-					$locator->addService($key, $value);
+					$context->removeService($key);
+					$context->addService($key, $value);
 				} else {
 					if ($value->factory) {
-						$locator->removeService($key);
-						$locator->addService($key, $value->factory, isset($value->singleton) ? $value->singleton : TRUE, (array) $value->option);
+						$context->removeService($key);
+						$context->addService($key, $value->factory, isset($value->singleton) ? $value->singleton : TRUE, (array) $value->option);
 					}
 					if ($value->run) {
 						$runServices[] = $key;
@@ -223,7 +222,7 @@ class NConfigurator extends NObject
 
 		// auto-start services
 		foreach ($runServices as $name) {
-			$locator->getService($name);
+			$context->getService($name);
 		}
 
 		return $config;
@@ -236,16 +235,45 @@ class NConfigurator extends NObject
 
 
 	/**
-	 * Get initial instance of service locator.
-	 * @return IServiceLocator
+	 * Get initial instance of context.
+	 * @return IContext
 	 */
-	public function createServiceLocator()
+	public function createContext()
 	{
-		$locator = new NServiceLocator;
+		$context = new NContext;
 		foreach ($this->defaultServices as $name => $service) {
-			$locator->addService($name, $service);
+			$context->addService($name, $service);
 		}
-		return $locator;
+		return $context;
+	}
+
+
+
+	/**
+	 * @return NApplication
+	 */
+	public static function createApplication()
+	{
+		if (NEnvironment::getVariable('baseUri', NULL) === NULL) {
+			NEnvironment::setVariable('baseUri', NEnvironment::getHttpRequest()->getUri()->getBasePath());
+		}
+
+		$context = clone NEnvironment::getContext();
+		$context->addService('Nette\\Application\\IRouter', 'NMultiRouter');
+		$context->addService('defaultRouter', callback(create_function('', '
+			return new NSimpleRouter(array(
+				\'presenter\' => \'Default\',
+				\'action\' => \'default\',
+			));
+		')));
+		$context->addService('Nette\\Application\\IPresenterLoader', callback(create_function('', '
+			return new NPresenterLoader(NEnvironment::getVariable(\'appDir\'));
+		')));
+
+		$application = new NApplication;
+		$application->setContext($context);
+		$application->catchExceptions = NEnvironment::isProduction();
+		return $application;
 	}
 
 
@@ -255,7 +283,12 @@ class NConfigurator extends NObject
 	 */
 	public static function createCacheStorage()
 	{
-		return new NFileStorage(NEnvironment::getVariable('tempDir'));
+		$context = new NContext;
+		$context->addService('Nette\\Caching\\ICacheJournal', array(__CLASS__, 'createCacheJournal'));
+		$dir = NEnvironment::getVariable('tempDir') . '/cache';
+		umask(0000);
+		@mkdir($dir, 0755); // @ - directory may exists
+		return new NFileStorage($dir, $context);
 	}
 
 
@@ -266,9 +299,9 @@ class NConfigurator extends NObject
 	public static function createCacheJournal()
 	{
 		/*if (NSqliteJournal::isAvailable()) {
-			return new NSqliteJournal(NEnvironment::getVariable('tempDir') . '/cachejournal.db');
+			return new NSqliteJournal(NEnvironment::getVariable('tempDir') . '/cache/cachejournal.db');
 		} else*/ {
-			return new NFileJournal(NEnvironment::getVariable('tempDir'));
+			return new NFileJournal(NEnvironment::getVariable('tempDir') . '/cache');
 		}
 	}
 
@@ -281,9 +314,16 @@ class NConfigurator extends NObject
 	{
 		$loader = new NRobotLoader;
 		$loader->autoRebuild = !NEnvironment::isProduction();
-		//$loader->setCache(NEnvironment::getCache('Nette.NRobotLoader'));
-		$dirs = isset($options['directory']) ? $options['directory'] : array(NEnvironment::getVariable('appDir'), NEnvironment::getVariable('libsDir'));
-		$loader->addDirectory($dirs);
+		$loader->setCacheStorage(NEnvironment::getService('Nette\\Caching\\ICacheStorage'));
+		if (isset($options['directory'])) {
+			$loader->addDirectory($options['directory']);
+		} else {
+			foreach (array('appDir', 'libsDir') as $var) {
+				if ($dir = NEnvironment::getVariable($var, NULL)) {
+					$loader->addDirectory($dir);
+				}
+			}
+		}
 		$loader->register();
 		return $loader;
 	}

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * Nette environment and configuration.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette
+ * @author     David Grudl
  */
 final class NEnvironment
 {
@@ -24,12 +23,6 @@ final class NEnvironment
 	const DEVELOPMENT = 'development';
 	const PRODUCTION = 'production';
 	const CONSOLE = 'console';
-	const LAB = 'lab';
-	/**#@-*/
-
-	/**#@+ mode name */
-	const DEBUG = 'debug';
-	const PERFORMANCE = 'performance';
 	/**#@-*/
 
 	/** @var NConfigurator */
@@ -41,16 +34,11 @@ final class NEnvironment
 	/** @var ArrayObject */
 	private static $config;
 
-	/** @var IServiceLocator */
-	private static $serviceLocator;
+	/** @var IContext */
+	private static $context;
 
 	/** @var array */
-	private static $vars = array( // all deprecated
-		'encoding' => array('UTF-8', FALSE),
-		'lang' => array('en', FALSE),
-		'cacheBase' => array('%tempDir%', TRUE),
-		'tempDir' => array('%appDir%/temp', TRUE),
-		'logDir' => array('%appDir%/log', TRUE),
+	private static $vars = array(
 	);
 
 	/** @var array */
@@ -60,10 +48,9 @@ final class NEnvironment
 		'getHttpResponse' => 'Nette\\Web\\IHttpResponse',
 		'getApplication' => 'Nette\\Application\\Application',
 		'getUser' => 'Nette\\Web\\IUser',
+		'getRobotLoader' => 'Nette\\Loaders\\RobotLoader',
 	);
 
-	/** @var array */
-	private static $criticalSections;
 
 
 	/**
@@ -130,7 +117,7 @@ final class NEnvironment
 	 */
 	public static function getName()
 	{
-		$name = self::getVariable('environment');
+		$name = self::getVariable('environment', NULL);
 		if ($name === NULL) {
 			$name = self::getConfigurator()->detect('environment');
 			self::setVariable('environment', $name, FALSE);
@@ -238,8 +225,11 @@ final class NEnvironment
 				self::$vars[$name] = array($list['user'][$const], FALSE);
 				return $list['user'][$const];
 
-			} else {
+			} elseif (func_num_args() > 1) {
 				return $default;
+
+			} else {
+				throw new InvalidStateException("Unknown environment variable '$name'.");
 			}
 		}
 	}
@@ -269,65 +259,56 @@ final class NEnvironment
 	 */
 	public static function expand($var)
 	{
+		static $livelock;
 		if (is_string($var) && strpos($var, '%') !== FALSE) {
-			return @preg_replace_callback('#%([a-z0-9_-]*)%#i', array(__CLASS__, 'expandCb'), $var); // intentionally @ due PHP bug #39257
+			return @preg_replace_callback(
+				'#%([a-z0-9_-]*)%#i',
+				create_function('$m', 'extract(NClosureFix::$vars['.NClosureFix::uses(array('livelock'=>& $livelock)).'], EXTR_REFS); 
+					list(, $var) = $m;
+					if ($var === \'\') return \'%\';
+
+					if (isset($livelock[$var])) {
+						throw new InvalidStateException("Circular reference detected for variables: "
+							. implode(\', \', array_keys($livelock)) . ".");
+					}
+
+					try {
+						$livelock[$var] = TRUE;
+						$val = NEnvironment::getVariable($var);
+						unset($livelock[$var]);
+					} catch (Exception $e) {
+						$livelock = array();
+						throw $e;
+					}
+
+					if (!is_scalar($val)) {
+						throw new InvalidStateException("Environment variable \'$var\' is not scalar.");
+					}
+
+					return $val;
+				'),
+				$var
+			); // intentionally @ due PHP bug #39257
 		}
 		return $var;
 	}
 
 
 
-	/**
-	 * @see NEnvironment::expand()
-	 * @param  array
-	 * @return string
-	 */
-	private static function expandCb($m)
-	{
-		list(, $var) = $m;
-		if ($var === '') return '%';
-
-		static $livelock;
-		if (isset($livelock[$var])) {
-			throw new InvalidStateException("Circular reference detected for variables: "
-				. implode(', ', array_keys($livelock)) . ".");
-		}
-
-		try {
-			$livelock[$var] = TRUE;
-			$val = self::getVariable($var);
-			unset($livelock[$var]);
-		} catch (Exception $e) {
-			$livelock = array();
-			throw $e;
-		}
-
-		if ($val === NULL) {
-			throw new InvalidStateException("Unknown environment variable '$var'.");
-
-		} elseif (!is_scalar($val)) {
-			throw new InvalidStateException("Environment variable '$var' is not scalar.");
-		}
-
-		return $val;
-	}
-
-
-
-	/********************* service locator ****************d*g**/
+	/********************* context ****************d*g**/
 
 
 
 	/**
-	 * Get initial instance of service locator.
-	 * @return IServiceLocator
+	 * Get initial instance of context.
+	 * @return IContext
 	 */
-	public static function getServiceLocator()
+	public static function getContext()
 	{
-		if (self::$serviceLocator === NULL) {
-			self::$serviceLocator = self::getConfigurator()->createServiceLocator();
+		if (self::$context === NULL) {
+			self::$context = self::getConfigurator()->createContext();
 		}
-		return self::$serviceLocator;
+		return self::$context;
 	}
 
 
@@ -340,7 +321,7 @@ final class NEnvironment
 	 */
 	public static function getService($name, array $options = NULL)
 	{
-		return self::getServiceLocator()->getService($name, $options);
+		return self::getContext()->getService($name, $options);
 	}
 
 
@@ -367,7 +348,7 @@ final class NEnvironment
 	public static function __callStatic($name, $args)
 	{
 		if (isset(self::$aliases[$name])) {
-			return self::getServiceLocator()->getService(self::$aliases[$name], $args);
+			return self::getContext()->getService(self::$aliases[$name], $args);
 		} else {
 			throw new MemberAccessException("Call to undefined static method Nette\\Environment::$name().");
 		}
@@ -380,7 +361,7 @@ final class NEnvironment
 	 */
 	public static function getHttpRequest()
 	{
-		return self::getServiceLocator()->getService(self::$aliases[__FUNCTION__]);
+		return self::getContext()->getService(self::$aliases[__FUNCTION__]);
 	}
 
 
@@ -390,7 +371,7 @@ final class NEnvironment
 	 */
 	public static function getHttpContext()
 	{
-		return self::getServiceLocator()->getService(self::$aliases[__FUNCTION__]);
+		return self::getContext()->getService(self::$aliases[__FUNCTION__]);
 	}
 
 
@@ -400,7 +381,7 @@ final class NEnvironment
 	 */
 	public static function getHttpResponse()
 	{
-		return self::getServiceLocator()->getService(self::$aliases[__FUNCTION__]);
+		return self::getContext()->getService(self::$aliases[__FUNCTION__]);
 	}
 
 
@@ -410,7 +391,7 @@ final class NEnvironment
 	 */
 	public static function getApplication()
 	{
-		return self::getServiceLocator()->getService(self::$aliases[__FUNCTION__]);
+		return self::getContext()->getService(self::$aliases[__FUNCTION__]);
 	}
 
 
@@ -420,7 +401,17 @@ final class NEnvironment
 	 */
 	public static function getUser()
 	{
-		return self::getServiceLocator()->getService(self::$aliases[__FUNCTION__]);
+		return self::getContext()->getService(self::$aliases[__FUNCTION__]);
+	}
+
+
+
+	/**
+	 * @return NRobotLoader
+	 */
+	public static function getRobotLoader()
+	{
+		return self::getContext()->getService(self::$aliases[__FUNCTION__]);
 	}
 
 
@@ -486,46 +477,6 @@ final class NEnvironment
 		} else {
 			return self::$config;
 		}
-	}
-
-
-
-	/********************* critical section ****************d*g**/
-
-
-
-	/**
-	 * Enters the critical section, other threads are locked out.
-	 * @param  string
-	 * @return void
-	 */
-	public static function enterCriticalSection($key)
-	{
-		$file = self::getVariable('tempDir') . "/criticalSection-" . md5($key);
-		$handle = fopen($file, 'w');
-		if (!$handle) {
-			throw new InvalidStateException('Unable initialize critical section.');
-		}
-		flock($handle, LOCK_EX);
-		self::$criticalSections[$key] = array($file, $handle);
-	}
-
-
-
-	/**
-	 * Leaves the critical section, other threads can now enter it.
-	 * @param  string
-	 * @return void
-	 */
-	public static function leaveCriticalSection($key)
-	{
-		if (!isset(self::$criticalSections[$key])) {
-			throw new InvalidStateException('Critical section has not been initialized.');
-		}
-		list($file, $handle) = self::$criticalSections[$key];
-		@unlink($file);
-		fclose($handle);
-		unset(self::$criticalSections[$key]);
 	}
 
 }

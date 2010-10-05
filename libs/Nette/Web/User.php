@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Web
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Web
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * NUser authentication and authorization.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Web
+ * @author     David Grudl
  *
  * @property-read IIdentity $identity
  * @property   IAuthenticator $authenticationHandler
@@ -421,33 +420,5 @@ class NUser extends NObject implements IUser
 	{
 		return NEnvironment::getSession();
 	}
-
-
-
-	/**#@+ @deprecated */
-	function authenticate($username, $password, $extra = NULL)
-	{
-		trigger_error(__METHOD__ . '() is deprecated; use login() instead.', E_USER_WARNING);
-		return $this->login($username, $password, $extra);
-	}
-
-	function signOut($clearIdentity = FALSE)
-	{
-		trigger_error(__METHOD__ . '() is deprecated; use logout() instead.', E_USER_WARNING);
-		return $this->logout($clearIdentity);
-	}
-
-	function isAuthenticated()
-	{
-		trigger_error(__METHOD__ . '() is deprecated; use isLoggedIn() instead.', E_USER_WARNING);
-		return $this->isLoggedIn();
-	}
-
-	function getSignOutReason()
-	{
-		trigger_error(__METHOD__ . '() is deprecated; use getLogoutReason() instead.', E_USER_WARNING);
-		return $this->getLogoutReason();
-	}
-	/**#@-*/
 
 }

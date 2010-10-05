@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette
  */
 
 
@@ -22,8 +22,7 @@
  * $image->send();
  * </code>
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette
+ * @author     David Grudl
  *
  * @property-read int $width
  * @property-read int $height
@@ -91,7 +90,7 @@ class NImage extends NObject
 			throw new Exception("PHP extension GD is not loaded.");
 		}
 
-		$info = @getimagesize($file); // @ - format may not be supported by getimagesize()
+		$info = @getimagesize($file); // @ - files smaller than 12 bytes causes read error
 		if (self::$useImageMagick && (empty($info) || $info[0] * $info[1] > 9e5)) { // cca 1024x768
 			return new NImageMagick($file, $format);
 		}

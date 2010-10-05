@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Caching
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Caching
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * Implements the cache for a application.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Caching
+ * @author     David Grudl
  */
 class NCache extends NObject implements ArrayAccess
 {
@@ -150,9 +149,9 @@ class NCache extends NObject implements ArrayAccess
 		}
 
 		if ($data instanceof NCallback || $data instanceof Closure) {
-			NEnvironment::enterCriticalSection('Nette\Caching/' . $key);
+			NTools::enterCriticalSection();
 			$data = $data->__invoke();
-			NEnvironment::leaveCriticalSection('Nette\Caching/' . $key);
+			NTools::leaveCriticalSection();
 		}
 
 		if (is_object($data)) {

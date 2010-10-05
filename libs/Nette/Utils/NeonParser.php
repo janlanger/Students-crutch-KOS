@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette
  */
 
 
@@ -15,36 +15,29 @@
 /**
  * Simple parser for Nette NObject Notation.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette
+ * @author     David Grudl
  */
 class NNeonParser extends NObject
 {
 	/** @var array */
 	private static $patterns = array(
-		'(\'[^\'\n]*\'|"(?:\\\\.|[^"\\\\\n])*")', // string
-		'(@[a-zA-Z_0-9\\\\]+)', // object
-		'([:-](?=\s|$)|[,=[\]{}()])', // symbol
-		'#.*', // comment
-		'(\n *)', // indent
-		'literal' => '([^#"\',:=@[\]{}()<>\s](?:[^#,:=\]})>\n]+|:(?!\s)|(?<!\s)#)*)(?<!\s)', // literal / boolean / integer / float
-		' +', // whitespace
+		'\'[^\'\n]*\'|"(?:\\\\.|[^"\\\\\n])*"', // string
+		'@[a-zA-Z_0-9\\\\]+', // object
+		'[:-](?=\s|$)|[,=[\]{}()]', // symbol
+		'?:#.*', // comment
+		'\n *', // indent
+		'[^#"\',:=@[\]{}()<>\s](?:[^#,:=\]})>\n]+|:(?!\s)|(?<!\s)#)*(?<!\s)', // literal / boolean / integer / float
+		'?: +', // whitespace
 	);
 
-	/** @var string */
-	private static $regexp;
+	/** @var NTokenizer */
+	private static $tokenizer;
 
 	private static $brackets = array(
 		'[' => ']',
 		'{' => '}',
 		'(' => ')',
 	);
-
-	/** @var string */
-	private $input;
-
-	/** @var array */
-	private $tokens;
 
 	/** @var int */
 	private $n;
@@ -56,14 +49,25 @@ class NNeonParser extends NObject
 	 * @param  string
 	 * @return array
 	 */
-	public function parse($s)
+	public function parse($input)
 	{
-		$this->tokenize($s);
+		if (!self::$tokenizer) { // speed-up
+			self::$tokenizer = new NTokenizer(self::$patterns, 'mi');
+		}
+		$input = str_replace("\r", '', $input);
+		$input = strtr($input, "\t", ' ');
+		$input = "\n" . $input . "\n"; // first \n is required by "Indent"
+		self::$tokenizer->tokenize($input);
+
 		$this->n = 0;
 		$res = $this->_parse();
 
-		while (isset($this->tokens[$this->n])) {
-			if ($this->tokens[$this->n][0] === "\n") $this->n++; else $this->error();
+		while (isset(self::$tokenizer->tokens[$this->n])) {
+			if (self::$tokenizer->tokens[$this->n][0] === "\n") {
+				$this->n++;
+			} else {
+				$this->error();
+			}
 		}
 		return $res;
 	}
@@ -71,7 +75,7 @@ class NNeonParser extends NObject
 
 
 	/**
-	 * Tokenizer & parser.
+	 * NTokenizer & parser.
 	 * @param  int  indentation (for block-parser)
 	 * @param  string  end char (for inline-hash/array parser)
 	 * @return array
@@ -83,7 +87,7 @@ class NNeonParser extends NObject
 		$result = $inlineParser || $indent ? array() : NULL;
 		$value = $key = $object = NULL;
 		$hasValue = $hasKey = FALSE;
-		$tokens = $this->tokens;
+		$tokens = self::$tokenizer->tokens;
 		$n = & $this->n;
 		$count = count($tokens);
 
@@ -202,44 +206,25 @@ class NNeonParser extends NObject
 			}
 		}
 
-		throw new Exception('NEON parse error: unexpected end of file.');
-	}
-
-
-
-	/**
-	 * Lexical scanner.
-	 * @param  string
-	 * @return void
-	 */
-	private function tokenize($s)
-	{
-		if (!self::$regexp) {
-			self::$regexp = '~' . implode('|', self::$patterns) . '~mA';
-		}
-
-		$s = str_replace("\r", '', $s);
-		$s = strtr($s, "\t", ' ');
-		$s = "\n" . $s . "\n"; // first is required by "Indent", last is required by parse-error check
-
-		$this->input = $s;
-		$this->tokens = NString::split($s, self::$regexp, PREG_SPLIT_NO_EMPTY);
-
-		if (end($this->tokens) !== "\n") { // unable to parse
-			$this->n = key($this->tokens);
-			$this->error();
-		}
+		throw new NNeonException('Unexpected end of file.');
 	}
 
 
 
 	private function error()
 	{
-		$tokens = NString::split($this->input, self::$regexp, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE);
-		list($token, $offset) = $tokens[$this->n];
-		$line = substr_count($this->input, "\n", 0, $offset) + 1;
-		$col = $offset - strrpos(substr($this->input, 0, $offset), "\n");
-		throw new Exception('NEON parse error: unexpected ' . str_replace("\n", '\n', substr($token, 0, 10))  . " on line $line, column $col.");
+		list(, $line, $col) = self::$tokenizer->getOffset($this->n);
+		throw new NNeonException("Unexpected '" . str_replace("\n", '\n', substr(self::$tokenizer->tokens[$this->n], 0, 10))
+			. "' on line " . ($line - 1) . ", column $col.");
 	}
 
+}
+
+
+
+/**
+ * The exception that indicates error of NEON decoding.
+ */
+class NNeonException extends Exception
+{
 }

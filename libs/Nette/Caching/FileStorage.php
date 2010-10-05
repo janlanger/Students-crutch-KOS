@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Caching
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Caching
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * NCache file storage.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Caching
+ * @author     David Grudl
  */
 class NFileStorage extends NObject implements ICacheStorage
 {
@@ -60,12 +59,12 @@ class NFileStorage extends NObject implements ICacheStorage
 	/** @var bool */
 	private $useDirs;
 
-	/** @var ICacheJournal */
-	private $journal;
+	/** @var NContext */
+	private $context;
 
 
 
-	public function __construct($dir)
+	public function __construct($dir, NContext $context = NULL)
 	{
 		if (self::$useDirectories === NULL) {
 			// checks whether directory is writable
@@ -81,11 +80,12 @@ class NFileStorage extends NObject implements ICacheStorage
 				self::$useDirectories = TRUE;
 				unlink("$dir/$uniq/_");
 			}
-			rmdir("$dir/$uniq");
+			@rmdir("$dir/$uniq"); // @ - directory may not already exist
 		}
 
 		$this->dir = $dir;
 		$this->useDirs = (bool) self::$useDirectories;
+		$this->context = $context;
 
 		if (mt_rand() / mt_getrandmax() < self::$gcProbability) {
 			$this->clean(array());
@@ -200,6 +200,9 @@ class NFileStorage extends NObject implements ICacheStorage
 		}
 
 		if (!empty($dp[NCache::TAGS]) || isset($dp[NCache::PRIORITY])) {
+			if (!$this->context) {
+				throw new InvalidStateException('CacheJournal has not been provided.');
+			}
 			$this->getJournal()->write($cacheFile, $dp);
 		}
 
@@ -264,13 +267,8 @@ class NFileStorage extends NObject implements ICacheStorage
 		// cleaning using file iterator
 		if ($all || $collector) {
 			$now = time();
-			$base = $this->dir . DIRECTORY_SEPARATOR . 'c';
-			$iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($this->dir), RecursiveIteratorIterator::CHILD_FIRST);
-			foreach ($iterator as $entry) {
+			foreach (NFinder::find('/c*', '/c*/*')->from($this->dir)->limitDepth(1)->childFirst() as $entry) {
 				$path = (string) $entry;
-				if (strncmp($path, $base, strlen($base))) { // skip files out of cache
-					continue;
-				}
 				if ($entry->isDir()) { // collector: remove empty dirs
 					@rmdir($path); // @ - removing dirs is not necessary
 					continue;
@@ -291,13 +289,17 @@ class NFileStorage extends NObject implements ICacheStorage
 				}
 			}
 
-			$this->getJournal()->clean($conds);
+			if ($this->context) {
+				$this->getJournal()->clean($conds);
+			}
 			return;
 		}
 
 		// cleaning using journal
-		foreach ($this->getJournal()->clean($conds) as $file) {
-			$this->delete($file);
+		if ($this->context) {
+			foreach ($this->getJournal()->clean($conds) as $file) {
+				$this->delete($file);
+			}
 		}
 	}
 
@@ -398,15 +400,11 @@ class NFileStorage extends NObject implements ICacheStorage
 
 
 	/**
-	 * Returns the ICacheJournal
 	 * @return ICacheJournal
 	 */
 	protected function getJournal()
 	{
-		if ($this->journal === NULL) {
-			$this->journal = NEnvironment::getService('Nette\\Caching\\ICacheJournal');
-		}
-		return $this->journal;
+		return $this->context->getService('Nette\\Caching\\ICacheJournal');
 	}
 
 }

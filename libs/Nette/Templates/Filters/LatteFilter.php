@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Templates
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Templates
  */
 
 
@@ -15,17 +15,10 @@
 /**
  * Compile-time filter Latte.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Templates
+ * @author     David Grudl
  */
 class NLatteFilter extends NObject
 {
-	/** @internal single & double quoted PHP string */
-	const RE_STRING = '\'(?:\\\\.|[^\'\\\\])*\'|"(?:\\\\.|[^"\\\\])*"';
-
-	/** @internal PHP identifier */
-	const RE_IDENTIFIER = '[_a-zA-Z\x7F-\xFF][_a-zA-Z0-9\x7F-\xFF]*';
-
 	/** @internal special HTML tag or attribute prefix */
 	const HTML_PREFIX = 'n:';
 
@@ -136,7 +129,7 @@ class NLatteFilter extends NObject
 				break;
 
 			} elseif (!empty($matches['macro'])) { // {macro|modifiers}
-				list(, $macro, $value, $modifiers) = NString::match($matches['macro'], '#^(/?[a-z]+)?(.*?)(\\|[a-z](?:'.self::RE_STRING.'|[^\'"]+)*)?$()#is');
+				list(, $macro, $value, $modifiers) = NString::match($matches['macro'], '#^(/?[a-z0-9.:]+)?(.*?)(\\|[a-z](?:'.NTokenizer::RE_STRING.'|[^\'"]+)*)?$()#is');
 				$code = $this->handler->macro($macro, trim($value), isset($modifiers) ? $modifiers : '');
 				if ($code === NULL) {
 					throw new InvalidStateException("Unknown macro {{$matches['macro']}} on line $this->line.");
@@ -412,7 +405,7 @@ class NLatteFilter extends NObject
 		$this->macroRe = '
 			(?P<indent>\n[\ \t]*)?
 			' . $left . '
-				(?P<macro>(?:' . self::RE_STRING . '|[^\'"]+?)*?)
+				(?P<macro>(?:' . NTokenizer::RE_STRING . '|[^\'"]+?)*?)
 			' . $right . '
 			(?P<newline>[\ \t]*(?=\r|\n))?
 		';
@@ -421,129 +414,30 @@ class NLatteFilter extends NObject
 
 
 
-	/********************* compile-time helpers ****************d*g**/
-
-
-
-	/**
-	 * Applies modifiers.
-	 * @param  string
-	 * @param  string
-	 * @return string
-	 */
-	public static function formatModifiers($var, $modifiers)
+	/**#@+ @deprecated */
+	static function formatModifiers($var, $modifiers)
 	{
-		if (!$modifiers) return $var;
-		$tokens = NString::matchAll(
-			$modifiers . '|',
-			'~
-				'.self::RE_STRING.'|  ## single or double quoted string
-				[^\'"|:,\s]+|         ## symbol
-				[|:,]                 ## separator
-			~xs',
-			PREG_PATTERN_ORDER
-		);
-
-		$inside = FALSE;
-		$prev = '';
-		foreach ($tokens[0] as $token) {
-			if ($token === '|' || $token === ':' || $token === ',') {
-				if ($prev === '') {
-
-				} elseif (!$inside) {
-					if (!NString::match($prev, '#^'.self::RE_IDENTIFIER.'$#')) {
-						throw new InvalidStateException("Modifier name must be alphanumeric string, '$prev' given.");
-					}
-					$var = "\$template->$prev($var";
-					$prev = '';
-					$inside = TRUE;
-
-				} else {
-					$var .= ', ' . self::formatString($prev);
-					$prev = '';
-				}
-
-				if ($token === '|' && $inside) {
-					$var .= ')';
-					$inside = FALSE;
-				}
-			} else {
-				$prev .= $token;
-			}
-		}
-		return $var;
+		trigger_error(__METHOD__ . '() is deprecated; use LatteMacros::formatModifiers() instead.', E_USER_WARNING);
+		return NLatteMacros::formatModifiers($var, $modifiers);
 	}
 
-
-
-	/**
-	 * Reads single token (optionally delimited by comma) from string.
-	 * @param  string
-	 * @return string
-	 */
-	public static function fetchToken(& $s)
+	static function fetchToken(& $s)
 	{
-		if ($matches = NString::match($s, '#^((?>'.self::RE_STRING.'|[^\'"\s,]+)+)\s*,?\s*(.*)$#')) { // token [,] tail
-			$s = $matches[2];
-			return $matches[1];
-		}
-
-		return NULL;
+		trigger_error(__METHOD__ . '() is deprecated; use LatteMacros::fetchToken() instead.', E_USER_WARNING);
+		return NLatteMacros::fetchToken($s);
 	}
 
-
-
-	/**
-	 * Formats parameters to PHP array.
-	 * @param  string
-	 * @param  string
-	 * @return string
-	 */
-	public static function formatArray($s, $prefix = '')
+	static function formatArray($input, $prefix = '')
 	{
-		$s = NString::replace(
-			trim($s),
-			'~
-				'.self::RE_STRING.'|                          ## single or double quoted string
-				(?<=[,=(]|=>|^)\s*([a-z\d_]+)(?=\s*[,=)]|$)   ## 1) symbol
-			~xi',
-			callback(__CLASS__, 'cbArgs')
-		);
-		$s = NString::replace($s, '#\$(' . self::RE_IDENTIFIER . ')\s*=>#', '"$1" =>');
-		return $s === '' ? '' : $prefix . "array($s)";
+		trigger_error(__METHOD__ . '() is deprecated; use LatteMacros::formatArray() instead.', E_USER_WARNING);
+		return NLatteMacros::formatArray($input, $prefix);
 	}
 
-
-
-	/**
-	 * NCallback for formatArgs().
-	 * @internal
-	 */
-	public static function cbArgs($matches)
+	static function formatString($s)
 	{
-		//    [1] => symbol
-
-		if (!empty($matches[1])) { // symbol
-			list(, $symbol) = $matches;
-			static $keywords = array('true'=>1, 'false'=>1, 'null'=>1, 'and'=>1, 'or'=>1, 'xor'=>1, 'clone'=>1, 'new'=>1);
-			return is_numeric($symbol) || isset($keywords[strtolower($symbol)]) ? $matches[0] : "'$symbol'";
-
-		} else {
-			return $matches[0];
-		}
+		trigger_error(__METHOD__ . '() is deprecated; use LatteMacros::formatString() instead.', E_USER_WARNING);
+		return NLatteMacros::formatString($s);
 	}
-
-
-
-	/**
-	 * Formats parameter to PHP string.
-	 * @param  string
-	 * @return string
-	 */
-	public static function formatString($s)
-	{
-		static $keywords = array('true'=>1, 'false'=>1, 'null'=>1);
-		return (is_numeric($s) || strspn($s, '\'"$') || isset($keywords[strtolower($s)])) ? $s : '"' . $s . '"';
-	}
+	/**#@-*/
 
 }

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Templates
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Templates
  */
 
 
@@ -38,14 +38,12 @@
  * - {status ...} HTTP status
  * - {capture ?} ... {/capture} capture block to parameter
  * - {var var => value} set template parameter
- * - {assign var => value} set template parameter
  * - {default var => value} set default template parameter
  * - {dump $var}
  * - {debugbreak}
  * - {l} {r} to display { }
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Templates
+ * @author     David Grudl
  */
 class NLatteMacros extends NObject
 {
@@ -81,6 +79,12 @@ class NLatteMacros extends NObject
 		'/while' => '<?php endwhile ?>',
 		'continueIf' => '<?php if (%%) continue ?>',
 		'breakIf' => '<?php if (%%) break ?>',
+		'first' => '<?php if ($iterator->isFirst(%%)): ?>',
+		'/first' => '<?php endif ?>',
+		'last' => '<?php if ($iterator->isLast(%%)): ?>',
+		'/last' => '<?php endif ?>',
+		'sep' => '<?php if (!$iterator->isLast(%%)): ?>',
+		'/sep' => '<?php endif ?>',
 
 		'include' => '<?php %:macroInclude% ?>',
 		'extends' => '<?php %:macroExtends% ?>',
@@ -89,14 +93,14 @@ class NLatteMacros extends NObject
 		'plink' => '<?php echo %:macroEscape%(%:macroPlink%) ?>',
 		'link' => '<?php echo %:macroEscape%(%:macroLink%) ?>',
 		'ifCurrent' => '<?php %:macroIfCurrent% ?>',
-		'widget' => '<?php %:macroWidget% ?>',
-		'control' => '<?php %:macroWidget% ?>',
+		'widget' => '<?php %:macroControl% ?>',
+		'control' => '<?php %:macroControl% ?>',
 
 		'attr' => '<?php echo NHtml::el(NULL)->%:macroAttr%attributes() ?>',
 		'contentType' => '<?php %:macroContentType% ?>',
 		'status' => '<?php NEnvironment::getHttpResponse()->setCode(%%) ?>',
-		'var' => '<?php %:macroAssign% ?>',
-		'assign' => '<?php %:macroAssign% ?>',
+		'var' => '<?php %:macroVar% ?>',
+		'assign' => '<?php %:macroVar% ?>', // deprecated
 		'default' => '<?php %:macroDefault% ?>',
 		'dump' => '<?php %:macroDump% ?>',
 		'debugbreak' => '<?php %:macroDebugbreak% ?>',
@@ -107,19 +111,22 @@ class NLatteMacros extends NObject
 		'_' => '<?php echo %:macroEscape%(%:macroTranslate%) ?>',
 		'!=' => '<?php echo %:macroModifiers% ?>',
 		'=' => '<?php echo %:macroEscape%(%:macroModifiers%) ?>',
-		'!$' => '<?php echo %:macroVar% ?>',
-		'$' => '<?php echo %:macroEscape%(%:macroVar%) ?>',
+		'!$' => '<?php echo %:macroDollar% ?>',
+		'$' => '<?php echo %:macroEscape%(%:macroDollar%) ?>',
 		'?' => '<?php %:macroModifiers% ?>',
 	);
+
+	/** @internal PHP identifier */
+	const RE_IDENTIFIER = '[_a-zA-Z\x7F-\xFF][_a-zA-Z0-9\x7F-\xFF]*';
+
+	/** @internal */
+	const T_SYMBOL = -1;
 
 	/** @var array */
 	public $macros;
 
 	/** @var NLatteFilter */
 	private $filter;
-
-	/** @var array */
-	private $current;
 
 	/** @var array */
 	private $blocks = array();
@@ -221,9 +228,20 @@ class NLatteMacros extends NObject
 
 		// named blocks
 		if ($this->namedBlocks) {
+			$uniq = $this->uniq;
 			foreach (array_reverse($this->namedBlocks, TRUE) as $name => $foo) {
-				$name = preg_quote($name, '#');
-				$s = NString::replace($s, "#{block ($name)} \?>(.*)<\?php {/block $name}#sU", callback($this, 'cbNamedBlocks'));
+				$code = & $this->namedBlocks[$name];
+				$namere = preg_quote($name, '#');
+				$s = NString::replace($s,
+					"#{block $namere} \?>(.*)<\?php {/block $namere}#sU",
+					callback(create_function('$matches', 'extract(NClosureFix::$vars['.NClosureFix::uses(array('name'=>$name, 'code'=>& $code,'uniq'=> $uniq)).'], EXTR_REFS); 
+						list(, $content) = $matches;
+						$func = \'_lb\' . substr(md5($uniq . $name), 0, 10) . \'_\' . preg_replace(\'#[^a-z0-9_]#i\', \'_\', $name);
+						$code = "//\\n// block $name\\n//\\n"
+							. "if (!function_exists(\\$_l->blocks[" . var_export($name, TRUE) . "][] = \'$func\')) { "
+							. "function $func(\\$_l, \\$_args) { extract(\\$_args)\\n?>$content<?php\\n}}";
+						return \'\';
+					')));
 			}
 			$s = "<?php\n\n" . implode("\n\n\n", $this->namedBlocks) . "\n\n//\n// end of blocks\n//\n?>" . $s;
 		}
@@ -258,25 +276,18 @@ class NLatteMacros extends NObject
 		} elseif (!isset($this->macros[$macro])) {
 			return NULL;
 		}
-		$this->current = array($content, $modifiers);
-		return NString::replace($this->macros[$macro], '#%(.*?)%#', callback($this, 'lMacro'));
-	}
-
-
-
-	/**
-	 * NCallback for self::macro().
-	 * @internal
-	 */
-	public function lMacro($m)
-	{
-		list($content, $modifiers) = $this->current;
-		if ($m[1]) {
-			return callback($m[1][0] === ':' ? array($this, substr($m[1], 1)) : $m[1])
-				->invoke($content, $modifiers);
-		} else {
-			return $content;
-		}
+		$This = $this;
+		return NString::replace(
+			$this->macros[$macro],
+			'#%(.*?)%#',
+			callback(create_function('$m', 'extract(NClosureFix::$vars['.NClosureFix::uses(array('This'=>$This,'content'=> $content,'modifiers'=> $modifiers)).'], EXTR_REFS); 
+				if ($m[1]) {
+					return callback($m[1][0] === \':\' ? array($This, substr($m[1], 1)) : $m[1])
+						->invoke($content, $modifiers);
+				} else {
+					return $content;
+				}
+			')));
 	}
 
 
@@ -299,7 +310,9 @@ class NLatteMacros extends NObject
 		);
 		return $this->macro(
 			$closing ? "/$name" : $name,
-			isset($knownTags[$name], $attrs[$knownTags[$name]]) ? $attrs[$knownTags[$name]] : substr(var_export($attrs, TRUE), 8, -1),
+			isset($knownTags[$name], $attrs[$knownTags[$name]])
+				? $attrs[$knownTags[$name]]
+				: preg_replace("#'([^\\'$]+)'#", '$1', substr(var_export($attrs, TRUE), 8, -1)),
 			isset($attrs['modifiers']) ? $attrs['modifiers'] : ''
 		);
 	}
@@ -360,9 +373,9 @@ class NLatteMacros extends NObject
 	/**
 	 * {$var |modifiers}
 	 */
-	public function macroVar($var, $modifiers)
+	public function macroDollar($var, $modifiers)
 	{
-		return NLatteFilter::formatModifiers('$' . $var, $modifiers);
+		return self::formatModifiers('$' . $var, $modifiers);
 	}
 
 
@@ -372,7 +385,7 @@ class NLatteMacros extends NObject
 	 */
 	public function macroTranslate($var, $modifiers)
 	{
-		return NLatteFilter::formatModifiers($var, 'translate|' . $modifiers);
+		return self::formatModifiers($var, '|translate' . $modifiers);
 	}
 
 
@@ -416,15 +429,15 @@ class NLatteMacros extends NObject
 	 */
 	public function macroInclude($content, $modifiers, $isDefinition = FALSE)
 	{
-		$destination = NLatteFilter::fetchToken($content); // destination [,] [params]
-		$params = NLatteFilter::formatArray($content) . ($content ? ' + ' : '');
+		$destination = self::fetchToken($content); // destination [,] [params]
+		$params = self::formatArray($content) . ($content ? ' + ' : '');
 
 		if ($destination === NULL) {
 			throw new InvalidStateException("Missing destination in {include} on line {$this->filter->line}.");
 
 		} elseif ($destination[0] === '#') { // include #block
 			$destination = ltrim($destination, '#');
-			if (!NString::match($destination, '#^' . NLatteFilter::RE_IDENTIFIER . '$#')) {
+			if (!NString::match($destination, '#^' . self::RE_IDENTIFIER . '$#')) {
 				throw new InvalidStateException("Included block name must be alphanumeric string, '$destination' given on line {$this->filter->line}.");
 			}
 
@@ -443,14 +456,14 @@ class NLatteMacros extends NObject
 				? "call_user_func(reset(\$_l->blocks[$name]), \$_l, $params)"
 				: 'NLatteMacros::callBlock' . ($parent ? 'Parent' : '') . "(\$_l, $name, $params)";
 			return $modifiers
-				? "ob_start(); $cmd; echo " . NLatteFilter::formatModifiers('ob_get_clean()', $modifiers)
+				? "ob_start(); $cmd; echo " . self::formatModifiers('ob_get_clean()', $modifiers)
 				: $cmd;
 
 		} else { // include "file"
-			$destination = NLatteFilter::formatString($destination);
+			$destination = self::formatString($destination);
 			$cmd = 'NLatteMacros::includeTemplate(' . $destination . ', ' . $params . '$template->getParams(), $_l->templates[' . var_export($this->uniq, TRUE) . '])';
 			return $modifiers
-				? 'echo ' . NLatteFilter::formatModifiers($cmd . '->__toString(TRUE)', $modifiers)
+				? 'echo ' . self::formatModifiers($cmd . '->__toString(TRUE)', $modifiers)
 				: $cmd . '->render()';
 		}
 	}
@@ -462,7 +475,7 @@ class NLatteMacros extends NObject
 	 */
 	public function macroExtends($content)
 	{
-		$destination = NLatteFilter::fetchToken($content); // destination
+		$destination = self::fetchToken($content); // destination
 		if ($destination === NULL) {
 			throw new InvalidStateException("Missing destination in {extends} on line {$this->filter->line}.");
 		}
@@ -473,7 +486,7 @@ class NLatteMacros extends NObject
 			throw new InvalidStateException("Multiple {extends} declarations are not allowed; on line {$this->filter->line}.");
 		}
 		$this->extends = $destination !== 'none';
-		return $this->extends ? '$_l->extends = ' . NLatteFilter::formatString($destination) : '';
+		return $this->extends ? '$_l->extends = ' . self::formatString($destination) : '';
 	}
 
 
@@ -483,7 +496,7 @@ class NLatteMacros extends NObject
 	 */
 	public function macroBlock($content, $modifiers)
 	{
-		$name = NLatteFilter::fetchToken($content); // block [,] [params]
+		$name = self::fetchToken($content); // block [,] [params]
 
 		if ($name === NULL) { // anonymous block
 			$this->blocks[] = array(self::BLOCK_ANONYMOUS, NULL, $modifiers);
@@ -491,7 +504,7 @@ class NLatteMacros extends NObject
 
 		} else { // #block
 			$name = ltrim($name, '#');
-			if (!NString::match($name, '#^' . NLatteFilter::RE_IDENTIFIER . '$#')) {
+			if (!NString::match($name, '#^' . self::RE_IDENTIFIER . '$#')) {
 				throw new InvalidStateException("Block name must be alphanumeric string, '$name' given on line {$this->filter->line}.");
 
 			} elseif (isset($this->namedBlocks[$name])) {
@@ -502,7 +515,7 @@ class NLatteMacros extends NObject
 			$this->namedBlocks[$name] = $name;
 			$this->blocks[] = array(self::BLOCK_NAMED, $name, '');
 			if ($name[0] === '_') { // snippet - experimental
-				$tag = NLatteFilter::fetchToken($content);  // [name [,]] [tag]
+				$tag = self::fetchToken($content);  // [name [,]] [tag]
 				$tag = trim($tag, '<>');
 				$namePhp = var_export(substr($name, 1), TRUE);
 				if (!$tag) $tag = 'div';
@@ -543,7 +556,7 @@ class NLatteMacros extends NObject
 			return "{/block $name}";
 
 		} else { // anonymous block
-			return $modifiers === '' ? '' : 'echo ' . NLatteFilter::formatModifiers('ob_get_clean()', $modifiers);
+			return $modifiers === '' ? '' : 'echo ' . self::formatModifiers('ob_get_clean()', $modifiers);
 		}
 	}
 
@@ -559,11 +572,11 @@ class NLatteMacros extends NObject
 			return $this->macroBlock('_' . ltrim($content, ':'), '');
 		}
 		$args = array('');
-		if ($snippet = NLatteFilter::fetchToken($content)) {  // [name [,]] [tag]
-			$args[] = NLatteFilter::formatString($snippet);
+		if ($snippet = self::fetchToken($content)) {  // [name [,]] [tag]
+			$args[] = self::formatString($snippet);
 		}
 		if ($content) {
-			$args[] = NLatteFilter::formatString($content);
+			$args[] = self::formatString($content);
 		}
 		return '} if ($_l->foo = NSnippetHelper::create($control' . implode(', ', $args) . ')) { $_l->snippets[] = $_l->foo';
 	}
@@ -588,7 +601,7 @@ class NLatteMacros extends NObject
 	 */
 	public function macroCapture($content, $modifiers)
 	{
-		$name = NLatteFilter::fetchToken($content); // $variable
+		$name = self::fetchToken($content); // $variable
 
 		if (substr($name, 0, 1) !== '$') {
 			throw new InvalidStateException("Invalid capture block parameter '$name' on line {$this->filter->line}.");
@@ -611,7 +624,7 @@ class NLatteMacros extends NObject
 			throw new InvalidStateException("Tag {/capture $content} was not expected here on line {$this->filter->line}.");
 		}
 
-		return $name . '=' . NLatteFilter::formatModifiers('ob_get_clean()', $modifiers);
+		return $name . '=' . self::formatModifiers('ob_get_clean()', $modifiers);
 	}
 
 
@@ -623,23 +636,7 @@ class NLatteMacros extends NObject
 	{
 		return 'if (NCachingHelper::create('
 			. var_export($this->uniq . ':' . $this->cacheCounter++, TRUE)
-			. ', $_l->g->caches' . NLatteFilter::formatArray($content, ', ') . ')) {';
-	}
-
-
-
-	/**
-	 * Converts {block named}...{/block} to functions.
-	 * @internal
-	 */
-	public function cbNamedBlocks($matches)
-	{
-		list(, $name, $content) = $matches;
-		$func = '_lb' . substr(md5($this->uniq . $name), 0, 10) . '_' . preg_replace('#[^a-z0-9_]#i', '_', $name);
-		$this->namedBlocks[$name] = "//\n// block $name\n//\n"
-			. "if (!function_exists(\$_l->blocks[" . var_export($name, TRUE) . "][] = '$func')) { "
-			. "function $func(\$_l, \$_args) { extract(\$_args)\n?>$content<?php\n}}";
-		return '';
+			. ', $_l->g->caches' . self::formatArray($content, ', ') . ')) {';
 	}
 
 
@@ -707,7 +704,7 @@ class NLatteMacros extends NObject
 	{
 		return 'NDebug::barDump('
 			. ($content ? 'array(' . var_export($content, TRUE) . " => $content)" : 'get_defined_vars()')
-			. ', "Template " . str_replace(NEnvironment::getVariable("appDir"), "\xE2\x80\xA6", $template->getFile()))';
+			. ', "Template " . str_replace(NEnvironment::getVariable("appDir", ""), "\xE2\x80\xA6", $template->getFile()))';
 	}
 
 
@@ -723,22 +720,22 @@ class NLatteMacros extends NObject
 
 
 	/**
-	 * {widget ...}
+	 * {control ...}
 	 */
-	public function macroWidget($content)
+	public function macroControl($content)
 	{
-		$pair = NLatteFilter::fetchToken($content); // widget[:method]
+		$pair = self::fetchToken($content); // control[:method]
 		if ($pair === NULL) {
-			throw new InvalidStateException("Missing widget name in {widget} on line {$this->filter->line}.");
+			throw new InvalidStateException("Missing control name in {control} on line {$this->filter->line}.");
 		}
 		$pair = explode(':', $pair, 2);
-		$widget = NLatteFilter::formatString($pair[0]);
+		$name = self::formatString($pair[0]);
 		$method = isset($pair[1]) ? ucfirst($pair[1]) : '';
-		$method = NString::match($method, '#^(' . NLatteFilter::RE_IDENTIFIER . '|)$#') ? "render$method" : "{\"render$method\"}";
-		$param = NLatteFilter::formatArray($content);
+		$method = NString::match($method, '#^(' . self::RE_IDENTIFIER . '|)$#') ? "render$method" : "{\"render$method\"}";
+		$param = self::formatArray($content);
 		if (strpos($content, '=>') === FALSE) $param = substr($param, 6, -1); // removes array()
-		return ($widget[0] === '$' ? "if (is_object($widget)) {$widget}->$method($param); else " : '')
-			. "\$control->getWidget($widget)->$method($param)";
+		return ($name[0] === '$' ? "if (is_object($name)) {$name}->$method($param); else " : '')
+			. "\$control->getWidget($name)->$method($param)";
 	}
 
 
@@ -748,7 +745,7 @@ class NLatteMacros extends NObject
 	 */
 	public function macroLink($content, $modifiers)
 	{
-		return NLatteFilter::formatModifiers('$control->link(' . $this->formatLink($content) .')', $modifiers);
+		return self::formatModifiers('$control->link(' . $this->formatLink($content) .')', $modifiers);
 	}
 
 
@@ -758,7 +755,7 @@ class NLatteMacros extends NObject
 	 */
 	public function macroPlink($content, $modifiers)
 	{
-		return NLatteFilter::formatModifiers('$presenter->link(' . $this->formatLink($content) .')', $modifiers);
+		return self::formatModifiers('$presenter->link(' . $this->formatLink($content) .')', $modifiers);
 	}
 
 
@@ -779,24 +776,61 @@ class NLatteMacros extends NObject
 	 */
 	private function formatLink($content)
 	{
-		return NLatteFilter::formatString(NLatteFilter::fetchToken($content)) . NLatteFilter::formatArray($content, ', '); // destination [,] args
+		return self::formatString(self::fetchToken($content)) . self::formatArray($content, ', '); // destination [,] args
 	}
 
 
 
 	/**
-	 * {assign ...}
+	 * {var ...}
 	 */
-	public function macroAssign($content, $modifiers)
+	public function macroVar($content, $modifiers, $extract = FALSE)
 	{
-		if (!$content) {
-			throw new InvalidStateException("Missing arguments in {var} or {assign} on line {$this->filter->line}.");
+		$tokenizer = new NTokenizer(array(
+			NTokenizer::T_WHITESPACE => '\s+',
+			NTokenizer::RE_STRING,
+			'true|false|null|and|or|xor|clone|new|instanceof',
+			self::T_SYMBOL => '\$?[0-9a-zA-Z_]+', // variable, string, number
+			'=>|[^"\']', // =>, any char except quotes
+		), 'i');
+
+		$out = '';
+		$quote = $var = TRUE;
+		$depth = 0;
+		foreach ($tokenizer->tokenize($content) as $n => $token) {
+			list($token, $name) = $token;
+
+			if ($name === self::T_SYMBOL) {
+				if ($var) {
+					if ($extract) {
+						$token = "'" . ($token[0] === '$' ? substr($token, 1) : $token) . "'";
+					} else {
+						$token = $token[0] === '$' ? $token : '$' . $token;
 		}
-		if (strpos($content, '=>') === FALSE) { // back compatibility
-			return '$' . ltrim(NLatteFilter::fetchToken($content), '$')
-				. ' = ' . NLatteFilter::formatModifiers($content === '' ? 'NULL' : $content, $modifiers);
+				} elseif ($quote && $token[0] !== '$' && !is_numeric($token) && in_array($tokenizer->nextToken($n), array(',', '=>', ')', NULL), TRUE)) {
+					$token = "'$token'";
 		}
-		return 'extract(' . NLatteFilter::formatArray($content) . ')';
+			} elseif ($token === '(') {
+				$depth++;
+
+			} elseif ($token === ')') {
+				$depth--;
+
+			} elseif (($token === '=' || $token === '=>') && $depth === 0) {
+				$token = $extract ? '=>' : '=';
+				$var = FALSE;
+
+			} elseif ($token === ',' && $depth === 0) {
+				$token = $extract ? ',' : ';';
+				$var = TRUE;
+	}
+
+			if ($name !== NTokenizer::T_WHITESPACE) {
+				$quote = in_array($token, array('[', ',', '=', '(', '=>'));
+			}
+			$out .= $token;
+		}
+		return $out;
 	}
 
 
@@ -806,11 +840,8 @@ class NLatteMacros extends NObject
 	 */
 	public function macroDefault($content)
 	{
-		if (!$content) {
-			throw new InvalidStateException("Missing arguments in {default} on line {$this->filter->line}.");
+		return 'extract(array(' . $this->macroVar($content, '', TRUE) . '), EXTR_SKIP)';
 		}
-		return 'extract(' . NLatteFilter::formatArray($content) . ', EXTR_SKIP)';
-	}
 
 
 
@@ -829,7 +860,137 @@ class NLatteMacros extends NObject
 	 */
 	public function macroModifiers($content, $modifiers)
 	{
-		return NLatteFilter::formatModifiers($content, $modifiers);
+		return self::formatModifiers($content, $modifiers);
+	}
+
+
+
+	/********************* compile-time helpers ****************d*g**/
+
+
+
+	/**
+	 * Applies modifiers.
+	 * @param  string
+	 * @param  string
+	 * @return string
+	 */
+	public static function formatModifiers($var, $modifiers)
+	{
+		if (!$modifiers) return $var;
+		$tokenizer = new NTokenizer(array(
+			NTokenizer::T_WHITESPACE => '\s+',
+			NTokenizer::RE_STRING,
+			'true|false|null|and|or|xor|clone|new|instanceof',
+			'\$[_a-z0-9\x7F-\xFF]+', // variable
+			self::T_SYMBOL => '[_a-z0-9\x7F-\xFF]+', // string, number
+			'[^"\']', // =>, any char except quotes
+		), 'i');
+
+		$inside = FALSE;
+		foreach ($tokenizer->tokenize(ltrim($modifiers, '|')) as $n => $token) {
+			list($token, $name) = $token;
+			if ($name === NTokenizer::T_WHITESPACE) {
+				$var = rtrim($var) . ' ';
+
+			} elseif (!$inside) {
+				if ($name === self::T_SYMBOL) {
+					$var = "\$template->$token($var";
+					$inside = TRUE;
+				} else {
+					throw new InvalidStateException("Modifier name must be alphanumeric string, '$token' given.");
+				}
+			} else {
+				if ($token === ':' || $token === ',') {
+					$var = $var . ', ';
+
+				} elseif ($token === '|') {
+					$var = $var . ')';
+					$inside = FALSE;
+
+				} elseif ($name === self::T_SYMBOL && $quote && !is_numeric($token)
+					&& in_array($tokenizer->nextToken($n), array(',', ':', ')', '|', NULL), TRUE)) {
+					$var .= "'$token'";
+
+				} else {
+					$var .= $token;
+				}
+			}
+			if ($name !== NTokenizer::T_WHITESPACE) {
+				$quote = in_array($token, array('[', ',', '=', '(', ':'));
+			}
+		}
+		return $inside ? "$var)" : $var;
+	}
+
+
+
+	/**
+	 * Reads single token (optionally delimited by comma) from string.
+	 * @param  string
+	 * @return string
+	 */
+	public static function fetchToken(& $s)
+	{
+		if ($matches = NString::match($s, '#^((?>'.NTokenizer::RE_STRING.'|[^\'"\s,]+)+)\s*,?\s*(.*)$#')) { // token [,] tail
+			$s = $matches[2];
+			return $matches[1];
+		}
+
+		return NULL;
+	}
+
+
+
+	/**
+	 * Formats parameters to PHP array.
+	 * @param  string
+	 * @param  string
+	 * @return string
+	 */
+	public static function formatArray($input, $prefix = '')
+	{
+		$tokenizer = new NTokenizer(array(
+			NTokenizer::T_WHITESPACE => '\s+',
+			NTokenizer::T_COMMENT => '/\*.*?\*/',
+			NTokenizer::RE_STRING,
+			'true|false|null|and|or|xor|clone|new|instanceof',
+			'\$[_a-z0-9\x7F-\xFF]+', // variable
+			self::T_SYMBOL => '[_a-z0-9\x7F-\xFF]+', // string, number
+			'=>|[^"\']', // =>, any char except quotes
+		), 'i');
+
+		$out = '';
+		$quote = TRUE;
+		foreach ($tokenizer->tokenize($input) as $n => $token) {
+			list($token, $name) = $token;
+
+			if ($name === NTokenizer::T_COMMENT) {
+				continue;
+
+			} elseif ($name === self::T_SYMBOL && $quote && !is_numeric($token)
+				&& in_array($tokenizer->nextToken($n), array(',', '=>', ')', NULL), TRUE)) {
+				$token = "'$token'";
+			}
+			if ($name !== NTokenizer::T_WHITESPACE) {
+				$quote = in_array($token, array('[', ',', '=', '(', '=>'));
+			}
+			$out .= $token;
+		}
+		return $out === '' ? '' : $prefix . "array($out)";
+	}
+
+
+
+	/**
+	 * Formats parameter to PHP string.
+	 * @param  string
+	 * @return string
+	 */
+	public static function formatString($s)
+	{
+		static $keywords = array('true'=>1, 'false'=>1, 'null'=>1);
+		return (is_numeric($s) || strspn($s, '\'"$') || isset($keywords[strtolower($s)])) ? $s : '"' . $s . '"';
 	}
 
 

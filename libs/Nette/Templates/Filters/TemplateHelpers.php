@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Templates
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Templates
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * Standard template run-time helpers shipped with Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Templates
+ * @author     David Grudl
  */
 final class NTemplateHelpers
 {
@@ -154,8 +153,9 @@ final class NTemplateHelpers
 		return NString::replace(
 			$s,
 			'#(</textarea|</pre|</script|^).*?(?=<textarea|<pre|<script|$)#si',
-			callback(create_function('$m', 'return trim(preg_replace("#[ \t\r\n]+#", " ", $m[0]));'))
-		);
+			callback(create_function('$m', '
+				return trim(preg_replace("#[ \\t\\r\\n]+#", " ", $m[0]));
+			')));
 	}
 
 
@@ -170,7 +170,9 @@ final class NTemplateHelpers
 	public static function indent($s, $level = 1, $chars = "\t")
 	{
 		if ($level >= 1) {
-			$s = NString::replace($s, '#<(textarea|pre).*?</\\1#si', callback(create_function('$m', 'return strtr($m[0], " \t\r\n", "\x1F\x1E\x1D\x1A");')));
+			$s = NString::replace($s, '#<(textarea|pre).*?</\\1#si', callback(create_function('$m', '
+				return strtr($m[0], " \\t\\r\\n", "\\x1F\\x1E\\x1D\\x1A");
+			')));
 			$s = NString::indent($s, $level, $chars);
 			$s = strtr($s, "\x1F\x1E\x1D\x1A", " \t\r\n");
 		}

@@ -1,43 +1,29 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette
  */
 
 
 
 /**
- * Service locator pattern implementation.
+ * The dependency injection container default implementation.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette
+ * @author     David Grudl
  */
-class NServiceLocator extends NFreezableObject implements IServiceLocator
+class NContext extends NFreezableObject implements IContext
 {
-	/** @var IServiceLocator */
-	private $parent;
-
 	/** @var array  storage for shared objects */
 	private $registry = array();
 
 	/** @var array  storage for service factories */
 	private $factories = array();
-
-
-
-	/**
-	 * @param  IServiceLocator
-	 */
-	public function __construct(IServiceLocator $parent = NULL)
-	{
-		$this->parent = $parent;
-	}
 
 
 
@@ -61,7 +47,7 @@ class NServiceLocator extends NFreezableObject implements IServiceLocator
 			throw new NAmbiguousServiceException("Service named '$name' has been already registered.");
 		}
 
-		if (is_object($service)) {
+		if (is_object($service) && !($service instanceof Closure || $service instanceof NCallback)) {
 			if (!$singleton || $options) {
 				throw new InvalidArgumentException("Service named '$name' is an instantiated object and must therefore be singleton without options.");
 			}
@@ -150,10 +136,6 @@ class NServiceLocator extends NFreezableObject implements IServiceLocator
 				unset($this->factories[$lower]);
 			}
 			return $service;
-		}
-
-		if ($this->parent !== NULL) {
-			return $this->parent->getService($name, $options);
 
 		} else {
 			throw new InvalidStateException("Service '$name' not found.");
@@ -165,7 +147,7 @@ class NServiceLocator extends NFreezableObject implements IServiceLocator
 	/**
 	 * Exists the service?
 	 * @param  string service name
-	 * @param  bool   must be created yet?
+	 * @param  bool   must be created?
 	 * @return bool
 	 */
 	public function hasService($name, $created = FALSE)
@@ -175,18 +157,7 @@ class NServiceLocator extends NFreezableObject implements IServiceLocator
 		}
 
 		$lower = strtolower($name);
-		return isset($this->registry[$lower]) || (!$created && isset($this->factories[$lower])) || ($this->parent !== NULL && $this->parent->hasService($name, $created));
-	}
-
-
-
-	/**
-	 * Returns the parent container if any.
-	 * @return IServiceLocator|NULL
-	 */
-	public function getParent()
-	{
-		return $this->parent;
+		return isset($this->registry[$lower]) || (!$created && isset($this->factories[$lower]));
 	}
 
 }
@@ -196,8 +167,7 @@ class NServiceLocator extends NFreezableObject implements IServiceLocator
 /**
  * Ambiguous service resolution exception.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette
+ * @author     David Grudl
  */
 class NAmbiguousServiceException extends Exception
 {

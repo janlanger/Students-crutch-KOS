@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * NComponentContainer is default implementation of IComponentContainer.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette
+ * @author     David Grudl
  *
  * @property-read ArrayIterator $components
  */
@@ -253,8 +252,7 @@ class NComponentContainer extends NComponent implements IComponentContainer
 /**
  * Recursive component iterator. See NComponentContainer::getComponents().
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette
+ * @author     David Grudl
  */
 class NRecursiveComponentIterator extends RecursiveArrayIterator implements Countable
 {

@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * NTools library.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette
+ * @author     David Grudl
  */
 final class NTools
 {
@@ -37,6 +36,9 @@ final class NTools
 
 	/** average year in seconds */
 	const YEAR = 31557600;
+
+	/** @var resource {@link NTools::enterCriticalSection()} */
+	private static $criticalSections;
 
 
 
@@ -100,28 +102,31 @@ final class NTools
 
 
 	/**
-	 * Recursive glob(). Finds pathnames matching a pattern.
-	 * @param  string
-	 * @param  int
-	 * @return array
+	 * Compares two values.
+	 * @param  mixed
+	 * @param  mixed
+	 * @return bool
 	 */
-	public static function glob($pattern, $flags = 0)
+	public static function compare($l, $operator, $r)
 	{
-		// TODO: replace by RecursiveDirectoryIterator
-		$files = glob($pattern, $flags);
-		if (!is_array($files)) {
-			$files = array();
+		switch ($operator) {
+		case '>':
+			return $l > $r;
+		case '>=':
+			return $l >= $r;
+		case '<':
+			return $l < $r;
+		case '<=':
+			return $l <= $r;
+		case '=':
+		case '==':
+			return $l == $r;
+		case '!':
+		case '!=':
+		case '<>':
+			return $l != $r;
 		}
-
-		$dirs = glob(dirname($pattern) . '/*', $flags | GLOB_ONLYDIR);
-		if (is_array($dirs)) {
-			$mask = basename($pattern);
-			foreach ($dirs as $dir) {
-				$files = array_merge($files, self::glob($dir . '/' . $mask, $flags));
-			}
-		}
-
-		return $files;
+		throw new InvalidArgumentException("Unknown operator $operator.");
 	}
 
 
@@ -137,7 +142,7 @@ final class NTools
 			throw new FileNotFoundException("File '$file' not found.");
 		}
 
-		$info = getimagesize($file);
+		$info = @getimagesize($file); // @ - files smaller than 12 bytes causes read error
 		if (isset($info['mime'])) {
 			return $info['mime'];
 
@@ -149,6 +154,43 @@ final class NTools
 		}
 
 		return isset($type) && preg_match('#^\S+/\S+$#', $type) ? $type : 'application/octet-stream';
+	}
+
+
+
+	/********************* critical section ****************d*g**/
+
+
+
+	/**
+	 * Enters the critical section, other threads are locked out.
+	 * @return void
+	 */
+	public static function enterCriticalSection()
+	{
+		if (self::$criticalSections) {
+			throw new InvalidStateException('Critical section has been already entered.');
+		}
+		$handle = fopen((defined('TEMP_DIR') ? TEMP_DIR : dirname(__FILE__)) . '/criticalSection.lock', 'w');
+		if (!$handle) {
+			throw new InvalidStateException('Unable initialize critical section.');
+		}
+		flock(self::$criticalSections = $handle, LOCK_EX);
+	}
+
+
+
+	/**
+	 * Leaves the critical section, other threads can now enter it.
+	 * @return void
+	 */
+	public static function leaveCriticalSection()
+	{
+		if (!self::$criticalSections) {
+			throw new InvalidStateException('Critical section has not been initialized.');
+		}
+		fclose(self::$criticalSections);
+		self::$criticalSections = NULL;
 	}
 
 }

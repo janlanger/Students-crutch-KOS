@@ -1,20 +1,12 @@
 <?php
 
 /**
- * Nette Framework
+ * Nette Framework.
  *
  * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
  *
- * This source file is subject to the "Nette license" that is bundled
- * with this package in the file license.txt, and/or GPL license.
- *
- * For more information please see http://nette.org
- *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
  */
 
 
@@ -35,7 +27,7 @@ error_reporting(E_ALL | E_STRICT);
 @set_magic_quotes_runtime(FALSE); // @ - deprecated since PHP 5.3.0
 iconv_set_encoding('internal_encoding', 'UTF-8');
 extension_loaded('mbstring') && mb_internal_encoding('UTF-8');
-header('X-Powered-By: Nette Framework');
+@header('X-Powered-By: Nette Framework'); // @ - headers may be sent
 
 
 
@@ -44,7 +36,7 @@ header('X-Powered-By: Nette Framework');
  */
 define('NETTE', TRUE);
 define('NETTE_DIR', dirname(__FILE__));
-define('NETTE_VERSION_ID', 10000); // v1.0.0
+define('NETTE_VERSION_ID', 20000); // v2.0.0
 define('NETTE_PACKAGE', 'PHP 5.2 prefixed');
 
 
@@ -61,3 +53,14 @@ require_once dirname(__FILE__) . '/Loaders/NetteLoader.php';
 
 
 NNetteLoader::getInstance()->register();
+
+class NClosureFix
+{
+	static $vars = array();
+
+	static function uses($args)
+	{
+		self::$vars[] = $args;
+		return count(self::$vars)-1;
+	}
+}

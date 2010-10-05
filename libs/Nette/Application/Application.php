@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Application
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Application
  */
 
 
@@ -15,19 +15,12 @@
 /**
  * Front Controller.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Application
+ * @author     David Grudl
  */
 class NApplication extends NObject
 {
 	/** @var int */
 	public static $maxLoop = 20;
-
-	/** @var array */
-	public $defaultServices = array(
-		'Nette\\Application\\IRouter' => 'NMultiRouter',
-		'Nette\\Application\\IPresenterLoader' => array(__CLASS__, 'createPresenterLoader'),
-	);
 
 	/** @var bool enable fault barrier? */
 	public $catchExceptions;
@@ -56,8 +49,8 @@ class NApplication extends NObject
 	/** @var NPresenter */
 	private $presenter;
 
-	/** @var NServiceLocator */
-	private $serviceLocator;
+	/** @var NContext */
+	private $context;
 
 
 
@@ -72,18 +65,11 @@ class NApplication extends NObject
 
 		$httpRequest->setEncoding('UTF-8');
 
-		if (NEnvironment::getVariable('baseUri') === NULL) {
-			NEnvironment::setVariable('baseUri', $httpRequest->getUri()->getBasePath());
-		}
-
 		// autostarts session
 		$session = $this->getSession();
 		if (!$session->isStarted() && $session->exists()) {
 			$session->start();
 		}
-
-		// enable routing debuggger
-		NDebug::addPanel(new NRoutingDebugger($this->getRouter(), $httpRequest));
 
 		// check HTTP method
 		if ($this->allowedMethods) {
@@ -109,13 +95,15 @@ class NApplication extends NObject
 					$this->onStartup($this);
 
 					// default router
-					$router = $this->getRouter();
-					if ($router instanceof NMultiRouter && !count($router)) {
-						$router[] = new NSimpleRouter(array(
-							'presenter' => 'Default',
-							'action' => 'default',
-						));
+					if ($this->context->hasService('Nette\\Application\\IRouter', TRUE)) {
+						$router = $this->getRouter();
+					} else {
+						$this->setRouter($router = $this->context->getService('defaultRouter'));
 					}
+
+					// enable routing debuggger
+					NDebug::addPanel(new NRoutingDebugger($router, $httpRequest));
+
 
 					// routing
 					$request = $router->match($httpRequest);
@@ -158,10 +146,6 @@ class NApplication extends NObject
 
 			} catch (Exception $e) {
 				// fault barrier
-				if ($this->catchExceptions === NULL) {
-					$this->catchExceptions = NEnvironment::isProduction();
-				}
-
 				$this->onError($this, $e);
 
 				if (!$this->catchExceptions) {
@@ -251,21 +235,24 @@ class NApplication extends NObject
 
 
 	/**
-	 * Gets the service locator (experimental).
-	 * @return IServiceLocator
+	 * Gets the context.
+	 * @return NApplication  provides a fluent interface
 	 */
-	final public function getServiceLocator()
+	public function setContext(IContext $context)
 	{
-		if ($this->serviceLocator === NULL) {
-			$this->serviceLocator = new NServiceLocator(NEnvironment::getServiceLocator());
+		$this->context = $context;
+		return $this;
+	}
 
-			foreach ($this->defaultServices as $name => $service) {
-				if (!$this->serviceLocator->hasService($name)) {
-					$this->serviceLocator->addService($name, $service);
-				}
-			}
-		}
-		return $this->serviceLocator;
+
+
+	/**
+	 * Gets the context.
+	 * @return IContext
+	 */
+	final public function getContext()
+	{
+		return $this->context;
 	}
 
 
@@ -278,7 +265,7 @@ class NApplication extends NObject
 	 */
 	final public function getService($name, array $options = NULL)
 	{
-		return $this->getServiceLocator()->getService($name, $options);
+		return $this->context->getService($name, $options);
 	}
 
 
@@ -289,7 +276,7 @@ class NApplication extends NObject
 	 */
 	public function getRouter()
 	{
-		return $this->getServiceLocator()->getService('Nette\\Application\\IRouter');
+		return $this->context->getService('Nette\\Application\\IRouter');
 	}
 
 
@@ -301,7 +288,7 @@ class NApplication extends NObject
 	 */
 	public function setRouter(IRouter $router)
 	{
-		$this->getServiceLocator()->addService('Nette\\Application\\IRouter', $router);
+		$this->context->addService('Nette\\Application\\IRouter', $router);
 		return $this;
 	}
 
@@ -313,21 +300,38 @@ class NApplication extends NObject
 	 */
 	public function getPresenterLoader()
 	{
-		return $this->getServiceLocator()->getService('Nette\\Application\\IPresenterLoader');
+		return $this->context->getService('Nette\\Application\\IPresenterLoader');
 	}
 
 
 
-	/********************* service factories ****************d*g**/
+	/**
+	 * @return IHttpRequest
+	 */
+	protected function getHttpRequest()
+	{
+		return $this->context->getService('Nette\\Web\\IHttpRequest');
+	}
 
 
 
 	/**
-	 * @return IPresenterLoader
+	 * @return IHttpResponse
 	 */
-	public static function createPresenterLoader()
+	protected function getHttpResponse()
 	{
-		return new NPresenterLoader(NEnvironment::getVariable('appDir'));
+		return $this->context->getService('Nette\\Web\\IHttpResponse');
+	}
+
+
+
+	/**
+	 * @return NSession
+	 */
+	protected function getSession($namespace = NULL)
+	{
+		$handler = $this->context->getService('Nette\\Web\\Session');
+		return $namespace === NULL ? $handler : $handler->getNamespace($namespace);
 	}
 
 
@@ -369,40 +373,6 @@ class NApplication extends NObject
 			$request->setFlag(NPresenterRequest::RESTORED, TRUE);
 			$this->presenter->terminate(new NForwardingResponse($request));
 		}
-	}
-
-
-
-	/********************* backend ****************d*g**/
-
-
-
-	/**
-	 * @return IHttpRequest
-	 */
-	protected function getHttpRequest()
-	{
-		return NEnvironment::getHttpRequest();
-	}
-
-
-
-	/**
-	 * @return IHttpResponse
-	 */
-	protected function getHttpResponse()
-	{
-		return NEnvironment::getHttpResponse();
-	}
-
-
-
-	/**
-	 * @return NSession
-	 */
-	protected function getSession($namespace = NULL)
-	{
-		return NEnvironment::getSession($namespace);
 	}
 
 }

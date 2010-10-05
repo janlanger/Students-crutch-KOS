@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Web
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Web
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * NHttpRequest provides access scheme for request sent via HTTP.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Web
+ * @author     David Grudl
  *
  * @property   NUriScript $uri
  * @property-read NUri $originalUri
@@ -418,7 +417,7 @@ class NHttpRequest extends NObject implements IHttpRequest
 
 
 	/**
-	 * Initializes $this->query, $this->files, $this->cookies and $this->files arrays
+	 * Initializes $this->query, $this->files, $this->cookies and $this->files arrays.
 	 * @return void
 	 */
 	public function initialize()

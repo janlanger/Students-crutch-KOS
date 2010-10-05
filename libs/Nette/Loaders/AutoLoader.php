@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Loaders
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Loaders
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * Auto loader is responsible for loading classes and interfaces.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Loaders
+ * @author     David Grudl
  */
 abstract class NAutoLoader extends NObject
 {

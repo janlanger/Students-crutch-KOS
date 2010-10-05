@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Caching
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Caching
  */
 
 
@@ -16,12 +16,10 @@
  * Provides SQLite/SQLite3 based cache journal backend.
  *
  * @author     Jan Smitka
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Caching
  */
 class NSqliteJournal extends NObject implements ICacheJournal
 {
-	/** @var SQLite3|NSQLiteMimic */
+	/** @var SQLite3|SQLiteMimic */
 	private $database;
 
 
@@ -43,7 +41,7 @@ class NSqliteJournal extends NObject implements ICacheJournal
 			throw new NotSupportedException("SQLite or SQLite3 extension is required for storing tags and priorities.");
 		}
 
-		$this->database = extension_loaded('sqlite') ? new NSQLiteMimic($file) : new SQLite3($file);
+		$this->database = extension_loaded('sqlite') ? new SQLiteMimic($file) : new SQLite3($file);
 		@$this->database->exec( // simulates IGNORE IF EXISTS (available since SQLite3 )
 			'CREATE TABLE cache (entry VARCHAR NOT NULL, priority INTEGER, tag VARCHAR); '
 			. 'CREATE INDEX IDX_ENTRY ON cache (entry); '
@@ -128,13 +126,12 @@ class NSqliteJournal extends NObject implements ICacheJournal
 
 if (class_exists('SQLiteDatabase')) {
 	/**
-	 * SQLite3 API mimic for SQLiteDatabase
+	 * SQLite3 API mimic for SQLiteDatabase.
 	 *
-	 * @copyright  Copyright (c) 2004, 2010 David Grudl
-	 * @package    Nette\Caching
+	 * @author     David Grudl
 	 * @internal
 	 */
-	class NSQLiteMimic extends SQLiteDatabase
+	class SQLiteMimic extends SQLiteDatabase
 	{
 
 		function exec($sql)

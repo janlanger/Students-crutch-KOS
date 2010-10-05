@@ -1,13 +1,13 @@
 <?php
 
 /**
- * Nette Framework
+ * This file is part of the Nette Framework.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @license    http://nette.org/license  Nette license
- * @link       http://nette.org
- * @category   Nette
- * @package    Nette\Application
+ * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "Nette license", and/or
+ * GPL license. For more information please see http://nette.org
+ * @package Nette\Application
  */
 
 
@@ -15,8 +15,7 @@
 /**
  * NPresenter object represents a webpage instance. It executes all the logic for the request.
  *
- * @copyright  Copyright (c) 2004, 2010 David Grudl
- * @package    Nette\Application
+ * @author     David Grudl
  *
  * @property-read NPresenterRequest $request
  * @property-read array $signal
@@ -673,7 +672,7 @@ abstract class NPresenter extends NControl implements IPresenter
 
 
 	/**
-	 * Attempts to cache the sent entity by its last modification date
+	 * Attempts to cache the sent entity by its last modification date.
 	 * @param  string|int|DateTime  last modified time
 	 * @param  string strong entity tag validator
 	 * @param  mixed  optional expiration time
@@ -1243,7 +1242,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	/**
 	 * @return NSession
 	 */
-	protected function getSession($namespace = NULL)
+	public function getSession($namespace = NULL)
 	{
 		return NEnvironment::getSession($namespace);
 	}
@@ -1253,7 +1252,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	/**
 	 * @return NUser
 	 */
-	protected function getUser()
+	public function getUser()
 	{
 		return NEnvironment::getUser();
 	}
