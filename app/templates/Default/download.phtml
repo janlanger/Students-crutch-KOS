@@ -1,3 +1,21 @@
 {block content}
 <h2>{$control['header']->getTitle(1)}</h2>
 {widget downloadForm}
+
+{ifset $responseHeaders}
+<h3>Hlavičky odpovědi</h3>
+<code>
+    {foreach $responseHeaders as $header=>$value}
+    <b>{$header}</b>: {$value}<br />
+    {/foreach}
+</code>
+{/if}
+<br />
+{ifset $requestHeaders}
+<h3>Hlavičky požadavku</h3>
+<code>
+    {foreach $requestHeaders as $header=>$value}
+    {!=NString::replace($value, "#([\w-]+)(.*)#","<b>$1</b>$2")}<br />
+    {/foreach}
+</code>
+{/if}
