@@ -55,12 +55,12 @@ a[href^="error:"] {
     border-color: #f08888;
     color:#770000;
 }
-.flash.notice{
+.flash.notice, .flash.info{
     background: #e8e8F8 url(/images/icons/info.png) no-repeat scroll 15px 50%;
     border-color: #8888F0;
     color:#030340;
 }
-.flash.warn{
+.flash.warning{
     background: #FFfae5 url(/images/icons/warn.png) no-repeat scroll 15px 50%;
     border-color: #ff7800;
     color:#b24a00;
@@ -88,6 +88,9 @@ form th{
 }
 label.required{
     font-weight: bold;
+}
+input.long {
+    width: 300px;
 }
 code{
     line-height: 1.4em;

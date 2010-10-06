@@ -16,18 +16,13 @@ class XMLDownloader extends NComponent {
     private $login;
     private $password;
 
+    private $localRepository;
+
     const NOT_MODIFIED=304;
     const MODIFIED=200;
 
-    public function checkForNewer($localRepo) {
-        $xmls = array();
-        $files = NFinder::findFiles("*.xml")->in($localRepo);
-        foreach ($files as $file) {
-            $xmls[$file->getCTime()] = array(
-                'file' => $file->getRealPath()
-            );
-        }
-        $last_mod = @end(array_keys($xmls)); //intentionally @
+    public function checkForNewer() {
+        $last_mod = $this->getLatestChangeInLocalRepo();
 
         $last_mod-=date("Z");   //GMT time
 
@@ -35,8 +30,10 @@ class XMLDownloader extends NComponent {
             $curl = new Curl($this->url);
 
             $curl->setHeader('If-Modified-Since', date("D, d M Y H:i:s \G\M\T", $last_mod));
-            $curl->setOption('HTTPAUTH', CURLAUTH_BASIC);
-            $curl->setOption('USERPWD', $this->login . ":" . $this->password);
+            if ($this->login != NULL && $this->password != NULL) {
+                $curl->setOption('HTTPAUTH', CURLAUTH_BASIC);
+                $curl->setOption('USERPWD', $this->login . ":" . $this->password);
+            }
             $odpoved = $curl->head();
 
             $this->log($curl->getInfo('request_header'), $odpoved->getHeaders());
@@ -53,15 +50,9 @@ class XMLDownloader extends NComponent {
         }
     }
 
-    public function download($localRepo) {
-        $xmls = array();
-        $files = NFinder::findFiles("*.xml")->in($localRepo);
-        foreach ($files as $file) {
-            $xmls[$file->getCTime()] = array(
-                'file' => $file->getRealPath()
-            );
-        }
-        $last_mod = @end(array_keys($xmls)); //intentionally @
+    public function download() {
+        
+        $last_mod = $this->getLatestChangeInLocalRepo();
 
         $last_mod-=date("Z");   //GMT time
         $filename = 'rz-' . date("Y-m-d-H-i-s") . '.xml';
@@ -99,6 +90,20 @@ class XMLDownloader extends NComponent {
         $presenter->template->responseHeaders = $responseHeaders;
     }
 
+    private function getLatestChangeInLocalRepo() {
+        if($this->localRepository==NULL) {
+            throw new InvalidStateException ('Path to local repository is not set.');
+        }
+        $xmls = array();
+        $files = NFinder::findFiles("*.xml")->in($this->localRepository);
+        foreach ($files as $file) {
+            $xmls[$file->getCTime()] = array(
+                'file' => $file->getRealPath()
+            );
+        }
+        return @end(array_keys($xmls)); //intentionally @
+    }
+
     public function getUrl() {
         return $this->url;
     }
@@ -125,6 +130,17 @@ class XMLDownloader extends NComponent {
         $this->password = $password;
         return $this; //fluents
     }
+
+    public function getLocalRepository() {
+        return $this->localRepository;
+    }
+
+    public function setLocalRepository($localRepository) {
+        $this->localRepository = $localRepository;
+        return $this;
+    }
+
+
 
 }
 

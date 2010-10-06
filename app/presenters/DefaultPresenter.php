@@ -35,11 +35,14 @@ class DefaultPresenter extends BasePresenter {
         $form = new NAppForm($this, 'downloadForm');
         $form->addText('url', 'URL souboru')
                 ->setType('url')
-                ->setRequired('URL musí být vyplněno.');
+                ->setRequired('URL musí být vyplněno.')
+                ->getControlPrototype()->class[]='long';
         $form->addText('login', 'Fakultní login');
         $form->addPassword('password', 'Heslo');
-        $form->addText('localPath', 'Lokální úložiště')->setRequired('Lokální úložiště musí být vyplněno.');
-        $form->addCheckbox('check', 'Zkontrolovat nejdříve jestli je k dispozici novější verze')->setDefaultValue(TRUE);
+        $form->addText('localPath', 'Lokální úložiště')
+                ->setRequired('Lokální úložiště musí být vyplněno.')
+                ->getControlPrototype()->class[]='long';
+        $form->addCheckbox('check', 'Zkontrolovat nejdříve jestli je k dispozici novější verze.')->setDefaultValue(TRUE);
 
         $form->addSubmit('download', 'Stáhnout')->onClick[] = callback($this, 'downloadFile');
 
@@ -56,16 +59,22 @@ class DefaultPresenter extends BasePresenter {
 
         $values = $button->getForm()->getValues();
         try {
-            $down = $this['downloader']->setUrl($values['url'])->setLogin($values['login'])->setPassword($values['password']);
+            $downloader = $this['downloader'];
+            $downloader->setUrl($values['url'])
+                    ->setLogin($values['login'])
+                    ->setPassword($values['password'])
+                    ->setLocalRepository($values['localPath']);
+
             if ($values['check'] == TRUE) {
-                if ($down->checkForNewer($values['localPath']) == $down::NOT_MODIFIED) {
+                if ($downloader->checkForNewer($values['localPath']) == $downloader::NOT_MODIFIED) {
                     $this->flashMessage('V úložišti není k dispozici žádný novější soubor.');
                     return;
                 }
             }
-            $down = $this['downloader']->setUrl($values['url'])->setLogin($values['login'])->setPassword($values['password']);
-            $res = $down->download($values['localPath']);
+            
+            $res = $downloader->download($values['localPath']);
             $this->flashMessage('Soubor stažen (' . $res['file'] . ', velikost:' . NTemplateHelpers::bytes($res['size']) . ', celkový čas:' . round($res['time'], 2) . ' sec)', 'success');
+            $this->redirect('this');
         } catch (IOException $e) {
             $this->flashMessage($e->getMessage(), 'error');
         }
