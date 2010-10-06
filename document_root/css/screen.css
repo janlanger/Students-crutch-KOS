@@ -1,12 +1,19 @@
 body {
-	font: 16px/1.5 "Trebuchet MS", "Geneva CE", lucida, sans-serif;
+	font: 16px/1.5 Calibri,"Trebuchet MS", "Geneva CE", lucida, sans-serif;
 	color: #333;
 	background-color: #fff;
+        
 }
-
+h1,h2{
+    font-family: Georgia,serif;
+}
 h1 {
 	font-size: 150%;
-	color: #3484D2;
+        color: #006666;
+}
+h2 {
+	font-size: 130%;
+        color: #006666;
 }
 
 #ajax-spinner {
@@ -29,4 +36,58 @@ div.flash {
 a[href^="error:"] {
 	background: red;
 	color: white;
+}
+.flash{
+    font-size: 12px;
+    border: 1px;
+    border-style: solid;
+    padding: 12px 45px;
+    margin: 1em auto;
+    width:70%;
+}
+
+.success{
+    background:#e9fada url(/images/icons/accept.png) no-repeat scroll 15px 50%;
+    border-color: #90b975;
+    color: #005500;
+}
+
+.error {
+    background: #fff0f0 url(/images/icons/error.png) no-repeat scroll 15px 50%;
+    border-color: #f08888;
+    color:#770000;
+}
+.notice{
+    background: #e8e8F8 url(/images/icons/info.png) no-repeat scroll 15px 50%;
+    border-color: #8888F0;
+    color:#030340;
+}
+.warn{
+    background: #FFfae5 url(/images/icons/warn.png) no-repeat scroll 15px 50%;
+    border-color: #ff7800;
+    color:#b24a00;
+}
+.header {
+    border-bottom: 1px solid #006666;
+}
+.menu a,.menu a:hover{
+    color: #fff;
+}
+.menu ul {
+    list-style: none;
+    padding: 0px;
+    margin: 0px;
+}
+.menu ul li{
+    display: inline-block;
+    padding: 3px 10px;
+    margin: 0px 6px 0px 0px;
+    background-color: #006666;
+}
+form th{
+    text-align: left;
+    font-weight: normal;
+}
+label.required{
+    font-weight: bold;
 }

@@ -12,8 +12,12 @@
 {control header}
 
 <body>
+    <div class="header">
         <h1>{$control['header']->getTitle()}</h1>
-        {control navigation}
+        <div class="menu">
+            {control navigation}
+        </div>
+    </div>
 	{foreach $flashes as $flash}<div class="flash {$flash->type}">{$flash->message}</div>{/foreach}
 
 	{include #content}
