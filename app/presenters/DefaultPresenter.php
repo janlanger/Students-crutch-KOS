@@ -34,17 +34,18 @@ class DefaultPresenter extends BasePresenter
 	}
 
         public function actionDownload() {
-            
+            $this['header']->addTitle('Stažení XML');
         }
 
         public function createComponentDownloadForm() {
             $form=new NAppForm($this,'downloadForm');
             $form->addText('url','URL souboru')
-                    ->setRequired();
-            $form->addText('login','Fakultní login')->setRequired();
-            $form->addPassword('password','Heslo pro service.felk.cvut.cz')->setRequired();
-            $form->addSubmit('Odeslat');
-
+                    ->setType('url')
+                    ->setRequired('URL musí být vyplněno.');
+            $form->addText('login','Fakultní login')->setRequired('Login musí být vyplněn.');
+            $form->addPassword('password','Heslo pro service.felk.cvut.cz')->setRequired('Heslo musí být vyplněno.');
+            $form->addSubmit('check','Zkontrolovat novou verzi');
+            $form->addSubmit('download','Stáhnout');
             $form->setDefaults(array(
                 'url'=>'https://service.felk.cvut.cz/kos/data/rz.xml'
             ));
