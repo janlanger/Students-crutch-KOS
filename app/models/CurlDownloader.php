@@ -64,7 +64,7 @@ class XMLDownloader extends NComponent {
                 $curl->setOption('HTTPAUTH', CURLAUTH_BASIC);
                 $curl->setOption('USERPWD', $this->login . ":" . $this->password);
             }
-            $curl->setDownloadFolder($localRepo);
+            $curl->setDownloadFolder($this->localRepository);
 
             $odpoved = $curl->download($filename);
 
@@ -73,8 +73,8 @@ class XMLDownloader extends NComponent {
 
             if ($odpoved->getHeader('Status-Code') == 200) { //OK - Modified
                 return array(
-                    'file' => realpath($localRepo . '/' . $filename),
-                    'size' => filesize($localRepo . '/' . $filename),
+                    'file' => realpath($this->localRepository . '/' . $filename),
+                    'size' => filesize($this->localRepository . '/' . $filename),
                     'time' => NDebug::timer('download'));
             } else {
                 throw new IOException('Neočekávaná odpověď serveru. (' . $odpoved->getHeader('Status') . ')');
