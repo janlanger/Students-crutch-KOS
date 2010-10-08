@@ -10,7 +10,7 @@
  *
  * @author Honza
  */
-class XMLDownloader extends NComponent {
+class CurlDownloader extends NComponent implements IDownloader {
 
     private $url;
     private $login;
@@ -18,8 +18,6 @@ class XMLDownloader extends NComponent {
 
     private $localRepository;
 
-    const NOT_MODIFIED=304;
-    const MODIFIED=200;
 
     public function checkForNewer() {
         $last_mod = $this->getLatestChangeInLocalRepo();
