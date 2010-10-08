@@ -6,17 +6,8 @@
  * @license MIT
  */
 
-namespace Panel;
 
-use Nette\Debug;
-use Nette\Environment;
-use Nette\IDebugPanel;
-use Nette\Object;
-use Nette\Reflection\AnnotationsParser;
-use Nette\Templates;
-use Nette\Templates\Template;
-
-class PresenterTreePanel extends Object implements IDebugPanel
+class PresenterTreePanel extends NObject implements IDebugPanel
 {
 	/**
 	 *
@@ -29,7 +20,7 @@ class PresenterTreePanel extends Object implements IDebugPanel
 	public function __construct()
 	{
 		if (self::MODULES_DISABLED !== TRUE) {
-			throw new \NotImplementedException();
+			throw new NotImplementedException();
 		}
 	}
 
@@ -53,7 +44,7 @@ class PresenterTreePanel extends Object implements IDebugPanel
 	function getPanel()
 	{
 		ob_start();
-		$template = new Templates\FileTemplate(dirname(__FILE__) . '/bar.presentertree.panel.phtml');
+		$template = new NFileTemplate(dirname(__FILE__) . '/bar.presentertree.panel.phtml');
 		$template->tree = $this->generate();
 		$template->render();
 		return $cache['output'] = ob_get_clean();
@@ -77,7 +68,7 @@ class PresenterTreePanel extends Object implements IDebugPanel
 	 */
 	static function register()
 	{
-		Debug::addPanel(new self);
+		NDebug::addPanel(new self);
 	}
 
 
@@ -90,14 +81,14 @@ class PresenterTreePanel extends Object implements IDebugPanel
 	{
 		$links = array();
 
-		$iterator = new \RegexIterator(new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(APP_DIR)), '/Presenter\.(php|PHP)$/m', \RecursiveRegexIterator::GET_MATCH);
+		$iterator = new RegexIterator(new RecursiveIteratorIterator(new RecursiveDirectoryIterator(APP_DIR)), '/Presenter\.(php|PHP)$/m', RecursiveRegexIterator::GET_MATCH);
 		foreach ($iterator as $path => $match) {
 			$fileinfo = pathinfo($path);
 			$classname = $this->getClassNameFromPath($path);
 			if ($classname === FALSE) {
 				continue;
 			}
-			$reflection = new \ReflectionClass($classname);
+			$reflection = new ReflectionClass($classname);
 			if ($reflection->isInstantiable()) {
 				$modules = $this->getModulesFromName($reflection->name);
 				$link = ':';
@@ -110,7 +101,7 @@ class PresenterTreePanel extends Object implements IDebugPanel
 
 				$persistent = array();
 				foreach ($reflection->getProperties() as $property) {
-					foreach (AnnotationsParser::getAll($property) as $annotation => $value) {
+					foreach (NAnnotationsParser::getAll($property) as $annotation => $value) {
 						if ($annotation == 'persistent') {
 							$persistent[] = $property;
 						}
@@ -150,8 +141,8 @@ class PresenterTreePanel extends Object implements IDebugPanel
 				foreach ($actions as $action => $info) {
 					$label = $link . ':' . $action;
 
-					if (Environment::getApplication()->getPresenter() instanceof Presenter) {
-						$links[$label]['link'] = Environment::getApplication()->getPresenter()->link($label);
+					if (NEnvironment::getApplication()->getPresenter() instanceof NPresenter) {
+						$links[$label]['link'] = NEnvironment::getApplication()->getPresenter()->link($label);
 					} else {
 						$links[$label]['link'] = 'false';
 					}
