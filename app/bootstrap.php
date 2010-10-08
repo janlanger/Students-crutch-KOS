@@ -39,7 +39,7 @@ $application = NEnvironment::getApplication();
 $application->errorPresenter = 'Error';
 //$application->catchExceptions = TRUE;
 
-
+PresenterTreePanel::register();
 
 // Step 4: Setup application router
 $router = $application->getRouter();
