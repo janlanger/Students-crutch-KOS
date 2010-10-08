@@ -9,11 +9,11 @@
  *
  * @author Honza
  */
-class XML2SQLParser {
+class XMLImporter extends NControl {
     private $filename;
     private $rootNode=null;
     private $dom;
-    public function __construct($filename) {
+    public function construct($filename) {
        $this->filename=$filename;
         $this->dom=new DOMDocument();
         $this->dom->load($this->filename);
