@@ -1,0 +1,22 @@
+
+{block content}
+<h2>{$control['header']->getTitle(1)}</h2>
+
+{control fileChooseForm 'begin'}
+{control fileChooseForm 'error'}
+
+
+<b>Vyberte soubor k importu:</b><br />
+{foreach $files as $file}
+    {!$control['fileChooseForm']['choice']->getControl('rz-2010-09-20.xml')}
+<em><b>{$file['filename']}</b>, ({$file['size']|bytes}, staženo {$file['create_time']|date:"d.n.Y H:i:s"})
+{if $file->hasBeenImported()}
+    , importován do databáze <b>{$file['database_name']}</b> dne {=strtotime($file['import_time'])|date:"d.n.Y H:i:s"}
+{/if}
+</em><br />
+{/foreach}
+
+{$control['fileChooseForm']['send']->control}
+
+
+{control fileChooseForm 'end'}

@@ -25,7 +25,7 @@ abstract class BasePresenter extends NPresenter
                 ->setTitleSeparator(' | ');
 
         $header->addCss('/css/screen.css');
-        $header->addJs('http://code.jquery.com/jquery-1.4.2.min.js');
+        $header->addJs('/js/jquery-1.4.2.min.js');
         $header->addJs('/js/netteForms.js');
         return $header;
     }
@@ -34,7 +34,7 @@ abstract class BasePresenter extends NPresenter
         $nav=new Navigation();
         $nav->setupHomepage('Domů', $this->link('Default:'));
         $nav->add('Stažení XML', $this->link('Default:download'));
-        $nav->add('Import', $this->link('Default:import'));
+        $nav->add('Import', $this->link('Import:'));
         return $nav;
     }
 }

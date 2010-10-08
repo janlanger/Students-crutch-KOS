@@ -15,6 +15,10 @@
  */
 class DefaultPresenter extends BasePresenter {
 
+    public function actionImport() {
+        $this['header']->addTitle('Import');
+    }
+
     public function actionAnalyze() {
         NDebug::timer();
         //echo round(memory_get_usage()/1024,2)."kB<br />";
@@ -66,7 +70,7 @@ class DefaultPresenter extends BasePresenter {
                     ->setLocalRepository($values['localPath']);
 
             if ($values['check'] == TRUE) {
-                if ($downloader->checkForNewer($values['localPath']) == $downloader::NOT_MODIFIED) {
+                if ($downloader->checkForNewer($values['localPath']) == IDownloader::NOT_MODIFIED) {
                     $this->flashMessage('V úložišti není k dispozici žádný novější soubor.');
                     return;
                 }
@@ -81,7 +85,11 @@ class DefaultPresenter extends BasePresenter {
     }
 
     protected function createComponentDownloader() {
-        return new XMLDownloader($this, 'downloader');
+        return $this->getApplication()->getContext()->getService('IDownloader');
+    }
+
+    protected function createComponentImporter() {
+        return $this->getApplication()->getContext()->getService('IImporter');
     }
 
 }
