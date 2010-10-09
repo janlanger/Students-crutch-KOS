@@ -9,8 +9,8 @@
  *
  * @author Honza
  */
-class X2S_DataColumn {
-    public $name;
+class XMLi_Column extends NObject {
+    private $name;
     private $type=null;
     private $length=0;
     
@@ -49,6 +49,12 @@ class X2S_DataColumn {
     public function getType() {
         return $this->type;
     }
+
+    public function getName() {
+        return $this->name;
+    }
+
+
 
 
 
