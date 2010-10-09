@@ -7,15 +7,18 @@
 
 /**
  * Description of X2S_DataTable
- *
+ * @property-read array $indexes
+ * @property-read array $columns
+ * @property-read array $primaryKeys
  * @author Honza
  */
-class X2S_DataTable {
+class XMLi_Entity extends NObject {
 
-    public $name = NULL;
+    private $name = NULL;
     private $columns = array();
     private $rows=array();
-    private $tableIndexes=array();
+    private $indexes=array();
+    private $foreignKeys=null;
 
     public function __construct() {
     }
@@ -41,7 +44,7 @@ class X2S_DataTable {
     }
     
     public static function parseRootNode(DOMNode $node) {
-        $cache=  NEnvironment::getCache('xml_structure-'.basename($node->ownerDocument->documentURI));
+        $cache= NEnvironment::getCache('xml-structure-'.basename($node->ownerDocument->documentURI));
         if(isset($cache[$node->nodeName])) {
             return $cache[$node->nodeName];
         }
@@ -49,11 +52,11 @@ class X2S_DataTable {
         $_this->name=$node->nodeName;
         if($node->hasAttributes()) {
             for($i=0,$attrs=$node->attributes; $i<$attrs->length; $i++) {
-                $_this->columns[$attrs->item($i)->name]=new X2S_DataColumn($attrs->item($i)->name, "varchar(255)");
+                $_this->columns[$attrs->item($i)->name]=new XMLi_Column($attrs->item($i)->name, "varchar(255)");
                 $_this->rows[0][$attrs->item($i)->name]=$attrs->item($i)->value;
             }
         }
-        $_this->columns['import_time']=new X2S_DataColumn('import_time', "datetime");
+        $_this->columns['import_time']=new XMLi_Column('import_time', "datetime");
         $_this->rows[0]['import_time']=date("Y-m-d H:i:s");
 
         $cache->save($node->nodeName, $_this, array(
@@ -93,10 +96,10 @@ class X2S_DataTable {
                 for ($i = 0; $i < $attrs->length; $i++) {
                     $attribute = $attrs->item($i);
                     $attributeName=str_replace(".", "_", $attribute->name);
-                    $this->rows[$row][$attributeName]=($attribute->value);
+                    //$this->rows[$row][$attributeName]=($attribute->value);
                     
                     if (!isset($this->columns[$attributeName])) {
-                        $this->columns[$attributeName] = new X2S_DataColumn($attributeName);
+                        $this->columns[$attributeName] = new XMLi_Column($attributeName);
                     }
                     $this->columns[$attributeName]->detectType($attribute->value);
                     
@@ -105,8 +108,8 @@ class X2S_DataTable {
                     } else {
                         $this->columns[$attributeName]->type = 'varchar(255)';
                     }*/
-                    if(NString::endsWith($attributeName, "_id") && !in_array($attributeName, $this->tableIndexes)) {
-                        $this->tableIndexes[]=$attributeName;
+                    if(NString::endsWith($attributeName, "_id") && !in_array($attributeName, $this->indexes)) {
+                        $this->indexes[]=$attributeName;
                     }
                     
 
@@ -117,9 +120,9 @@ class X2S_DataTable {
                     if($node->nodeType!=XML_ELEMENT_NODE) {
                         continue;
                     }
-                    $this->rows[$row][$node->nodeName]=NString::trim($node->nodeValue);
+                    //$this->rows[$row][$node->nodeName]=NString::trim($node->nodeValue);
                     if (!in_array($node->nodeName, $this->columns))
-                        $this->columns[$node->nodeName] = new X2S_DataColumn($node->nodeName,'text');
+                        $this->columns[$node->nodeName] = new XMLi_Column($node->nodeName,'text');
                 }
             }
             $row++;
@@ -172,26 +175,53 @@ class X2S_DataTable {
         
     }
 
-    private function getPrimaryKey() {
+    public function getPrimaryKeys() {
         if(isset($this->columns['id']) && isset($this->columns['sem_id']) && !isset($this->columns['predmet_id'])) {
             //vyjimka pro tabulku predmety
-            return "[id],[sem_id]";
+            return array('id','sem_id');
         }
         if(isset($this->columns['id']) && isset($this->columns['stud_id']) ) {
             //vyjimka pro tabulku studenti
-            return "[id],[stud_id]";
+            return array('id','stud_id');
         }
         elseif(isset($this->columns['id'])) {
-            return "[id]";
+            return array('id');
         }
+        //TODO
+        /*elseif(count($this->columns)==count($this->indexes)) {
+            $primary=$this->indexes;
+            $this->indexes=array();
+            return $primary;
+        }*/
+        return array();
     }
 
-    private function getTableIndexes() {
+    public function getIndexes() {
+        return $this->indexes;
+    }
+
+    /*private function getTableIndexes() {
         foreach ($this->tableIndexes as $key=>$index) {
             $this->tableIndexes[$key]="INDEX ([".$index."])";
         }
         return implode(", ",  $this->tableIndexes);
+    }*/
+
+    public function getName() {
+        return strtolower($this->name);
     }
+
+    public function getColumns() {
+        return $this->columns;
+    }
+
+    public function getForeignKeys() {
+        return $this->foreignKeys;
+    }
+
+
+
+
 }
 
 ?>

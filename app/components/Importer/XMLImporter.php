@@ -8,19 +8,42 @@
  * Description of XML2SQL
  *
  * @author Honza
+ * @property-read array $tables
  */
 class XMLImporter extends NControl {
-    private $filename;
     private $rootNode=null;
-    private $dom;
-    public function construct($filename) {
-       $this->filename=$filename;
-        $this->dom=new DOMDocument();
-        $this->dom->load($this->filename);
-        $this->dom->preserveWhitespace=false;
-        $this->rootNode=$this->dom->documentElement;
+    private $dom=NULL;
+    private $tables;
+    private $file;
+
+    
+    public function setFile($filename) {
+        $this->file=realpath(NEnvironment::getConfig('xml')->localRepository.'/'.$filename);
+        if(!file_exists($this->file)) {
+            throw new FileNotFoundException('File "'.$this->file.'" was not found.');
+        }
     }
-    //prilis pametove narocne :-(
+
+    private function loadFile() {
+        if($this->dom==NULL && $this->file!="") {
+            $this->dom=new DOMDocument();
+            $this->dom->preserveWhiteSpace=FALSE;
+            $this->dom->load($this->file,LIBXML_NOEMPTYTAG | LIBXML_COMPACT);
+        }
+    }
+
+    public function analyzeStructure() {
+        $this->loadFile();
+        
+        foreach($this->dom->documentElement->childNodes as $node) {
+
+            if($node->nodeType==XML_ELEMENT_NODE) {
+                $this->tables[]=XMLi_Entity::parseNode($node);
+            }
+        }
+        $this->presenter->template->tables=$this->tables;
+    }
+    
     /*public function analyze() {
         $cache=NEnvironment::getCache('xml_structure');
         if(isset($cache['data'])) {
@@ -54,22 +77,24 @@ class XMLImporter extends NControl {
         foreach($this->rootNode->childNodes as $node) {
             
             if($node->nodeType==XML_ELEMENT_NODE) {
-                echo 'NODE: '.$node->nodeName.'<br />';
-                $time=microtime(true);
+                
                 $table=X2S_DataTable::parseNode($node);
-                echo 'Parse - '.round(microtime(true)-$time,4).'<br />';
-                $total+=microtime(true)-$time;
-                $time=microtime(true);
+                
                 $table->createTable();
-                echo 'Create - '.round(microtime(true)-$time,4).'<br />';
-                $total+=microtime(true)-$time;
-                echo '<br /><br />';
+                
             }           
         }
 
-        echo 'Total:'.$total;
-
-        
+        echo 'Total:'.$total;   
     }
+
+    public function getTables() {
+        if($this->tables==null) {
+            $this->analyzeStructure();
+        }
+        return $this->tables;
+    }
+
+
 }
 ?>

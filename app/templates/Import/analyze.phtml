@@ -1,2 +1,82 @@
+{**
+ * @param int $var
+ *}
+
+{extends '../@layout.phtml'}
 
 {block content}
+
+
+<h2>{$control['header']->getTitle(1)}</h2>
+<div  {if !$generateForeignForm}width="100%"{else}style="width:40%; float:left;"{/if}>
+{foreach $tables as $table}
+{continueIf !count($table->columns)}
+<h3>Tabulka {$table->name}</h3>
+
+<table cellspacing="0" border="1">
+    <tr>
+        <th width="20%">Sloupce</th>
+        <th width="20%">Indexy</th>
+        <th width="60%" n:if="count($table->foreignKeys)">Cizí klíče</th>
+    </tr>
+    <tr>
+
+        <td>
+           <ul n:inner-foreach="$table->columns as $col_name=>$column">
+                <li>{$column->name} ({$column->type})</li>
+            </ul>
+        </td>
+        <td>
+            <b>Primární index:</b>
+            <ul>
+                {if count($table->primaryKeys)}
+                <li n:foreach="$table->primaryKeys as $index">{$index}</li>
+                {else}
+                <li>tabulka nemá primární klíč</li>
+                {/if *}
+                
+            </ul>
+            <b>Indexy:</b>
+            <ul>
+                {if count($table->indexes)}
+                <li n:foreach="$table->indexes as $index">{$index}</li>
+                {else}
+                <li>tabulka nemá další indexy</li>
+                {/if *}
+
+            </ul>
+
+        </td>
+
+        <td n:if="count($table->foreignKeys)">
+            {* control foreignKeyForm $table->name *}
+        </td>
+    </tr>
+</table>
+
+{/foreach}
+        &nbsp;
+</div>
+<div n:if="$generateForeignForm" style="float: right; width:50%">
+    <h3>Definice cizích klíčů</h3>
+    {control foreignKeysForm 'begin'}
+    {control foreignKeysForm 'errors'}
+    {var $form = $control['foreignKeysForm']}
+
+    Jako "vlastníka" vybírejte vždy tabulku, která obsahuje sloupec s cizím klíčem (např. kat_id), jako obraz pak odpovídající klíč ve drhé tabulce (např. katedra.id).
+    <table>
+        <tr>
+            <th>Vlastník (owning side)</th>
+            <th>Obraz (inverse side)</th>
+            <th>{$form['addRow']->control}</th>
+        </tr>
+        <tr n:for="$i=1;$i<=$form['items']->getValue();$i++">
+            <td>{$form['owner'.$i]->control}</td>
+            <td>{$form['inverse'.$i]->control}</td>
+            <td>&nbsp;</td>
+        </tr>
+
+    </table>
+    {$form['send']->control}
+    {control foreignKeysForm 'end'}
+</div>
