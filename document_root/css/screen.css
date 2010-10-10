@@ -44,6 +44,7 @@ a[href^="error:"] {
     width:50%;
 }
 
+
 .flash.success{
     background:#e9fada url(/images/icons/accept.png) no-repeat scroll 15px 50%;
     border-color: #90b975;
@@ -84,7 +85,7 @@ a[href^="error:"] {
 }
 form th{
     text-align: left;
-    font-weight: normal;
+    
 }
 label.required{
     font-weight: bold;

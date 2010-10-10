@@ -18,19 +18,7 @@ class DefaultPresenter extends BasePresenter {
     public function actionImport() {
         $this['header']->addTitle('Import');
     }
-
-    public function actionAnalyze() {
-        NDebug::timer();
-        //echo round(memory_get_usage()/1024,2)."kB<br />";
-        $xmlControl = new XML2SQLParser(WWW_DIR . '/xml/rz-2010-09-20.xml');
-        $xmlControl->buildDatabase("rozvrh-01");
-        $this->template->result = 'Import dokončen - ' . NDebug::timer() . 'sec';
-        //$xmlControl=new XML2SQLParser(WWW_DIR.'/xml/rz-2010-06-17.xml');
-        //$xmlControl->buildDatabase("rozvrh-02");
-        /* $xmlControl=new XML2SQLParser(WWW_DIR.'/xml/rz-2010-09-20.xml');
-          $xmlControl->buildDatabase("rozvrh-01"); */
-    }
-
+    
     public function actionDownload() {
         $this['header']->addTitle('Stažení XML');
     }
@@ -43,9 +31,7 @@ class DefaultPresenter extends BasePresenter {
                 ->getControlPrototype()->class[]='long';
         $form->addText('login', 'Fakultní login');
         $form->addPassword('password', 'Heslo');
-        $form->addText('localPath', 'Lokální úložiště')
-                ->setRequired('Lokální úložiště musí být vyplněno.')
-                ->getControlPrototype()->class[]='long';
+        
         $form->addCheckbox('check', 'Zkontrolovat nejdříve jestli je k dispozici novější verze.')->setDefaultValue(TRUE);
 
         $form->addSubmit('download', 'Stáhnout')->onClick[] = callback($this, 'downloadFile');
@@ -53,8 +39,7 @@ class DefaultPresenter extends BasePresenter {
         $config = NEnvironment::getConfig('xml');
 
         $form->setDefaults(array(
-            'url' => $config['remoteRepository'],
-            'localPath' => $config['localRepository']
+            'url' => $config['remoteRepository']
         ));
         return $form;
     }
@@ -67,16 +52,16 @@ class DefaultPresenter extends BasePresenter {
             $downloader->setUrl($values['url'])
                     ->setLogin($values['login'])
                     ->setPassword($values['password'])
-                    ->setLocalRepository($values['localPath']);
+                    ->setLocalRepository(NEnvironment::getConfig('xml')->localRepository);
 
             if ($values['check'] == TRUE) {
-                if ($downloader->checkForNewer($values['localPath']) == IDownloader::NOT_MODIFIED) {
+                if ($downloader->checkForNewer() == IDownloader::NOT_MODIFIED) {
                     $this->flashMessage('V úložišti není k dispozici žádný novější soubor.');
                     return;
                 }
             }
             
-            $res = $downloader->download($values['localPath']);
+            $res = $downloader->download();
             $this->flashMessage('Soubor stažen (' . $res['file'] . ', velikost:' . NTemplateHelpers::bytes($res['size']) . ', celkový čas:' . round($res['time'], 2) . ' sec)', 'success');
             $this->redirect('this');
         } catch (IOException $e) {

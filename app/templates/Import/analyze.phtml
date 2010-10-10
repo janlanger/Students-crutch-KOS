@@ -8,24 +8,47 @@
 
 
 <h2>{$control['header']->getTitle(1)}</h2>
-<div  {if !$generateForeignForm}width="100%"{else}style="width:40%; float:left;"{/if}>
+    {control columnDefForm 'begin'}
+{control columnDefForm 'errors'}
+{var $form = $control['columnDefForm']}
+
 {foreach $tables as $table}
 {continueIf !count($table->columns)}
 <h3>Tabulka {$table->name}</h3>
 
-<table cellspacing="0" border="1">
+<table cellspacing="0" border="0" width="100%">
     <tr>
-        <th width="20%">Sloupce</th>
-        <th width="20%">Indexy</th>
-        <th width="60%" n:if="count($table->foreignKeys)">Cizí klíče</th>
+        <th width="30%">Sloupce</th>
+        <th width="60%">Náhled dat</th>
+        
     </tr>
     <tr>
 
         <td>
-           <ul n:inner-foreach="$table->columns as $col_name=>$column">
-                <li>{$column->name} ({$column->type})</li>
-            </ul>
+            <table border="0">
+                <tr><td colspan="3">&nbsp;</td></tr>
+           <tr n:foreach="$table->columns as $col_name=>$column">
+               <td>{$column->name} ({$column->type})</td>
+               <td>{$form[$table->name.'__'.$column->name.'_index']->control}</td>
+               <td>{$form[$table->name.'__'.$column->name.'_foreign']->control}</td>
+               <td></td>
+            </tr>
+            </table>
+        </td> 
+        <td>
+            Celkem {=count($table->rows)} záznamů.
+            {var $rows=array_slice($table->rows,0,4)}
+            {var $keys=array_keys($rows[0])}
+            <table>
+                
+                <tr n:foreach="$keys as $key">
+                    <th>{$key}</th>
+                    <td n:foreach="$rows as $row">{ifset $row[$key]}{$row[$key]|truncate:20}{/if}</td>
+                </tr>
+                
+            </table>
         </td>
+{*
         <td>
             <b>Primární index:</b>
             <ul>
@@ -34,7 +57,7 @@
                 {else}
                 <li>tabulka nemá primární klíč</li>
                 {/if *}
-                
+          {*
             </ul>
             <b>Indexy:</b>
             <ul>
@@ -43,25 +66,29 @@
                 {else}
                 <li>tabulka nemá další indexy</li>
                 {/if *}
-
+{*
             </ul>
 
         </td>
 
         <td n:if="count($table->foreignKeys)">
             {* control foreignKeyForm $table->name *}
-        </td>
+       {* </td>
+        *}
     </tr>
 </table>
 
 {/foreach}
-        &nbsp;
-</div>
+<br />
+<br />
+{$form['db_name']->label}: {$form['db_name']->control}<br />
+<br />
+{$form['send']->control}
+{control columnDefForm 'end'}
+{*
 <div n:if="$generateForeignForm" style="float: right; width:50%">
     <h3>Definice cizích klíčů</h3>
-    {control foreignKeysForm 'begin'}
-    {control foreignKeysForm 'errors'}
-    {var $form = $control['foreignKeysForm']}
+    
 
     Jako "vlastníka" vybírejte vždy tabulku, která obsahuje sloupec s cizím klíčem (např. kat_id), jako obraz pak odpovídající klíč ve drhé tabulce (např. katedra.id).
     <table>
@@ -80,3 +107,4 @@
     {$form['send']->control}
     {control foreignKeysForm 'end'}
 </div>
+*}

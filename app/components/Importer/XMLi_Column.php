@@ -31,7 +31,7 @@ class XMLi_Column extends NObject {
         if(ctype_digit($value)) {
             if($this->type!='bigint') {
                 if($value < 2147483647) { //mysql int limit
-                    $this->type='int';
+                    $this->type='bigint';
                 }
                 else {
                     $this->type='bigint';
