@@ -25,7 +25,7 @@ final class NFramework
 
 	const VERSION = '2.0-dev';
 
-	const REVISION = 'ecc11df released on 2010-09-30';
+	const REVISION = 'bf28179 released on 2010-10-08';
 	/**#@-*/
 
 
@@ -50,4 +50,15 @@ final class NFramework
 			'src="http://files.nette.org/icons/nette-powered.gif" alt="Powered by Nette Framework" width="80" height="15" /></a>';
 	}
 
+}
+
+class NClosureFix
+{
+	static $vars = array();
+
+	static function uses($args)
+	{
+		self::$vars[] = $args;
+		return count(self::$vars)-1;
+	}
 }

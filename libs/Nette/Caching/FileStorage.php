@@ -163,7 +163,7 @@ class NFileStorage extends NObject implements ICacheStorage
 			self::META_TIME => microtime(),
 		);
 
-		if (!empty($dp[NCache::EXPIRE])) {
+		if (isset($dp[NCache::EXPIRE])) {
 			if (empty($dp[NCache::SLIDING])) {
 				$meta[self::META_EXPIRE] = $dp[NCache::EXPIRE] + time(); // absolute time
 			} else {
@@ -171,7 +171,7 @@ class NFileStorage extends NObject implements ICacheStorage
 			}
 		}
 
-		if (!empty($dp[NCache::ITEMS])) {
+		if (isset($dp[NCache::ITEMS])) {
 			foreach ((array) $dp[NCache::ITEMS] as $item) {
 				$depFile = $this->getCacheFile($item);
 				$m = $this->readMeta($depFile, LOCK_SH);
@@ -180,7 +180,7 @@ class NFileStorage extends NObject implements ICacheStorage
 			}
 		}
 
-		if (!empty($dp[NCache::CALLBACKS])) {
+		if (isset($dp[NCache::CALLBACKS])) {
 			$meta[self::META_CALLBACKS] = $dp[NCache::CALLBACKS];
 		}
 
@@ -199,7 +199,7 @@ class NFileStorage extends NObject implements ICacheStorage
 			}
 		}
 
-		if (!empty($dp[NCache::TAGS]) || isset($dp[NCache::PRIORITY])) {
+		if (isset($dp[NCache::TAGS]) || isset($dp[NCache::PRIORITY])) {
 			if (!$this->context) {
 				throw new InvalidStateException('CacheJournal has not been provided.');
 			}
@@ -267,7 +267,7 @@ class NFileStorage extends NObject implements ICacheStorage
 		// cleaning using file iterator
 		if ($all || $collector) {
 			$now = time();
-			foreach (NFinder::find('/c*', '/c*/*')->from($this->dir)->limitDepth(1)->childFirst() as $entry) {
+			foreach (NFinder::find('*')->from($this->dir)->childFirst() as $entry) {
 				$path = (string) $entry;
 				if ($entry->isDir()) { // collector: remove empty dirs
 					@rmdir($path); // @ - removing dirs is not necessary
@@ -365,9 +365,9 @@ class NFileStorage extends NObject implements ICacheStorage
 	{
 		if ($this->useDirs) {
 			$key = explode(NCache::NAMESPACE_SEPARATOR, $key, 2);
-			return $this->dir . '/c' . (isset($key[1]) ? '-' . urlencode($key[0]) . '/_' . urlencode($key[1]) : '_' . urlencode($key[0]));
+			return $this->dir . '/' . (isset($key[1]) ? urlencode($key[0]) . '/_' . urlencode($key[1]) : '_' . urlencode($key[0]));
 		} else {
-			return $this->dir . '/c_' . urlencode($key);
+			return $this->dir . '/_' . urlencode($key);
 		}
 	}
 

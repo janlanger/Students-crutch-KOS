@@ -24,7 +24,7 @@ class NSimpleAuthenticator extends NObject implements IAuthenticator
 
 
 	/**
-	 * @param  array  list of usernames and passwords
+	 * @param  array  list of pairs username => password
 	 */
 	public function __construct(array $userlist)
 	{
@@ -42,18 +42,16 @@ class NSimpleAuthenticator extends NObject implements IAuthenticator
 	 */
 	public function authenticate(array $credentials)
 	{
-		$username = $credentials[self::USERNAME];
+		list($username, $password) = $credentials;
 		foreach ($this->userlist as $name => $pass) {
-			if (strcasecmp($name, $credentials[self::USERNAME]) === 0) {
-				if (strcasecmp($pass, $credentials[self::PASSWORD]) === 0) {
-					// matched!
+			if (strcasecmp($name, $username) === 0) {
+				if ($pass === $password) {
 					return new NIdentity($name);
+				} else {
+					throw new NAuthenticationException("Invalid password.", self::INVALID_CREDENTIAL);
 				}
-
-				throw new NAuthenticationException("Invalid password.", self::INVALID_CREDENTIAL);
 			}
 		}
-
 		throw new NAuthenticationException("User '$username' not found.", self::IDENTITY_NOT_FOUND);
 	}
 

@@ -113,13 +113,13 @@ class NCache extends NObject implements ArrayAccess
 	public function save($key, $data, array $dp = NULL)
 	{
 		if (!is_string($key) && !is_int($key)) {
-			throw new InvalidArgumentException("Cache key name must be string or integer, " . gettype($key) ." given.");
+			throw new InvalidArgumentException("Cache key name must be string or integer, " . gettype($key) . " given.");
 		}
 		$this->key = (string) $key;
 		$key = $this->namespace . self::NAMESPACE_SEPARATOR . $key;
 
 		// convert expire into relative amount of seconds
-		if (!empty($dp[NCache::EXPIRE])) {
+		if (isset($dp[NCache::EXPIRE])) {
 			$dp[NCache::EXPIRE] = NTools::createDateTime($dp[NCache::EXPIRE])->format('U') - time();
 		}
 
@@ -215,7 +215,7 @@ class NCache extends NObject implements ArrayAccess
 	public function offsetGet($key)
 	{
 		if (!is_string($key) && !is_int($key)) {
-			throw new InvalidArgumentException("Cache key name must be string or integer, " . gettype($key) ." given.");
+			throw new InvalidArgumentException("Cache key name must be string or integer, " . gettype($key) . " given.");
 		}
 
 		$key = (string) $key;

@@ -86,7 +86,7 @@ class NNetteLoader extends NAutoLoader
 		'ncheckbox' => '/Forms/Controls/Checkbox.php',
 		'nclassreflection' => '/Reflection/ClassReflection.php',
 		'nclirouter' => '/Application/Routers/CliRouter.php',
-		'nclosurefix' => '/loader.php',
+		'nclosurefix' => '/Utils/Framework.php',
 		'ncomponent' => '/ComponentModel/Component.php',
 		'ncomponentcontainer' => '/ComponentModel/ComponentContainer.php',
 		'nconfig' => '/Config/Config.php',

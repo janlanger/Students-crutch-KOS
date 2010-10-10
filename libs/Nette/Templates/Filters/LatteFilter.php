@@ -286,7 +286,7 @@ class NLatteFilter extends NObject
 
 		} else { // HTML attribute
 			$name = $matches['attr'];
-			$value = empty($matches['value']) ? TRUE : $matches['value'];
+			$value = isset($matches['value']) ? $matches['value'] : '';
 
 			// special attribute?
 			if ($isSpecial = NString::startsWith($name, self::HTML_PREFIX)) {

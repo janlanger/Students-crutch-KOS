@@ -846,9 +846,6 @@ final class NDebug
 		if (isset($args[0]) && is_string($args[0])) {
 			$item['template'] = array_shift($args);
 		}
-		if (isset($args[0]) && in_array($args[0], array(self::DEBUG, self::INFO, self::WARNING, self::ERROR, self::CRITICAL), TRUE)) {
-			$item['level'] = array_shift($args);
-		}
 
 		if (isset($args[0]) && $args[0] instanceof Exception) {
 			$e = array_shift($args);
@@ -880,6 +877,11 @@ final class NDebug
 				unset($trace[0]);
 			}
 		}
+
+		if (isset($args[0]) && in_array($args[0], array(self::DEBUG, self::INFO, self::WARNING, self::ERROR, self::CRITICAL), TRUE)) {
+			$item['level'] = array_shift($args);
+		}
+		
 		$item['args'] = $args;
 
 		foreach ($trace as $frame) {

@@ -116,6 +116,30 @@ class NImage extends NObject
 
 
 	/**
+	 * Get format from the image stream in the string.
+	 * @param  string
+	 * @return mixed  detected image format
+	 */
+	public static function getFormatFromString($s)
+	{
+		if (strncmp($s, "\xff\xd8", 2) === 0) {
+			return self::JPEG;
+		}
+
+		if (strncmp($s, "\x89PNG", 4) === 0) {
+			return self::PNG;
+		}
+
+		if (strncmp($s, "GIF", 3) === 0) {
+			return self::GIF;
+		}
+
+		return NULL;
+	}
+
+
+
+	/**
 	 * Create a new image from the image stream in the string.
 	 * @param  string
 	 * @param  mixed  detected image format
@@ -127,18 +151,8 @@ class NImage extends NObject
 			throw new Exception("PHP extension GD is not loaded.");
 		}
 
-		if (strncmp($s, "\xff\xd8", 2) === 0) {
-			$format = self::JPEG;
+		$format = self::getFormatFromString($s);
 
-		} elseif (strncmp($s, "\x89PNG", 4) === 0) {
-			$format = self::PNG;
-
-		} elseif (strncmp($s, "GIF", 3) === 0) {
-			$format = self::GIF;
-
-		} else {
-			$format = NULL;
-		}
 		return new self(imagecreatefromstring($s));
 	}
 

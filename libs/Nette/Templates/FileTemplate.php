@@ -20,7 +20,7 @@
 class NFileTemplate extends NTemplate implements IFileTemplate
 {
 	/** @var int */
-	public static $cacheExpire = FALSE;
+	public static $cacheExpire = NULL;
 
 	/** @var ICacheStorage */
 	private static $cacheStorage;
@@ -109,6 +109,7 @@ class NFileTemplate extends NTemplate implements IFileTemplate
 				array(
 					NCache::FILES => $this->file,
 					NCache::EXPIRE => self::$cacheExpire,
+					NCache::CONSTS => 'NFramework::REVISION',
 				)
 			);
 			$cache->release();

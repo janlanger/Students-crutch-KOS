@@ -15,10 +15,12 @@
 /**
  * NFinder allows searching through directory trees using iterator.
  *
- * Example: NFinder::findFiles('*.php')
+ * <code>
+ * NFinder::findFiles('*.php')
  *     ->size('> 10kB')
  *     ->from('.')
  *     ->exclude('temp');
+ * </code>
  *
  * @author     David Grudl
  */

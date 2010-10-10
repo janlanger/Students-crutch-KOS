@@ -107,7 +107,7 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 	 */
 	public function write($key, $data, array $dp)
 	{
-		if (!empty($dp[NCache::ITEMS])) {
+		if (isset($dp[NCache::ITEMS])) {
 			throw new NotSupportedException('Dependent items are not supported by MemcachedStorage.');
 		}
 
@@ -116,18 +116,18 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 		);
 
 		$expire = 0;
-		if (!empty($dp[NCache::EXPIRE])) {
+		if (isset($dp[NCache::EXPIRE])) {
 			$expire = (int) $dp[NCache::EXPIRE];
 			if (!empty($dp[NCache::SLIDING])) {
 				$meta[self::META_DELTA] = $expire; // sliding time
 			}
 		}
 
-		if (!empty($dp[NCache::CALLBACKS])) {
+		if (isset($dp[NCache::CALLBACKS])) {
 			$meta[self::META_CALLBACKS] = $dp[NCache::CALLBACKS];
 		}
 
-		if (!empty($dp[NCache::TAGS]) || isset($dp[NCache::PRIORITY])) {
+		if (isset($dp[NCache::TAGS]) || isset($dp[NCache::PRIORITY])) {
 			if (!$this->context) {
 				throw new InvalidStateException('CacheJournal has not been provided.');
 			}

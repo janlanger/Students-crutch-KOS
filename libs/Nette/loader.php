@@ -53,14 +53,3 @@ require_once dirname(__FILE__) . '/Loaders/NetteLoader.php';
 
 
 NNetteLoader::getInstance()->register();
-
-class NClosureFix
-{
-	static $vars = array();
-
-	static function uses($args)
-	{
-		self::$vars[] = $args;
-		return count(self::$vars)-1;
-	}
-}

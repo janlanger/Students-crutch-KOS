@@ -15,6 +15,7 @@
 /**
  * File journal.
  *
+ * <pre>
  * fj structure
  *
  *     Header : ( Magic : int32
@@ -39,6 +40,7 @@
  *                   Serialized : N*byte
  *                 )
  *      )
+ * </pre>
  *
  * @author     Jakub Kulhan
  */
