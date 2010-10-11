@@ -61,24 +61,7 @@ class XMLImporter extends NControl {
         return $this->tables;
     }
 
-    /* public function analyze() {
-      $cache=NEnvironment::getCache('xml_structure');
-      if(isset($cache['data'])) {
-      $this->tables=$cache['data'];
-      return;
-      }
-      foreach($this->rootNode->childNodes as $node) {
-
-      if($node->nodeType==XML_ELEMENT_NODE) {
-      $this->tables[]=X2S_DataTable::parseNode($node);
-      }
-      }
-      $cache->save('data', $this->tables,array(
-      'expire'=> time() + 10*3600,
-      'tags' =>array('xml')
-      ));
-      } */
-
+    
     public function buildDatabase($db_name) {
         //dibi::query("DROP DATABASE IF EXISTS [".$db_name."]");
         try {
@@ -132,6 +115,7 @@ class XMLImporter extends NControl {
         foreach (self::$status as $key => $value) {
             $ret.=NHtml::el("li")->setText('"' . $key . '" - ' . round($value['create_time']*1000,4) . 'ms');
         }
+        $ret.=NHtml::el("li")->setText('Celkem provedeno dotazů: ' . dibi::$numOfQueries);
         return NHtml::el("ul")->setHtml($ret);
     }
 

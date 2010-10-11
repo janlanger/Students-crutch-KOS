@@ -152,8 +152,11 @@ class ImportPresenter extends BasePresenter {
 
             $this->flashMessage('Import proběhl úspěšně.'.$importer->getReport(),'success');
             $this->redirect("Import:");
-        } catch (DibiException $e) {
-            $this->flashMessage($e->getMessage().' SQL: '.$e->getSql(),'error');
+        } catch (Exception $e) {
+            $this->flashMessage($e->getMessage(),'error');
+            if($e instanceof DibiException) {
+                $this->flashMessage("SQL: ".$e->getSql(),'error');
+            }
         }
     }
 

@@ -101,3 +101,10 @@ code{
     
     max-width: 300px;
 }
+table.import select {
+    width: 120px;
+}
+table.import td {
+    white-space: nowrap;
+    overflow: hidden;
+}

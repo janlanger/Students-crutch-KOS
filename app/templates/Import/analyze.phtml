@@ -18,63 +18,40 @@
 
 <table cellspacing="0" border="0" width="100%">
     <tr>
-        <th width="30%">Sloupce</th>
+        <th width="490">Sloupce</th>
         <th width="60%">Náhled dat</th>
-        
+
     </tr>
     <tr>
 
         <td>
-            <table border="0">
-                <tr><td colspan="3">&nbsp;</td></tr>
-           <tr n:foreach="$table->columns as $col_name=>$column">
-               <td>{$column->name} ({$column->type})</td>
-               <td>{$form[$table->name.'__'.$column->name.'_index']->control}</td>
-               <td>{$form[$table->name.'__'.$column->name.'_foreign']->control}</td>
-               <td></td>
-            </tr>
+            <table class="import" border="0" width="490">
+                <tr>
+                    <td width="250">&nbsp;</td>
+                    <td width="120">&nbsp;</td>
+                    <td width="120">&nbsp;</td>
+                </tr>
+                <tr n:foreach="$table->columns as $col_name=>$column">
+                    <td>{$column->name} ({$column->type})</td>
+                    <td>{$form[$table->name.'__'.$column->name.'_index']->control}</td>
+                    <td>{$form[$table->name.'__'.$column->name.'_foreign']->control}</td>
+                </tr>
             </table>
         </td> 
         <td>
             Celkem {=count($table->rows)} záznamů.
             {var $rows=array_slice($table->rows,0,4)}
             {var $keys=array_keys($rows[0])}
-            <table>
-                
+            <table class="import" border="0" width="100%">
+
                 <tr n:foreach="$keys as $key">
-                    <th>{$key}</th>
+                    <th width="120">{$key}</th>
                     <td n:foreach="$rows as $row">{ifset $row[$key]}{$row[$key]|truncate:20}{/if}</td>
                 </tr>
-                
+
             </table>
         </td>
-{*
-        <td>
-            <b>Primární index:</b>
-            <ul>
-                {if count($table->primaryKeys)}
-                <li n:foreach="$table->primaryKeys as $index">{$index}</li>
-                {else}
-                <li>tabulka nemá primární klíč</li>
-                {/if *}
-          {*
-            </ul>
-            <b>Indexy:</b>
-            <ul>
-                {if count($table->indexes)}
-                <li n:foreach="$table->indexes as $index">{$index}</li>
-                {else}
-                <li>tabulka nemá další indexy</li>
-                {/if *}
-{*
-            </ul>
 
-        </td>
-
-        <td n:if="count($table->foreignKeys)">
-            {* control foreignKeyForm $table->name *}
-       {* </td>
-        *}
     </tr>
 </table>
 
@@ -83,28 +60,12 @@
 <br />
 {$form['db_name']->label}: {$form['db_name']->control}<br />
 <br />
-{$form['send']->control}
+{$form['send']->control} (Buďte trpělivý, import trvá dlouho)
 {control columnDefForm 'end'}
-{*
-<div n:if="$generateForeignForm" style="float: right; width:50%">
-    <h3>Definice cizích klíčů</h3>
-    
 
-    Jako "vlastníka" vybírejte vždy tabulku, která obsahuje sloupec s cizím klíčem (např. kat_id), jako obraz pak odpovídající klíč ve drhé tabulce (např. katedra.id).
-    <table>
-        <tr>
-            <th>Vlastník (owning side)</th>
-            <th>Obraz (inverse side)</th>
-            <th>{$form['addRow']->control}</th>
-        </tr>
-        <tr n:for="$i=1;$i<=$form['items']->getValue();$i++">
-            <td>{$form['owner'.$i]->control}</td>
-            <td>{$form['inverse'.$i]->control}</td>
-            <td>&nbsp;</td>
-        </tr>
+<script type="text/javascript">
+    $("#"+{$form['send']->getHtmlId()}).click(function() {
+        this.disabled=true;
+    });
 
-    </table>
-    {$form['send']->control}
-    {control foreignKeysForm 'end'}
-</div>
-*}
+</script>
