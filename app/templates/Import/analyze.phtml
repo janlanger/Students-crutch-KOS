@@ -32,6 +32,7 @@
                     <td width="120">&nbsp;</td>
                 </tr>
                 <tr n:foreach="$table->columns as $col_name=>$column">
+                    {continueIf $column->name=='hash'}
                     <td>{$column->name} ({$column->type})</td>
                     <td>{$form[$table->name.'__'.$column->name.'_index']->control}</td>
                     <td>{$form[$table->name.'__'.$column->name.'_foreign']->control}</td>
@@ -45,6 +46,7 @@
             <table class="import" border="0" width="100%">
 
                 <tr n:foreach="$keys as $key">
+                    {continueIf $key=='hash'}
                     <th width="120">{$key}</th>
                     <td n:foreach="$rows as $row">{ifset $row[$key]}{$row[$key]|truncate:20}{/if}</td>
                 </tr>
@@ -64,8 +66,12 @@
 {control columnDefForm 'end'}
 
 <script type="text/javascript">
-    $("#"+{$form['send']->getHtmlId()}).click(function() {
-        this.disabled=true;
+    btn={$form['send']->getHtmlId()};
+    $("#"+btn).click(function() {
+        $(this).disabled=true;
+        setTimeout(function() {
+            $("#"+btn).disabled=false;
+    }, 10000);
     });
 
 </script>

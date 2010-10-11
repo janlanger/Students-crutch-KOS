@@ -75,6 +75,7 @@ class ImportPresenter extends BasePresenter {
         foreach ($tables as $table) {
 
             foreach ($table->columns as $column) {
+                if($column->name=='hash')                    continue;
                 $form->addSelect($table->name . '__' . $column->name . '_index', '',
                                 array("none" => "-------", "primary" => 'PRIMARY', "index" => 'INDEX', "foreign" => 'FOREIGN'))
                         ->skipFirst();
@@ -152,11 +153,12 @@ class ImportPresenter extends BasePresenter {
 
             $this->flashMessage('Import proběhl úspěšně.'.$importer->getReport(),'success');
             $this->redirect("Import:");
-        } catch (Exception $e) {
+        } catch (InvalidStateException $e) {
+            
             $this->flashMessage($e->getMessage(),'error');
-            if($e instanceof DibiException) {
-                $this->flashMessage("SQL: ".$e->getSql(),'error');
-            }
+        } catch (DibiException $e) {
+            $this->flashMessage($e->getMessage(),'error');
+            $this->flashMessage("SQL: ".$e->getSql(),'error');            
         }
     }
 
