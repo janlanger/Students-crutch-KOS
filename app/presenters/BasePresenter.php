@@ -25,8 +25,11 @@ abstract class BasePresenter extends NPresenter
                 ->setTitleSeparator(' | ');
 
         $header->addCss('/css/screen.css');
+        $header->addCss('/css/smoothness/jquery-ui-1.8.5.custom.css');
+        $header->addCss('/css/gridito.css');
         $header->addJs('/js/jquery-1.4.2.min.js');
         $header->addJs('/js/netteForms.js');
+        $header->addJs('/js/gridito.js');
         return $header;
     }
 
@@ -35,6 +38,7 @@ abstract class BasePresenter extends NPresenter
         $nav->setupHomepage('Domů', $this->link('Default:'));
         $nav->add('Stažení XML', $this->link('Default:download'));
         $nav->add('Import', $this->link('Import:'));
+        $nav->add('Log', $this->link('Default:showLog'));
         return $nav;
     }
 }
