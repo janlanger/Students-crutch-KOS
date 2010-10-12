@@ -34,7 +34,7 @@ class CurlDownloader extends NComponent implements IDownloader {
             }
             $odpoved = $curl->head();
 
-            $this->log($curl->getInfo('request_header'), $odpoved->getHeaders());
+            //$this->log($curl->getInfo('request_header'), $odpoved->getHeaders());
 
             if ($odpoved->getHeader('Status-Code') == 304) {
                 return self::NOT_MODIFIED;
@@ -66,7 +66,7 @@ class CurlDownloader extends NComponent implements IDownloader {
 
             $odpoved = $curl->download($filename);
 
-            $this->log($curl->getInfo('request_header'), $odpoved->getHeaders());
+            //$this->log($curl->getInfo('request_header'), $odpoved->getHeaders());
 
 
             if ($odpoved->getHeader('Status-Code') == 200) { //OK - Modified
@@ -82,12 +82,7 @@ class CurlDownloader extends NComponent implements IDownloader {
         }
     }
 
-    private function log($requestHeaders, $responseHeaders) {
-        $presenter = NEnvironment::getApplication()->getPresenter();
-        $presenter->template->requestHeaders = explode("\n", $requestHeaders);
-        $presenter->template->responseHeaders = $responseHeaders;
-    }
-
+    
     private function getLatestChangeInLocalRepo() {
         if($this->localRepository==NULL) {
             throw new InvalidStateException ('Path to local repository is not set.');
