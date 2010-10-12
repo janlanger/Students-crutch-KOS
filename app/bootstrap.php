@@ -22,7 +22,7 @@ require LIBS_DIR . '/Nette/loader.php';
 
 // Step 2: Configure environment
 // 2a) enable NDebug for better exception and error visualisation
-NDebug::enable();
+NDebug::enable(NULL,APP_DIR.'/log/');
 NDebug::$strictMode=true;
 NDebug::$maxDepth=5;
 

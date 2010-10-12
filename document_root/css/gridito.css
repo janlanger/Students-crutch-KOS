@@ -74,6 +74,9 @@ div.gridito-flash .ui-icon {
     font-weight: bold;
     color: #ff9900;
 }
-.gridito-table .notice {
+.gridito-table .info {
     color: #009900;
+}
+.gridito-table .notice {
+    color: #0066cc;
 }

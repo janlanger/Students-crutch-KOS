@@ -14,7 +14,7 @@ class Logger {
     const CRITICAL='critical';
     const WARNING = 'warning';
     const NOTICE = 'notice';
-    const INFO = 'notice';
+    const INFO = 'info';
     const DEBUG = 'debug';
 
     private $defaultSeverity='warning';

@@ -219,6 +219,19 @@ class XMLi_Entity extends NObject {
         return $this->guessedIndexes;
     }
 
+    public function setIndexes($indexes) {
+        $this->indexes = $indexes;
+    }
+
+    public function setForeignKeys($foreignKeys) {
+        $this->foreignKeys = $foreignKeys;
+    }
+
+    public function setPrimaryKeys($primaryKeys) {
+        $this->primaryKeys = $primaryKeys;
+    }
+
+    
     public function addPrimary($column) {
         $this->primaryKeys[] = $column;
     }

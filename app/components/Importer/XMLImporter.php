@@ -57,19 +57,21 @@ class XMLImporter extends NControl {
         $cache->save('structure', $this->tables, array(
             'expire' => time() + 5 * 3600,
             'tags' => array('xml'),
-                'sliding' => TRUE
+            'sliding' => TRUE
         ));
         return $this->tables;
     }
 
-    
-    public function buildDatabase($db_name) {
-        //dibi::query("DROP DATABASE IF EXISTS [".$db_name."]");
-        try {
-            dibi::query("USE [" . $db_name . "]");
-            throw new InvalidStateException("Database " . $db_name . ' already exists.');
-        } catch (DibiException $e) {
-            //intentionally
+    public function buildDatabase($db_name, $owerwrite=FALSE) {
+        if ($owerwrite) {
+            dibi::query("DROP DATABASE IF EXISTS [" . $db_name . "]");
+        } else {
+            try {
+                dibi::query("USE [" . $db_name . "]");
+                throw new InvalidStateException("Database " . $db_name . ' already exists.');
+            } catch (DibiException $e) {
+                //intentionally
+            }
         }
         try {
             dibi::query("CREATE DATABASE [" . $db_name . "] COLLATE 'utf8_czech_ci'");
@@ -81,7 +83,7 @@ class XMLImporter extends NControl {
                 $table->createTable();
                 self::$status[$table->name]['create_time'] = microtime(TRUE) - $time;
             }
-            $table=microtime(TRUE);
+            $table = microtime(TRUE);
             foreach ($this->tables as $table) {
                 $table->createReferences();
             }
@@ -102,7 +104,7 @@ class XMLImporter extends NControl {
 
     public function getTables() {
         if ($this->tables == null) {
-            $this->analyzeStructure();
+            $this->getStructure();
         }
         return $this->tables;
     }
@@ -113,13 +115,13 @@ class XMLImporter extends NControl {
 
     public function getReport() {
         $ret = '';
-        $total=0;
+        $total = 0;
         foreach (self::$status as $key => $value) {
-            $total+=round($value['create_time']*1000,4);
-            $ret.=NHtml::el("li")->setText('"' . $key . '" - ' . round($value['create_time']*1000,4) . 'ms');
+            $total+=round($value['create_time'] * 1000, 4);
+            $ret.=NHtml::el("li")->setText('"' . $key . '" - ' . round($value['create_time'] * 1000, 4) . 'ms');
         }
         $ret.=NHtml::el("li")->setText('Celkem provedeno dotazů: ' . dibi::$numOfQueries);
-        $ret.=NHtml::el("li")->setText('Celkový čas: ' . round($total/1000,3).'s');
+        $ret.=NHtml::el("li")->setText('Celkový čas: ' . round($total / 1000, 3) . 's');
         return NHtml::el("ul")->setHtml($ret);
     }
 
