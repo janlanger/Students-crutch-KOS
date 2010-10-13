@@ -108,3 +108,21 @@ table.import td {
     white-space: nowrap;
     overflow: hidden;
 }
+table.checker tr {
+    background-color: #e0e0e0;
+}
+table.checker td{
+    background-position: center center;
+    background-repeat: no-repeat;
+    padding: 2px 5px;
+}
+table.checker td.ok {
+    background-image: url("/images/icons/accept.png");
+    width: 30px;
+}
+table.checker td.warn {
+    background-image: url("/images/icons/warn.png");
+}
+table.checker td.err {
+    background-image: url("/images/icons/error.png");
+}

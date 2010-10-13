@@ -4,6 +4,29 @@
 
 <h2>{$control['header']->getTitle()}</h2>
 
-<a href="{link Default:download}">Stažení XML z service</a>
-<br />
-<a href="{link Default:analyze}">Import XML</a>
+Zvolte něco z menu.
+
+
+<h3>Stav prostředí</h3>
+<table class="checker">
+    <tr>
+        <td>{=$_SERVER['SERVER_SOFTWARE']}</td>
+        <td>&nbsp;</td>
+    </tr>
+    <tr>
+        <td>PHP {=PHP_VERSION}</td>
+        <td class="{if PHP_VERSION_ID>50300}ok{else}warn{/if}">&nbsp;</td>
+    </tr>
+    <tr>
+        <td>XML/DOM supporn</td>
+        <td class="{if class_exists("DOMDocument")}ok{else}err{/if}">&nbsp;</td>
+    </tr>
+    <tr>
+        <td>SOAP support</td>
+        <td class="{if extension_loaded("soap")}ok{else}err{/if}">&nbsp;</td>
+    </tr>
+    <tr>
+        <td>WS Framefork</td>
+        <td class="{if extension_loaded("wsf")}ok{else}err{/if}">&nbsp;</td>
+    </tr>
+</table>
