@@ -7,34 +7,38 @@
  * @package    MyApplication
  */
 
-
-
 /**
  * Base class for all application presenters.
  *
  * @author     John Doe
  * @package    MyApplication
  */
-abstract class BasePresenter extends NPresenter
-{
+abstract class BasePresenter extends NPresenter {
+
+
+
     public function createComponentHeader() {
-        $header=new HeaderControl($this, 'header');
+        NEnvironment::getSession()->start();
+        $header = new HeaderControl($this, 'header');
         $header->setDocType(HeaderControl::HTML_4_TRANSITIONAL);
         $header->setLanguage(HeaderControl::CZECH);
         $header->setTitle('Studentova berlička - KOS')
-                ->setTitleSeparator(' | ');
+                ->setTitleSeparator(' :: ');
 
         $header->addCss('/css/screen.css');
-        $header->addCss('/css/smoothness/jquery-ui-1.8.5.custom.css');
+        $header->addCss('/css/humanity/jquery-ui-1.8.5.custom.css');
         $header->addCss('/css/gridito.css');
         $header->addJs('/js/jquery-1.4.2.min.js');
+        $header->addJs("/js/jquery-ui-1.8.5.custom.min.js");
+        $header->addJs("/js/jquery.livequery.js");
+        $header->addJs("/js/jquery.nette.js");
         $header->addJs('/js/netteForms.js');
         $header->addJs('/js/gridito.js');
         return $header;
     }
 
     public function createComponentNavigation() {
-        $nav=new Navigation();
+        $nav = new Navigation();
         $nav->setupHomepage('Domů', $this->link('Default:'));
         $nav->add('Stažení XML', $this->link('Default:download'));
         $nav->add('Import', $this->link('Import:'));
@@ -42,4 +46,5 @@ abstract class BasePresenter extends NPresenter
         $nav->add('Log', $this->link('Default:showLog'));
         return $nav;
     }
+
 }

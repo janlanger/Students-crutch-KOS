@@ -20,45 +20,18 @@ class DefaultPresenter extends BasePresenter {
     }
 
     public function actionShowLog() {
-
+        $this['header']->addTitle('Log');
     }
 
     protected function createComponentLogGrid($name) {
-        $grid = new Grid($this, $name);
-
-        $grid->model = new DibiFluentModel(dibi::select("*")->from("rozvrh_main.log")->orderBy(array("timestamp" => 'DESC')));
-        $grid->setItemsPerPage(5);
-
-        $grid->addColumn("log_id", "ID#");
-        $grid->addColumn('component', 'Komponenta');
-        $grid->addColumn("severity", "Závažnost", function ($record) {
-                    $m = $record->severity;
-                    echo '<span class="' . $m . '">';
-                    switch ($m) {
-                        case Logger::CRITICAL :
-                            echo 'Kritická';
-                            break;
-                        case Logger::WARNING :
-                            echo 'Varování';
-                            break;
-                        case Logger::NOTICE :
-                            echo 'Poznámka';
-                            break;
-                        case Logger::DEBUG :
-                            echo 'Ladící';
-                            break;
-                        default:
-                            echo 'Info';
-                            break;
-                    }
-                    echo "</span>";
-                });
-        $grid->addColumn("message", "Zpráva");
-        $grid->addColumn("timestamp", "Čas", function ($record) {
-                    echo date("d.n.Y H:i:s", strtotime($record->timestamp));
-                });
+        $grid=new Datagrid($this, $name);
+        $grid->setDataTable('rozvrh_main.log');
+        $grid->setColumns(array('log_id'=>'ID#','component'=>'Komponenta','severity'=>'Závažnost','message'=>'Zpráva','timestamp'=>'Čas'));
+        $grid->setDefaultSort('timestamp', 'desc');
+        $grid->setColumnFormat('timestamp', DatagridFormatter::DATE);
+        $grid->setColumnFormat('severity', DatagridFormatter::SUBST, array('info'=>'Info','critical'=>'Kritická','notice'=>'Poznámka','error'=>'Chyba'));
         $grid->setItemsPerPage(50);
-        return $grid;
+        
     }
 
     public function actionDownload() {
@@ -81,7 +54,7 @@ class DefaultPresenter extends BasePresenter {
         $config = NEnvironment::getConfig('xml');
 
         $form->setDefaults(array(
-            'url' => $config['remoteRepository']
+            'url' => $config['remoteURL']
         ));
         return $form;
     }
