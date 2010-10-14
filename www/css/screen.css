@@ -67,10 +67,15 @@ a[href^="error:"] {
     color:#b24a00;
 }
 .header {
-    border-bottom: 1px solid #006666;
 }
-.menu a,.menu a:hover{
-    color: #fff;
+.menu a{
+    padding: 3px 6px;
+}
+.menu a:hover {
+    background:url("smoothness/images/ui-bg_glass_75_dadada_1x400.png") repeat-x scroll 50% 50% #DADADA;
+border:1px solid #999999;
+color:#212121;
+font-weight:normal;
 }
 .menu ul {
     list-style: none;
@@ -79,9 +84,9 @@ a[href^="error:"] {
 }
 .menu ul li{
     display: inline-block;
-    padding: 3px 10px;
-    margin: 0px 6px 0px 0px;
-    background-color: #006666;
+    
+    margin: 0px 7px 8px 0px;
+    
 }
 form th{
     text-align: left;
