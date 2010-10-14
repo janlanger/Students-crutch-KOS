@@ -1,0 +1,84 @@
+<div class="datagrid">
+{if $showHeader && $paginator->getItemCount()>0}
+    Celkem {!$paginator->getItemCount()} {=$paginator->getItemCount()|plural:'záznam','záznamy','záznamů'},
+    zobrazuji záznamy {!=$paginator->getOffset()+1} až {!=($paginator->getoffset()+$paginator->getLength())}.
+{/if}
+
+
+{capture $page_nav}
+    {if $paginator->getPageCount()>1}
+    <div class="paging">
+            {if !$paginator->isFirst()}
+        <a href="?{!$uriParams}start={$paginator->getPage()-1}{if $enableSort}&amp;sort={$sortBy}&amp;{!=($sortOrder=='DESC'?'desc':'asc')}{/if}">< Předchozí</a>
+            {else}
+        <a href="#" class="disabled">< Předchozí</a>
+            {/if}
+            {var $prevStep=0}
+            {foreach Datagrid::getSteps($paginator) as $step}
+                {if (++$prevStep!=$step)}
+        ...
+                    {var $prevStep=$step}
+                {/if}
+        <a {if $step==$paginator->getPage()}class="actual" {/if}href="?{!$uriParams}start={$step}{if $enableSort}&amp;sort={$sortBy}&amp;{!=($sortOrder=='DESC'?'desc':'asc')}{/if}">{$step}</a>
+            {/foreach}
+            {if !$paginator->isLast()}
+        <a  href="?{!$uriParams}start={$paginator->getPage()+1}{if $enableSort}&amp;sort={$sortBy}&amp;{!=($sortOrder=='DESC'?'desc':'asc')}{/if}">
+            Další >
+        </a>
+            {else}
+        <a href="#" class="disabled">Další ></a>
+            {/if}
+    </div>
+    {/if}
+{/capture}
+
+{!$page_nav}
+
+    <table cellpadding="0" cellspacing="0" {if isset($width)} style='width: {$width}'{/if}>
+        <thead>
+            <tr class="head">
+                <th  n:foreach="$columns as $headerItem"{* if $iterator->isLast()} style="border-color:#88C4D2"{/if *} >
+                {if $enableSort == TRUE}
+                    <a href="?{!$uriParams}start={!$paginator->getPage()}&amp;sort={$headerItem->getKey()}{if $sortBy==$headerItem->getKey() AND $sortOrder=='ASC'}&amp;desc{/if}">
+                        {!$headerItem->getTitle()}
+                    </a>
+                {else}
+                    {!$headerItem->getTitle()}
+                {/if}
+                {if $sortBy==$headerItem->getKey()}
+                    {if $sortOrder=='DESC'}
+                    &#x25bc;
+                    {else}
+                    &#x25B2;
+                    {/if}
+                {/if}
+                </th>
+                <th n:if="$grid->hasActions()">Akce</th>
+        
+            </tr>
+        </thead>
+        <tbody>
+        {if count($data)}
+            <tr n:foreach="$data as $row" class="{if $iterator->isEven()}odd{/if}">
+
+                   
+                <td n:foreach="$columns as $key=>$column">
+                            {if true}
+                                {!$column->format($row[$key])}
+                            {else}
+                                {!$row[$key]}
+                            {/if}
+                </td>
+                    {if $grid->hasActions()}
+                <td>{!=implode(" ",$grid->generateActions($row))}</td>
+                    {/if}
+            </tr>
+    {else}
+            <tr>
+                <td colspan="10">Nenalezena žádná data.</td>
+            </tr>
+    {/if}
+        </tbody>
+    </table>
+
+</div>
