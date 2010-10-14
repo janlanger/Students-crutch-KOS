@@ -14,7 +14,9 @@ div.gridito-flash .ui-icon {
 
 /* toolbar */
 .gridito-toolbar {
-	margin-bottom: 10px;
+	margin-bottom: 5px;
+        margin-left: 5px;
+        font-size: 0.8em;
 }
 .gridito-toolbar .ui-button {
 	margin-right: 5px;
