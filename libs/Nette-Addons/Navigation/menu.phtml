@@ -1,10 +1,10 @@
-<ul class="control menu">
+<ul class="control ">
 	{if $useHomepage}
 	<li>
 		{if $homepage->isCurrent}
-		<span class="active"><strong>{$homepage->label}</strong></span>
+		<span class="active"  class="ui-button ui-state-default ui-corner-all ui-button-text-icon"><strong>{$homepage->label}</strong></span>
 		{else}
-		<a href="{$homepage->url}">{$homepage->label}</a>
+		<a href="{$homepage->url}"  class="ui-button ui-state-default ui-corner-all ui-button-text-icon">{$homepage->label}</a>
 		{/if}
 	</li>
 	{/if}
@@ -13,9 +13,10 @@
 	{foreach $children as $item}
 	<li>
 		{if $item->isCurrent}
-		<span class="active"><strong>{$item->label}</strong></span>
+		<span class="active"  class="ui-button ui-state-default ui-corner-all ui-button-text-icon"  ><strong>{$item->label}</strong></span>
 		{else}
-		<a href="{$item->url}">{$item->label}</a>
+		<a href="{$item->url}" class="ui-button ui-state-default ui-corner-all ui-button-text-icon">
+                    {$item->label}</a>
 		{/if}
 		
 		{if $renderChildren && count($item->getComponents()) > 0}
