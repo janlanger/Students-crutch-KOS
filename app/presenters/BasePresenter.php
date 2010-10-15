@@ -26,14 +26,9 @@ abstract class BasePresenter extends NPresenter {
                 ->setTitleSeparator(' :: ');
 
         $header->addCss('/css/screen.css');
-        $header->addCss('/css/humanity/jquery-ui-1.8.5.custom.css');
-        $header->addCss('/css/gridito.css');
+        $header->addCss('/css/smoothness/jquery-ui-1.8.5.custom.css');
         $header->addJs('/js/jquery-1.4.2.min.js');
-        $header->addJs("/js/jquery-ui-1.8.5.custom.min.js");
-        $header->addJs("/js/jquery.livequery.js");
-        $header->addJs("/js/jquery.nette.js");
         $header->addJs('/js/netteForms.js');
-        $header->addJs('/js/gridito.js');
         return $header;
     }
 

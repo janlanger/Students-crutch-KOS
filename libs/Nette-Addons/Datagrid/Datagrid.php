@@ -174,7 +174,7 @@ class Datagrid extends NControl {
         $this->enableSort=$x;
     }
 
-    public function addAction($link,$label,$type) {
+    public function addAction($link,$label,$type=NULL) {
         return $this->actions->add($link,$label,$type);
         //DatagridRow::addAction($type, $this->presenter->link($link), $title, $useJsConfirm);
     }
