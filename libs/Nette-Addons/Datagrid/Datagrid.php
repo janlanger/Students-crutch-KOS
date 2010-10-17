@@ -162,6 +162,10 @@ class Datagrid extends NControl {
         $this->columns[$col]->setFormatter($type,$format);
     }
 
+    /**
+     *
+     * @return DatagridSQL
+     */
     public function getSql() {
         return $this->sql;
     }
