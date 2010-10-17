@@ -29,8 +29,9 @@ class AppPresenter extends BasePresenter {
         $grid = new Datagrid($this, $name);
         $grid->setDataTable("rozvrh_main.application");
         $grid->setColumns(array("app_id" => 'ID#', "name" => 'Aplikace'));
-        $grid->addAction(array("action" => 'Functions:','param'=>'app_id'), "Správa funkcí WS");
-        $grid->addAction(array("action" => 'Revisions:','param'=>'app_id'), "Správa revizí databáze");
+        $grid->addAction(array("action" => 'Operation:','param'=>'app_id'), "Správa funkcí WS");
+        $grid->addAction(array("action" => 'Revision:','param'=>'app_id'), "Správa revizí databáze");
+        $grid->addAction(array("action" => 'SoapTest:','param'=>'app_id'), 'SOAP Tester');
         $grid->addAction(array("action" => 'App:edit', 'param' => 'app_id'), "Upravit", 'edit');
         $grid->addAction(array("action" => 'App:delete', 'param' => 'app_id'), "Smazat", 'delete')
                 ->setConfirmQuestion("Smazat", 'Opravdu chcete tento záznam odstranit? Smažou se také veškeré závislé záznamy (definované funkce WS...)');

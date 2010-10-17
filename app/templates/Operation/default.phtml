@@ -1,0 +1,30 @@
+
+{block content}
+
+<script type="text/javascript">
+    $(document).ready(function($) {
+    $(".jush").jush();
+    });
+</script>
+
+{var $previous=""}
+{foreach $operations as $op}
+    {if $op->name!=$previous}
+        <h3>{$op->return} {$op->name} (
+                {if $op->params!=NULL}
+                {foreach unserialize($op->params) as $param}
+                    {if !$iterator->isFirst()}, {/if}
+                    {$param['type']} {$param['name']}
+                {/foreach}
+                {/if})</h3>
+        {var $previous=$op->name}
+    {/if}
+    <ul n:inner-foreach="$revisions as $rev">
+        <li><b>Revize: </b>{$rev->alias} {if $rev->isMain}(Výchozí){/if} - databáze {$rev->db_name}<br />
+            <code class="jush">{$op['sql'][$rev['rev_id']]['sql']}</code>
+        </li>
+    </ul>
+    
+
+
+{/foreach}
