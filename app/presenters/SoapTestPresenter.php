@@ -73,8 +73,9 @@ class SoapTestPresenter extends BasePresenter {
         SoapIdentity::$testCall=TRUE;
         $credintals=@reset(Application::find(array("app_id"=>  $this->app_id)));
         $handler->authenticate($credintals['login'], NULL);
-        //$handler->necoCall("student",123456);
-        dump(call_user_func_array(array($handler,$operation['name']), $params));
+        
+        $this->template->soapReturn=NDebug::dump(call_user_func_array(array($handler,$operation['name']), $params),TRUE);
+        $this->template->sql=$handler->getQuery();
 
     }
 

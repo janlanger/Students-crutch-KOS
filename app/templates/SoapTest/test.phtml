@@ -2,3 +2,13 @@
 {block content}
 
 {control form}
+
+{ifset $sql}
+<h3>Provedený SQL dotaz</h3> <code>{$sql}</code>
+{/if}
+
+{ifset $soapReturn}
+<h3>Odpověď služby</h3>
+    
+    {!$soapReturn}
+{/if}
