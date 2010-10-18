@@ -29,7 +29,7 @@ class DefaultPresenter extends BasePresenter {
         $grid->setColumns(array('log_id'=>'ID#','component'=>'Komponenta','severity'=>'Závažnost','message'=>'Zpráva','timestamp'=>'Čas'));
         $grid->setDefaultSort('timestamp', 'desc');
         $grid->setColumnFormat('timestamp', DatagridFormatter::DATE);
-        $grid->setColumnFormat('severity', DatagridFormatter::SUBST, array('info'=>'Info','critical'=>'Kritická','notice'=>'Poznámka','error'=>'Chyba'));
+        $grid->setColumnFormat('severity', DatagridFormatter::SUBST, array('info'=>'Info','critical'=>'Kritická','notice'=>'Poznámka','error'=>'Chyba','warning'=>'Varování'));
         $grid->setItemsPerPage(50);
         
     }

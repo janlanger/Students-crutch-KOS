@@ -17,7 +17,11 @@
     {/if}
     <ul n:inner-foreach="$revisions as $rev">
         <li><b>Revize: </b>{$rev->alias} {if $rev->isMain}(Výchozí){/if} - databáze {$rev->db_name}<br />
+            {ifset $op['sql'][$rev['rev_id']]}
             <code class="jush-sql">{$op['sql'][$rev['rev_id']]['sql']}</code>
+            {else}
+            <em>Není definováno</em>
+                {/if}
         </li>
     </ul>
     
