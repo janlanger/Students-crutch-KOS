@@ -1,11 +1,7 @@
 
 {block content}
 
-<script type="text/javascript">
-    $(document).ready(function($) {
-    $(".jush").jush();
-    });
-</script>
+
 
 {var $previous=""}
 {foreach $operations as $op}
@@ -21,7 +17,7 @@
     {/if}
     <ul n:inner-foreach="$revisions as $rev">
         <li><b>Revize: </b>{$rev->alias} {if $rev->isMain}(Výchozí){/if} - databáze {$rev->db_name}<br />
-            <code class="jush">{$op['sql'][$rev['rev_id']]['sql']}</code>
+            <code class="jush-sql">{$op['sql'][$rev['rev_id']]['sql']}</code>
         </li>
     </ul>
     

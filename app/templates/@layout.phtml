@@ -12,17 +12,23 @@
 {control header}
 
 <body>
+    <script type="text/javascript">
+    $(document).ready(function($) {
+        jush.style('/css/jush.css');
+        jush.highlight_tag('code');
+    });
+    </script>
     <div class="header">
         <h1>{$control['header']->getTitle()}</h1>
-        <div class="menu">
+    <div class="menu">
             {control navigation}
-        </div>
-        &nbsp;
-        <br clear="all">
     </div>
-    
+    &nbsp;
+    <br clear="all">
+</div>
+
 	{foreach $flashes as $flash}<div class="flash {$flash->type}">{!$flash->message}</div>{/foreach}
-        <h2>{$control['header']->getTitle(1)}</h2>
+<h2>{$control['header']->getTitle(1)}</h2>
 	{include #content}
 </body>
 </html>

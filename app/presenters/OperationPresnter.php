@@ -9,6 +9,7 @@ class OperationPresenter extends BasePresenter {
 
 
 	public function actionDefault($app_id) {
+            
             if($app_id>0) {
                 $app=@reset(Application::find(array("app_id"=>$app_id)));
             }

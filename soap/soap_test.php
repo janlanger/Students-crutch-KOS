@@ -11,6 +11,7 @@ $responseMessage=$client->request($requestPayloadString);
         printf("Response = %s <br>", htmlspecialchars($responseMessage->str));*/
 $soap=new SoapClient(NULL,array("location"=>'http://bp.local/soap/berlicka',"uri"=>'http://bp.local/soap/berlicka'));
 
-dump($soap->authenticate('berlicka','test'));
+$soap->authenticate('berlicka','test');
+dump($soap->getStudentClasses(355981000,'B101'));
 
 ?>

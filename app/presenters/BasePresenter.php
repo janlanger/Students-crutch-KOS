@@ -29,6 +29,7 @@ abstract class BasePresenter extends NPresenter {
         $header->addCss('/css/smoothness/jquery-ui-1.8.5.custom.css');
         $header->addJs('/js/jquery-1.4.2.min.js');
         $header->addJs('/js/netteForms.js');
+        $header->addJs("/js/jush.js");
         return $header;
     }
 
