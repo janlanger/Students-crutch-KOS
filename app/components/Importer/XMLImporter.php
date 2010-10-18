@@ -90,7 +90,7 @@ class XMLImporter extends NControl {
             self::$status['Cizí klíče']['create_time'] = microtime(TRUE) - $time;
 
             //dibi::query("SET foreign_key_checks = 1");
-            dibi::insert("rozvrh_main.import_history", array(
+            dibi::insert(":main:import_history", array(
                 "filename" => basename($this->file),
                 "database_name" => $db_name
             ))->execute();

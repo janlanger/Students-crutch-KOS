@@ -28,7 +28,7 @@ class SoapIdentity {
                 "password" => hash("sha256", $password)
             );
         }
-        $ret = dibi::select("*")->from("rozvrh_main.application")
+        $ret = dibi::select("*")->from(":main:application")
                         ->where($where)->execute();
         if ($ret->getRowCount() == 1) {
             $row = $ret->fetch();

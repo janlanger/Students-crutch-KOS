@@ -25,7 +25,7 @@ class DefaultPresenter extends BasePresenter {
 
     protected function createComponentLogGrid($name) {
         $grid=new Datagrid($this, $name);
-        $grid->setDataTable('rozvrh_main.log');
+        $grid->setDataTable(':main:log');
         $grid->setColumns(array('log_id'=>'ID#','component'=>'Komponenta','severity'=>'Závažnost','message'=>'Zpráva','timestamp'=>'Čas'));
         $grid->setDefaultSort('timestamp', 'desc');
         $grid->setColumnFormat('timestamp', DatagridFormatter::DATE);

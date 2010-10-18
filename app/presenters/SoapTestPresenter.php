@@ -29,7 +29,7 @@ class SoapTestPresenter extends BasePresenter {
 
     public function createComponentDatagrid($name) {
         $grid = new Datagrid($this, $name);
-        $grid->setDataTable('rozvrh_main.operations_def');
+        $grid->setDataTable(':main:operations_def');
         $grid->getSql()->where(array("app_id" => $this->getHttpRequest()->getQuery('app_id')));
         $grid->setColumns(array("met_id" => 'ID#', 'return' => 'Návratový typ', 'name' => 'Název', 'params' => 'Parametry'));
         $grid->setColumnFormat('params', DatagridFormatter::CALLBACK, function ($record) {

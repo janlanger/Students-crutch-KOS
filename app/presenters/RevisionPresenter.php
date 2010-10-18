@@ -21,7 +21,7 @@ class RevisionPresenter extends BasePresenter {
         public function createComponentDatagrid($name) {
             
             $grid=new Datagrid($this, $name);
-            $grid->setDataTable("rozvrh_main.revision");
+            $grid->setDataTable(":main:revision");
             $grid->setColumns(array("rev_id"=>'ID#','db_name'=>'Databáze','alias'=>'Alias','created_time'=>'Čas vytvoření','isMain'=>'Výchozí'));
             $grid->getSql()->where(array("app_id"=>$this->app_id));
             $grid->setColumnFormat('created_time', DatagridFormatter::DATE);

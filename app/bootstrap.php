@@ -30,4 +30,5 @@ NDebug::$maxDepth=5;
 NEnvironment::loadConfig();
 
 dibi::connect(NEnvironment::getConfig('database'));
+dibi::addSubst('main', "rozvrh_main.");
 

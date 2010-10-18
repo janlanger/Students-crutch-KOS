@@ -19,7 +19,7 @@ class Logger {
 
     private $defaultSeverity='warning';
 
-    private $log_table = 'rozvrh_main.log';
+    private $log_table = ':main:log';
 
     public function logMessage($message, $severity=NULL,$component=NULL) {
         if (is_null($severity)) {

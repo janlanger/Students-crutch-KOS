@@ -21,7 +21,7 @@ class File extends Model {
 
     public static function find($where = NULL, $order = NULL, $offset = NULL, $limit = NULL) {
         $q = dibi::query(
-                        'SELECT [file],[id],[time] FROM [rozvrh_main].[import_history]',
+                        'SELECT [file],[id],[time] FROM [:main:import_history]',
                         '%if', isset($where), 'WHERE %and', isset($where) ? $where : array(), '%end',
                         '%if', isset($order), 'ORDER BY %by', $order, '%end',
                         '%if', isset($limit), 'LIMIT %i %end', $limit,
@@ -36,7 +36,7 @@ class File extends Model {
      */
     public static function getImportableFiles() {
         $db_files = dibi::query('SELECT [id], [filename],[import_time], [database_name]
-            FROM [rozvrh_main].[import_history]
+            FROM [:main:import_history]
             ORDER BY [filename] ASC, [import_time] DESC')
         ->setRowClass(get_called_class())
         ->fetchAssoc('filename');

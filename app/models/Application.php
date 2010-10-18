@@ -12,7 +12,7 @@
 class Application extends Model {
 
     public static function find($where = NULL, $order = NULL, $offset = NULL, $limit = NULL) {
-        $q=dibi::select("*")->from("[rozvrh_main].[application]");
+        $q=dibi::select("*")->from("[:main:application]");
         if($where!=NULL) $q->where ($where);
         if($order!=NULL) $q->orderBy ($order);
         if($limit!=NULL) $q->limit ($limit);
@@ -31,18 +31,18 @@ class Application extends Model {
             if($this->password!="") {
                 $this->password=self::hashPassword($this->password);
             }
-            dibi::update('rozvrh_main.application', $this)->execute();
+            dibi::update(':main:application', $this)->execute();
             return TRUE;
         } else {
             $this->app_id=NULL;
             $this->password=self::hashPassword($this->password);
-            dibi::insert('rozvrh_main.application', $this)->execute();
+            dibi::insert(':main:application', $this)->execute();
             return TRUE;
         }  
     }
 
     public function delete() {
-        dibi::delete("rozvrh_main.application")->where(array("app_id"=>$this->app_id))->execute();
+        dibi::delete(":main:application")->where(array("app_id"=>$this->app_id))->execute();
     }
 
     public static function hashPassword($password) {

@@ -27,7 +27,7 @@ class AppPresenter extends BasePresenter {
 
     public function createComponentAppGrid($name) {
         $grid = new Datagrid($this, $name);
-        $grid->setDataTable("rozvrh_main.application");
+        $grid->setDataTable(":main:application");
         $grid->setColumns(array("app_id" => 'ID#', "name" => 'Aplikace'));
         $grid->addAction(array("action" => 'Operation:','param'=>'app_id'), "Správa funkcí WS");
         $grid->addAction(array("action" => 'Revision:','param'=>'app_id'), "Správa revizí databáze");

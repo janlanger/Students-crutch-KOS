@@ -12,7 +12,7 @@
 class Revision extends Model {
 
     public static function find($where = NULL, $order = NULL, $offset = NULL, $limit = NULL) {
-        $q=dibi::select("*")->from("[rozvrh_main].[revision]");
+        $q=dibi::select("*")->from("[:main:revision]");
         if($where!=NULL) $q->where ($where);
         if($order!=NULL) $q->orderBy ($order);
         if($limit!=NULL) $q->limit ($limit);
