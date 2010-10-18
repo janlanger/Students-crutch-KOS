@@ -37,6 +37,9 @@ class NApplication extends NObject
 	/** @var array of function(NApplication $sender, NPresenterRequest $request); Occurs when a new request is ready for dispatch */
 	public $onRequest;
 
+	/** @var array of function(NApplication $sender, IPresenterResponse $response); Occurs when a new response is received */
+	public $onResponse;
+
 	/** @var array of function(NApplication $sender, Exception $e); Occurs when an unhandled exception occurs in the application */
 	public $onError;
 
@@ -94,18 +97,12 @@ class NApplication extends NObject
 				if (!$request) {
 					$this->onStartup($this);
 
-					// default router
-					if ($this->context->hasService('Nette\\Application\\IRouter', TRUE)) {
-						$router = $this->getRouter();
-					} else {
-						$this->setRouter($router = $this->context->getService('defaultRouter'));
-					}
+					// routing
+					$router = $this->getRouter();
 
 					// enable routing debuggger
 					NDebug::addPanel(new NRoutingDebugger($router, $httpRequest));
 
-
-					// routing
 					$request = $router->match($httpRequest);
 					if (!($request instanceof NPresenterRequest)) {
 						$request = NULL;
@@ -113,7 +110,7 @@ class NApplication extends NObject
 					}
 
 					if (strcasecmp($request->getPresenterName(), $this->errorPresenter) === 0) {
-						throw new NBadRequestException('Invalid request.');
+						throw new NBadRequestException('Invalid request. Presenter is not achievable.');
 					}
 				}
 
@@ -133,6 +130,7 @@ class NApplication extends NObject
 				// Execute presenter
 				$this->presenter = new $class;
 				$response = $this->presenter->run($request);
+				$this->onResponse($this, $response);
 
 				// Send response
 				if ($response instanceof NForwardingResponse) {
@@ -183,7 +181,7 @@ class NApplication extends NObject
 						$code = $e->getCode();
 					} else {
 						$code = 500;
-						NDebug::log($e);
+						NDebug::log($e, NDebug::ERROR);
 					}
 					echo "<!DOCTYPE html><meta name=robots content=noindex><meta name=generator content='Nette Framework'>\n\n";
 					echo "<style>body{color:#333;background:white;width:500px;margin:100px auto}h1{font:bold 47px/1.5 sans-serif;margin:.6em 0}p{font:21px/1.5 Georgia,serif;margin:1.5em 0}small{font-size:70%;color:gray}</style>\n\n";
@@ -371,7 +369,7 @@ class NApplication extends NObject
 			$request = clone $session[$key];
 			unset($session[$key]);
 			$request->setFlag(NPresenterRequest::RESTORED, TRUE);
-			$this->presenter->terminate(new NForwardingResponse($request));
+			$this->presenter->sendResponse(new NForwardingResponse($request));
 		}
 	}
 

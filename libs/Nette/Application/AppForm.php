@@ -133,7 +133,7 @@ class NAppForm extends NForm implements ISignalReceiver
 			$this->fireEvents();
 
 		} else {
-			throw new NBadSignalException("There is no handler for signal '$signal' in {$this->reflection->name}.");
+			throw new NBadSignalException("Missing handler for signal '$signal' in {$this->reflection->name}.");
 		}
 	}
 

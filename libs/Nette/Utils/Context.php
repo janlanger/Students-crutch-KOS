@@ -44,7 +44,7 @@ class NContext extends NFreezableObject implements IContext
 
 		$lower = strtolower($name);
 		if (isset($this->registry[$lower])) { // only for instantiated services?
-			throw new NAmbiguousServiceException("Service named '$name' has been already registered.");
+			throw new NAmbiguousServiceException("Service named '$name' has already been registered.");
 		}
 
 		if (is_object($service) && !($service instanceof Closure || $service instanceof NCallback)) {

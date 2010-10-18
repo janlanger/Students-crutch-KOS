@@ -54,7 +54,7 @@ class NCache extends NObject implements ArrayAccess
 		$this->namespace = (string) $namespace;
 
 		if (strpos($this->namespace, self::NAMESPACE_SEPARATOR) !== FALSE) {
-			throw new InvalidArgumentException("Namespace name contains forbidden character.");
+			throw new InvalidArgumentException("Namespace name contains forbidden NUL character.");
 		}
 	}
 

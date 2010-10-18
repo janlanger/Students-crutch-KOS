@@ -119,9 +119,10 @@ interface IHttpResponse
 	 * @param  string
 	 * @param  string
 	 * @param  bool
+	 * @param  bool
 	 * @return void
 	 */
-	function setCookie($name, $value, $expire, $path = NULL, $domain = NULL, $secure = NULL);
+	function setCookie($name, $value, $expire, $path = NULL, $domain = NULL, $secure = NULL, $httpOnly = NULL);
 
 	/**
 	 * Deletes a cookie.

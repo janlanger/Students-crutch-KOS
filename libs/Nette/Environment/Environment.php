@@ -105,7 +105,7 @@ final class NEnvironment
 			self::setVariable('environment', $name, FALSE);
 
 		} else {
-			throw new InvalidStateException('Environment name has been already set.');
+			throw new InvalidStateException('Environment name has already been set.');
 		}
 	}
 

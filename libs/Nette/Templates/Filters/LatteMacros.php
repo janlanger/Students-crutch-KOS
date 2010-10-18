@@ -207,7 +207,7 @@ class NLatteMacros extends NObject
 			$s .= $this->macro('/block', '', '');
 
 		} elseif ($this->blocks) {
-			throw new InvalidStateException("There are some unclosed blocks.");
+			throw new InvalidStateException("There are unclosed blocks.");
 		}
 
 		// snippets support (temporary solution)
@@ -418,7 +418,7 @@ class NLatteMacros extends NObject
 			break;
 
 		default:
-			throw new InvalidStateException("Unknown macro syntax '$var' on line {$this->filter->line}.");
+			throw new InvalidStateException("Unknown syntax '$var' on line {$this->filter->line}.");
 		}
 	}
 
@@ -704,7 +704,7 @@ class NLatteMacros extends NObject
 	{
 		return 'NDebug::barDump('
 			. ($content ? 'array(' . var_export($content, TRUE) . " => $content)" : 'get_defined_vars()')
-			. ', "Template " . str_replace(NEnvironment::getVariable("appDir", ""), "\xE2\x80\xA6", $template->getFile()))';
+			. ', "Template " . str_replace(dirname(dirname($template->getFile())), "\xE2\x80\xA6", $template->getFile()))';
 	}
 
 
@@ -1009,7 +1009,7 @@ class NLatteMacros extends NObject
 	public static function callBlock($context, $name, $params)
 	{
 		if (empty($context->blocks[$name])) {
-			throw new InvalidStateException("Call to undefined block '$name'.");
+			throw new InvalidStateException("Cannot include undefined block '$name'.");
 		}
 		$block = reset($context->blocks[$name]);
 		$block($context, $params);
@@ -1027,7 +1027,7 @@ class NLatteMacros extends NObject
 	public static function callBlockParent($context, $name, $params)
 	{
 		if (empty($context->blocks[$name]) || ($block = next($context->blocks[$name])) === FALSE) {
-			throw new InvalidStateException("Call to undefined parent block '$name'.");
+			throw new InvalidStateException("Cannot include undefined parent block '$name'.");
 		}
 		$block($context, $params);
 	}

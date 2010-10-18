@@ -69,7 +69,7 @@ final class NDebug
 	/** @var array of callbacks specifies the functions that are automatically called after fatal error */
 	public static $onFatalError = array();
 
-	/** @var string name of the directory where errors should be logged */
+	/** @var string name of the directory where errors should be logged; FALSE means that logging is disabled */
 	public static $logDirectory;
 
 	/** @var string e-mail to sent error notifications */
@@ -173,7 +173,7 @@ final class NDebug
 
 		if (!$return && self::$showLocation) {
 			$trace = debug_backtrace();
-			$i = isset($trace[1]['class']) && $trace[1]['class'] === __CLASS__ ? 1 : 1;
+			$i = isset($trace[1]['class']) && $trace[1]['class'] === __CLASS__ ? 1 : 0;
 			if (isset($trace[$i]['file'], $trace[$i]['line'])) {
 				$output = substr_replace($output, ' <small>' . htmlspecialchars("in file {$trace[$i]['file']} on line {$trace[$i]['line']}", ENT_NOQUOTES) . '</small>', -8, 0);
 			}
@@ -353,7 +353,7 @@ final class NDebug
 	/**
 	 * Enables displaying or logging errors and exceptions.
 	 * @param  mixed         production, development mode, autodetection or IP address(es).
-	 * @param  string        error log directory; enables logging in production mode
+	 * @param  string        error log directory; enables logging in production mode, FALSE means that logging is disabled
 	 * @param  string        administrator email; enables email sending in production mode
 	 * @return void
 	 */
@@ -389,13 +389,17 @@ final class NDebug
 		}
 
 		// logging configuration
-		if (self::$productionMode && $logDirectory !== FALSE) {
-			if (is_string($logDirectory)) {
+		if (self::$productionMode) {
+			if (is_string($logDirectory) || $logDirectory === FALSE) {
 				self::$logDirectory = $logDirectory;
 			} else {
 				self::$logDirectory = defined('APP_DIR') ? APP_DIR . '/../log/' : getcwd() . '/log';
 			}
-			ini_set('error_log', self::$logDirectory . '/php_error.log');
+			if (self::$logDirectory) {
+				ini_set('error_log', self::$logDirectory . '/php_error.log');
+			}
+		} else {
+			self::$logDirectory = FALSE;
 		}
 
 		// php configuration
@@ -452,8 +456,14 @@ final class NDebug
 	 */
 	public static function log($message, $priority = self::INFO)
 	{
-		if (!self::$logDirectory) {
+		if (self::$logDirectory === FALSE) {
 			return;
+
+		} elseif (!self::$logDirectory) {
+			throw new InvalidStateException('Logging directory is not specified in NDebug::$logDirectory.');
+
+		} elseif (!is_dir(self::$logDirectory)) {
+			throw new DirectoryNotFoundException("Directory '" . self::$logDirectory . "' is not found or is not directory.");
 		}
 
 		if ($message instanceof Exception) {
@@ -461,10 +471,6 @@ final class NDebug
 			$message = "PHP Fatal error: "
 				. ($message instanceof FatalErrorException ? $exception->getMessage() : "Uncaught exception " . get_class($exception) . " with message '" . $exception->getMessage() . "'")
 				. " in " . $exception->getFile() . ":" . $exception->getLine();
-		}
-
-		if (!is_dir(self::$logDirectory)) {
-			throw new DirectoryNotFoundException("Directory '" . self::$logDirectory . "' is not found or is not directory.");
 		}
 
 		error_log(@date('[Y-m-d H-i-s] ') . trim($message) . (self::$source ? '  @  ' . self::$source : '') . PHP_EOL, 3, self::$logDirectory . '/' . strtolower($priority) . '.log');
@@ -615,13 +621,14 @@ final class NDebug
 
 		$message = 'PHP ' . (isset($types[$severity]) ? $types[$severity] : 'Unknown error') . ": $message";
 
-		if (self::$logDirectory) {
-			self::log("$message in $file:$line", self::ERROR); // log manually, required on some stupid hostings
+		self::log("$message in $file:$line", self::ERROR); // log manually, required on some stupid hostings
+
+		if (self::$productionMode) {
 			return NULL;
 
-		} elseif (!self::$productionMode) {
+		} else {
 			if (self::$showBar) {
-				self::$errors[] = "$message in $file:$line";
+				self::$errors[] = "$message in " . (self::$editor ? '<a href="' . htmlspecialchars(strtr(self::$editor, array('%file' => rawurlencode($file), '%line' => $line))) . "\">$file:$line</a>" : "$file:$line");
 			}
 			if (self::$firebugDetected && !headers_sent()) {
 				self::fireLog(new ErrorException($message, 0, $severity, $file, $line), self::WARNING);
@@ -704,7 +711,10 @@ final class NDebug
 	public static function tryError()
 	{
 		error_reporting(0);
+		$old = self::$scream;
+		self::$scream = FALSE;
 		trigger_error(''); // "reset" error_get_last
+		self::$scream = $old;
 	}
 
 
@@ -881,7 +891,7 @@ final class NDebug
 		if (isset($args[0]) && in_array($args[0], array(self::DEBUG, self::INFO, self::WARNING, self::ERROR, self::CRITICAL), TRUE)) {
 			$item['level'] = array_shift($args);
 		}
-		
+
 		$item['args'] = $args;
 
 		foreach ($trace as $frame) {

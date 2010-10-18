@@ -25,7 +25,7 @@ final class NFramework
 
 	const VERSION = '2.0-dev';
 
-	const REVISION = 'bf28179 released on 2010-10-08';
+	const REVISION = 'a8e74c1 released on 2010-10-14';
 	/**#@-*/
 
 

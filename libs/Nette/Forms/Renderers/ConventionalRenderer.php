@@ -123,7 +123,7 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 	/**
 	 * Provides complete form rendering.
 	 * @param  NForm
-	 * @param  string
+	 * @param  string 'begin', 'errors', 'body', 'end' or empty to render all
 	 * @return string
 	 */
 	public function render(NForm $form, $mode = NULL)

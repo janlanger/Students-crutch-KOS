@@ -80,7 +80,7 @@ class NMailMimePart extends NObject
 				}
 
 				if (preg_match('#[\r\n]#', $name)) {
-					throw new InvalidArgumentException("Name cannot contain the line separator.");
+					throw new InvalidArgumentException("Name must not contain line separator.");
 				}
 				$tmp[$email] = $name;
 			}
@@ -291,7 +291,7 @@ class NMailMimePart extends NObject
 				break;
 
 			default:
-				throw new InvalidStateException('Unknown encoding');
+				throw new InvalidStateException('Unknown encoding.');
 			}
 		}
 

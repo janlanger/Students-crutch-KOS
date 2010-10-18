@@ -194,4 +194,16 @@ class NHttpUploadedFile extends NObject
 		return $this->isOk() ? @getimagesize($this->tmpName) : NULL; // @ - files smaller than 12 bytes causes read error
 	}
 
+
+
+	/**
+	 * Get file contents
+	 * @return string
+	 */
+	public function getContents()
+	{
+		// future implementation can try to work around safe_mode and open_basedir limitations
+		return $this->isOk() ? file_get_contents($this->tmpName) : NULL;
+	}
+
 }

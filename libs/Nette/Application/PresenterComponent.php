@@ -247,7 +247,7 @@ abstract class NPresenterComponent extends NComponentContainer implements ISigna
 	public function signalReceived($signal)
 	{
 		if (!$this->tryCall($this->formatSignalMethod($signal), $this->params)) {
-			throw new NBadSignalException("There is no handler for signal '$signal' in {$this->reflection->name} class.");
+			throw new NBadSignalException("There is no handler for signal '$signal' in class {$this->reflection->name}.");
 		}
 	}
 
@@ -271,7 +271,7 @@ abstract class NPresenterComponent extends NComponentContainer implements ISigna
 
 	/**
 	 * Generates URL to presenter, action or signal.
-	 * @param  string   destination in format "[[module:]presenter:]action" or "signal!"
+	 * @param  string   destination in format "[[module:]presenter:]action" or "signal!" or "this"
 	 * @param  array|mixed
 	 * @return string
 	 * @throws NInvalidLinkException

@@ -24,6 +24,7 @@ final class NRules extends NObject implements IteratorAggregate
 
 	/** @var array */
 	public static $defaultMessages = array(
+		':protection' => 'Security token did not match. Possible CSRF attack.',
 	);
 
 	/** @var array of NRule */
@@ -58,12 +59,12 @@ final class NRules extends NObject implements IteratorAggregate
 	{
 		$rule = new NRule;
 		$rule->control = $this->control;
-		$rule->operation = $operation;
+		$rule->operation = ($operation === ':protection' ? ':equal' : $operation);
 		$this->adjustOperation($rule);
 		$rule->arg = $arg;
 		$rule->type = NRule::VALIDATOR;
-		if ($message === NULL && is_string($rule->operation) && isset(self::$defaultMessages[$rule->operation])) {
-			$rule->message = self::$defaultMessages[$rule->operation];
+		if ($message === NULL && is_string($operation) && isset(self::$defaultMessages[$operation])) {
+			$rule->message = self::$defaultMessages[$operation];
 		} else {
 			$rule->message = $message;
 		}
@@ -242,6 +243,9 @@ final class NRules extends NObject implements IteratorAggregate
 	public static function formatMessage($rule, $withValue)
 	{
 		$message = $rule->message;
+		if (!isset($message)) { // report missing message by notice
+			$message = self::$defaultMessages[$rule->operation];
+		}
 		if ($translator = $rule->control->getForm()->getTranslator()) {
 			$message = $translator->translate($message, is_int($rule->arg) ? $rule->arg : NULL);
 		}

@@ -263,15 +263,12 @@ class NConfigurator extends NObject
 
 		$context = clone NEnvironment::getContext();
 		$context->addService('Nette\\Application\\IRouter', 'NMultiRouter');
-		$context->addService('defaultRouter', callback(create_function('', '
-			return new NSimpleRouter(array(
-				\'presenter\' => \'Default\',
-				\'action\' => \'default\',
-			));
-		')));
-		$context->addService('Nette\\Application\\IPresenterLoader', callback(create_function('', '
-			return new NPresenterLoader(NEnvironment::getVariable(\'appDir\'));
-		')));
+
+		if (!$context->hasService('Nette\\Application\\IPresenterLoader')) {
+			$context->addService('Nette\\Application\\IPresenterLoader', callback(create_function('', '
+				return new NPresenterLoader(NEnvironment::getVariable(\'appDir\'));
+			')));
+		}
 
 		$application = new NApplication;
 		$application->setContext($context);

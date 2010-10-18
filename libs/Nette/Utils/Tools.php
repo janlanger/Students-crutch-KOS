@@ -169,11 +169,11 @@ final class NTools
 	public static function enterCriticalSection()
 	{
 		if (self::$criticalSections) {
-			throw new InvalidStateException('Critical section has been already entered.');
+			throw new InvalidStateException('Critical section has already been entered.');
 		}
-		$handle = fopen((defined('TEMP_DIR') ? TEMP_DIR : dirname(__FILE__)) . '/criticalSection.lock', 'w');
+		$handle = ($tmp= fopen(NETTE_DIR . '/lockfile', 'r')) ? $tmp : fopen(NETTE_DIR . '/lockfile', 'w');
 		if (!$handle) {
-			throw new InvalidStateException('Unable initialize critical section.');
+			throw new InvalidStateException("Unable initialize critical section (missing file '" . NETTE_DIR . "/lockfile').");
 		}
 		flock(self::$criticalSections = $handle, LOCK_EX);
 	}

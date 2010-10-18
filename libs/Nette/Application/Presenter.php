@@ -445,7 +445,7 @@ abstract class NPresenter extends NControl implements IPresenter
 			}
 		}
 
-		$this->terminate(new NRenderResponse($template));
+		$this->sendResponse(new NRenderResponse($template));
 	}
 
 
@@ -553,12 +553,42 @@ abstract class NPresenter extends NControl implements IPresenter
 	 */
 	public function sendPayload()
 	{
-		$this->terminate(new NJsonResponse($this->payload));
+		$this->sendResponse(new NJsonResponse($this->payload));
 	}
 
 
 
 	/********************* navigation & flow ****************d*g**/
+
+
+
+	/**
+	 * Sends response and terminates presenter.
+	 * @param  IPresenterResponse
+	 * @return void
+	 * @throws NAbortException
+	 */
+	public function sendResponse(IPresenterResponse $response)
+	{
+		$this->response = $response;
+		$this->terminate();
+	}
+
+
+
+	/**
+	 * Correctly terminates presenter.
+	 * @return void
+	 * @throws NAbortException
+	 */
+	public function terminate()
+	{
+		if (func_num_args() !== 0) {
+			trigger_error(__METHOD__ . ' is not intended to send a PresenterResponse; use sendResponse() instead.', E_USER_WARNING);
+			$this->sendResponse(func_get_arg(0));
+		}
+		throw new NAbortException();
+	}
 
 
 
@@ -572,7 +602,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	public function forward($destination, $args = array())
 	{
 		if ($destination instanceof NPresenterRequest) {
-			$this->terminate(new NForwardingResponse($destination));
+			$this->sendResponse(new NForwardingResponse($destination));
 
 		} elseif (!is_array($args)) {
 			$args = func_get_args();
@@ -580,7 +610,7 @@ abstract class NPresenter extends NControl implements IPresenter
 		}
 
 		$this->createRequest($this, $destination, $args, 'forward');
-		$this->terminate(new NForwardingResponse($this->lastCreatedRequest));
+		$this->sendResponse(new NForwardingResponse($this->lastCreatedRequest));
 	}
 
 
@@ -601,7 +631,7 @@ abstract class NPresenter extends NControl implements IPresenter
 		} elseif (!$code) {
 			$code = $this->getHttpRequest()->isMethod('post') ? IHttpResponse::S303_POST_GET : IHttpResponse::S302_FOUND;
 		}
-		$this->terminate(new NRedirectingResponse($uri, $code));
+		$this->sendResponse(new NRedirectingResponse($uri, $code));
 	}
 
 
@@ -641,20 +671,6 @@ abstract class NPresenter extends NControl implements IPresenter
 
 
 	/**
-	 * Correctly terminates presenter.
-	 * @param  IPresenterResponse
-	 * @return void
-	 * @throws NAbortException
-	 */
-	public function terminate(IPresenterResponse $response = NULL)
-	{
-		$this->response = $response;
-		throw new NAbortException();
-	}
-
-
-
-	/**
 	 * Conditional redirect to canonicalized URI.
 	 * @return void
 	 * @throws NAbortException
@@ -664,7 +680,7 @@ abstract class NPresenter extends NControl implements IPresenter
 		if (!$this->isAjax() && ($this->request->isMethod('get') || $this->request->isMethod('head'))) {
 			$uri = $this->createRequest($this, $this->action, $this->getGlobalState() + $this->request->params, 'redirectX');
 			if ($uri !== NULL && !$this->getHttpRequest()->getUri()->isEqual($uri)) {
-				$this->terminate(new NRedirectingResponse($uri, IHttpResponse::S301_MOVED_PERMANENTLY));
+				$this->sendResponse(new NRedirectingResponse($uri, IHttpResponse::S301_MOVED_PERMANENTLY));
 			}
 		}
 	}
@@ -700,7 +716,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	/**
 	 * NPresenterRequest/URL factory.
 	 * @param  NPresenterComponent  base
-	 * @param  string   destination in format "[[module:]presenter:]action" or "signal!"
+	 * @param  string   destination in format "[[module:]presenter:]action" or "signal!" or "this"
 	 * @param  array    array of arguments
 	 * @param  string   forward|redirect|link
 	 * @return string   URL
@@ -799,14 +815,14 @@ abstract class NPresenter extends NControl implements IPresenter
 			if ($signal === 'this') { // means "no signal"
 				$signal = '';
 				if (array_key_exists(0, $args)) {
-					throw new NInvalidLinkException("Extra parameter for signal '{$reflection->name}:$signal!'.");
+					throw new NInvalidLinkException("Unable to pass parameters to 'this!' signal.");
 				}
 
 			} elseif (strpos($signal, self::NAME_SEPARATOR) === FALSE) { // TODO: NAppForm exception
 				// counterpart of signalReceived() & tryCall()
 				$method = $component->formatSignalMethod($signal);
 				if (!$reflection->hasCallableMethod($method)) {
-					throw new NInvalidLinkException("Unknown signal '{$reflection->name}:$signal!'.");
+					throw new NInvalidLinkException("Unknown signal '$signal', missing handler {$reflection->name}::$method()");
 				}
 				if ($args) { // convert indexed parameters to named
 					self::argsToParams(get_class($component), $method, $args);
@@ -849,7 +865,7 @@ abstract class NPresenter extends NControl implements IPresenter
 				// convert indexed parameters to named
 				if ($method === NULL) {
 					if (array_key_exists(0, $args)) {
-						throw new NInvalidLinkException("Extra parameter for '$presenter:$action'.");
+						throw new NInvalidLinkException("Unable to pass parameters to action '$presenter:$action', missing corresponding method.");
 					}
 
 				} elseif ($destination === 'this') {
@@ -962,7 +978,8 @@ abstract class NPresenter extends NControl implements IPresenter
 		}
 
 		if (array_key_exists($i, $args)) {
-			throw new NInvalidLinkException("Extra parameter for signal '$class:$method'.");
+			$method = NMethodReflection::from($class, $method)->getName();
+			throw new NInvalidLinkException("Passed more parameters than method $class::$method() expects.");
 		}
 	}
 

@@ -157,7 +157,7 @@ class NFileJournal extends NObject implements ICacheJournal
 		$tries = 3;
 		do {
 			if (!$tries--) {
-				throw new InvalidStateException('Cannot open journal file ' . $this->file . '.');
+				throw new InvalidStateException("Cannot open journal file '$this->file'.");
 			}
 
 			if (!($this->handle = @fopen($this->file, 'rb'))) { // intentionally @
@@ -169,7 +169,7 @@ class NFileJournal extends NObject implements ICacheJournal
 
 				if ($magic !== self::MAGIC) {
 					fclose($this->handle);
-					throw new InvalidStateException('Malformed journal file ' . $this->file . '.');
+					throw new InvalidStateException("Malformed journal file '$this->file'.");
 				}
 
 				for ($i = 0; $i < $sectionCount; ++$i) {
@@ -193,7 +193,7 @@ class NFileJournal extends NObject implements ICacheJournal
 
 
 		if (!($this->logHandle = @fopen($logfile = $this->file . self::EXTLOG, 'a+b'))) { // intentionally @
-			throw new InvalidStateException('Cannot open logfile ' . $logfile . ' for journal.');
+			throw new InvalidStateException("Cannot open logfile '$logfile' for journal.");
 		}
 
 		$doMergeFirst = FALSE;
@@ -202,7 +202,7 @@ class NFileJournal extends NObject implements ICacheJournal
 		if (flock($this->logHandle, LOCK_SH | LOCK_NB)) {
 			if (file_exists($logfile = $this->file . self::EXTLOGNEW)) {
 				if (($logmtime = @filemtime($this->file . self::EXTLOG)) === FALSE) {
-					throw new InvalidStateException('Cannot determine mtime of logfile ' . $this->file . self::EXTLOG . '.');
+					throw new InvalidStateException("Cannot determine modification time of logfile '$this->file" . self::EXTLOG . "'.");
 				}
 
 				if ($logmtime < $this->mtime) {
@@ -253,7 +253,7 @@ class NFileJournal extends NObject implements ICacheJournal
 		if ($reopen) {
 			fclose($this->logHandle);
 			if (!($this->logHandle = @fopen($logfile = $this->file . self::EXTLOG, 'a+b'))) {
-				throw new InvalidStateException('Cannot open logfile ' . $logfile . '.');
+				throw new InvalidStateException("Cannot open logfile '$logfile'.");
 			}
 
 			if (!flock($this->logHandle, LOCK_SH)) {
@@ -264,7 +264,7 @@ class NFileJournal extends NObject implements ICacheJournal
 		if ($openNewLog) {
 			fclose($this->logHandle);
 			if (!($this->logHandle = @fopen($logfile = $this->file . self::EXTLOGNEW, 'a+b'))) { // intentionally @
-				throw new InvalidStateException('Cannot open logfile ' . $logfile . '.');
+				throw new InvalidStateException("Cannot open logfile '$logfile'.");
 			}
 
 			$this->isLogNew = TRUE;
@@ -717,14 +717,14 @@ class NFileJournal extends NObject implements ICacheJournal
 		}
 
 		if (!($this->logHandle = @fopen($logfile, 'a+b'))) { // intentionally @
-			throw new InvalidStateException('Cannot reopen logfile ' . $logfile . '.');
+			throw new InvalidStateException("Cannot reopen logfile '$logfile'.");
 		}
 
 		$this->logMerge = array();
 		$this->logMergeP = 0;
 
 		if (!($this->handle = @fopen($this->file, 'rb'))) {
-			throw new InvalidStateException('Cannot reopen file ' . $this->file . '.');
+			throw new InvalidStateException("Cannot reopen file '$this->file'.");
 		}
 
 		clearstatcache();

@@ -41,7 +41,7 @@ class NSession extends NObject
 		'cookie_path' => '/',     // cookie is available within the entire domain
 		'cookie_domain' => '',    // cookie is available on current subdomain only
 		'cookie_secure' => FALSE, // cookie is available on HTTP & HTTPS
-		'cookie_httponly' => TRUE,// must be enabled to prevent NSession Fixation
+		'cookie_httponly' => TRUE,// must be enabled to prevent NSession Hijacking
 
 		// other
 		'gc_maxlifetime' => self::DEFAULT_FILE_LIFETIME,// 3 hours

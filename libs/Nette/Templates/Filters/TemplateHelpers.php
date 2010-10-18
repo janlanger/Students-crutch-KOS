@@ -20,6 +20,9 @@
 final class NTemplateHelpers
 {
 
+	/** @var string default date format */
+	public static $dateFormat = '%x';
+
 	/**
 	 * Static class - cannot be instantiated.
 	 */
@@ -187,10 +190,14 @@ final class NTemplateHelpers
 	 * @param  string
 	 * @return string
 	 */
-	public static function date($time, $format = "%x")
+	public static function date($time, $format = NULL)
 	{
 		if ($time == NULL) { // intentionally ==
 			return NULL;
+		}
+
+		if (!isset($format)) {
+			$format = self::$dateFormat;
 		}
 
 		$time = NTools::createDateTime($time);
