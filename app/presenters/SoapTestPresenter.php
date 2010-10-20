@@ -56,7 +56,15 @@ class SoapTestPresenter extends BasePresenter {
 
             $params = unserialize($operation->params);
             foreach ($params as $key => $param) {
-                $form->addText('param' . $key, 'Parametr ' . $param['name'] . ' (' . $param['type'] . ')')->setRequired("Vyplňte hodnotu parametru.");
+                if($param['type']=='array') {
+                    $form->addTextArea('param'.$key,  'Parametr ' . $param['name'] . ' (' . $param['type'] . ')')
+                            ->setOption('description', 'Jednotlivé hodnoty oddělte čárkou.')
+                            ->setRequired("Vyplňte hodnotu parametru.");
+                }
+                else {
+                    $form->addText('param' . $key, 'Parametr ' . $param['name'] . ' (' . $param['type'] . ')')
+                            ->setRequired("Vyplňte hodnotu parametru.");
+                }
             }
             $form->addSubmit('s', 'Odeslat')->onClick[] = callback($this, 'testSoap');
         }
@@ -65,16 +73,31 @@ class SoapTestPresenter extends BasePresenter {
     public function testSoap(NSubmitButton $btn) {
         $values = $btn->form->values;
         $operation = Operation::getSQL(array("met_id" => $values['met_id'], "rev_id" => $values['revision']));
+        if(!$operation instanceof DibiRow) {
+            $this->flashMessage('Vybraná operace není pro tuto revizi definována.','error');
+            return;
+        }
         $params = array();
 
         foreach (unserialize($operation->params) as $key => $param) {
-            $params[] = $values['param' . $key];
+            if($param['type']=='array') {
+                $x=explode(",", $values['param'.$key]);
+                array_walk($x, function (&$item,$key) { $item=trim($item); });
+                $params[]=$x;
+            }
+            else {
+                $params[] = $values['param' . $key];
+            }
         }
 
         $handler = new ServiceHandler();
         SoapIdentity::$testCall = TRUE;
         $credintals = @reset(Application::find(array("app_id" => $this->app_id)));
         $handler->authenticate($credintals['login'], NULL);
+        $revision=@reset(Revision::find(array("rev_id"=>$values['revision'],'app_id'=>  $this->app_id)));
+        
+        $handler->useRevision($revision->alias);
+
 
         $this->template->soapReturn = NDebug::dump(call_user_func_array(array($handler, $operation['name']), $params), TRUE);
         $this->template->sql = $handler->getQuery();

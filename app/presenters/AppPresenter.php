@@ -57,18 +57,18 @@ class AppPresenter extends BasePresenter {
         
         $form->addText('name', 'Název')
                 ->setRequired('Vyplňte prosím jméno aplikace.')
-                ->addRule(NForm::MAX_LENGTH, null, 255);
+                ->addRule(NForm::MAX_LENGTH, "null", 255);
         $form->addText('password', 'Heslo')
-                ->addRule(NForm::MAX_LENGTH, null, 255);
+                ->addRule(NForm::MAX_LENGTH, "null", 255);
 
         $form->addText('login', 'Login')
                 ->addRule(NForm::FILLED,"Vyplňte prosím login.")
-                ->addRule(NForm::MAX_LENGTH, null, 50);
+                ->addRule(NForm::MAX_LENGTH, "", 50);
         /* $form->addText('client_path', 'Client path')
           ->addRule(Form::FILLED)
           ->addRule(Form::MAX_LENGTH, null, 50); */
         $form->addText('admin_email', 'Admin email')        
-                ->addRule(NForm::MAX_LENGTH, null, 255);
+                ->addRule(NForm::MAX_LENGTH, "null", 255);
         if(!$new) {
             $form->addHidden('app_id');            
         }

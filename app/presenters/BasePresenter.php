@@ -36,8 +36,8 @@ abstract class BasePresenter extends NPresenter {
     public function createComponentNavigation() {
         $nav = new Navigation();
         $nav->setupHomepage('Domů', $this->link('Default:'));
-        $nav->add('Stažení XML', $this->link('Default:download'));
-        $nav->add('Import', $this->link('Import:'));
+        //$nav->add('Stažení XML', $this->link('Default:download'));
+        //$nav->add('Import', $this->link('Import:'));
         $nav->add('Správa aplikací', $this->link("App:"));
         $nav->add('Log', $this->link('Default:showLog'));
         return $nav;

@@ -26,16 +26,20 @@ class ServiceHandler {
             $this->proccessQuery($operation->sql, $params, $arguments);
 
             $q = call_user_func("dibi::query", $this->query);
-            /* @var $q DibiResult */
-            $q->detectTypes();
-            if ($operation->return == 'array') {
-                $returns = array();
-                foreach ($q as $row) {
-                    $returns[] = (array) $row;
+            
+            if ($operation->fetchType == 'simple' || $operation->fetchType=='assoc' ) {
+                if($operation->fetchType=='simple' || is_null($operation->assocKey)) {
+                    $returns = $q->fetchAll();
+                }
+                else {
+                    $returns=$q->fetchAssoc($operation->assocKey);
+                }
+                foreach ($returns as $key=>$row) {
+                    $returns[$key] = (array) $row;
                 }
                 return $returns;
             } else {
-                return $q->fetch();
+                return $q->fetchSingle();
             }
         } catch (Exception $e) {
             $this->latestError = $e;
@@ -56,6 +60,18 @@ class ServiceHandler {
             return FALSE;
         }
     }
+
+    public function useRevision($alias) {
+        $revision=Revision::find(array("app_id"=>  $this->user->getApp_id(),'alias'=>$alias));
+        if(count($revision)==1) {
+            $this->revision=@reset($revision);
+            dibi::query("USE [".$this->revision->db_name."]");
+            //dibi::query("SET search_path TO [".$this->revision->db_name."]"); postgre
+            return TRUE;
+        }
+        return FALSE;
+    }
+
 
     public function getLastError() {
         if (!is_null($this->latestError)) {
@@ -95,6 +111,9 @@ class ServiceHandler {
                 break;
             case 'string':
                 return "%s";
+                break;
+            case 'array':
+                return '%in';
                 break;
 
             default:
