@@ -10,6 +10,7 @@
  *
  * @author Honza
  * @property-read array $tables
+ * @property-read DOMParser $parser
  */
 class XMLImporter extends NControl {
 
@@ -18,42 +19,29 @@ class XMLImporter extends NControl {
     private $tables;
     private $file;
     public static $status = array();
+    private $Parser = NULL;
+    public static $cacheNamespace;
 
-    public function setFile($filename) {
-        $this->file = NEnvironment::getConfig('xml')->localRepository . '/' . $filename;
-        if (!file_exists(realpath($this->file))) {
-            throw new FileNotFoundException('File "' . $this->file . '" was not found.');
+    public function getParser() {
+        if($this->Parser == NULL) {
+            $this->Parser= NEnvironment::getContext()->getService('IParser');
         }
+        return $this->Parser;
     }
 
-    private function loadFile() {
-        if ($this->dom == NULL && $this->file != "") {
-            $this->dom = new DOMDocument();
-            $this->dom->preserveWhiteSpace = FALSE;
-            NDebug::tryError();
-            $this->dom->load(realpath($this->file), LIBXML_NOEMPTYTAG | LIBXML_COMPACT);
-
-            if (NDebug::catchError($msg)) {
-                throw new InvalidArgumentException('Dokument není ve správném formátu. (DOM Error: ' . $msg . ')');
-            }
-        }
+    public function setFile($filename) {
+        $this->parser->setFile(NEnvironment::getConfig('xml')->localRepository . '/' . $filename);
     }
 
     public function getStructure() {
-        XMLi_Entity::$cacheNamespace = 'xml_structure-' . basename($this->file);
-        $cache = NEnvironment::getCache('xml_structure-' . basename($this->file));
+        self::$cacheNamespace = 'xml_structure-' . basename($this->parser->file);
+        $cache = NEnvironment::getCache(self::$cacheNamespace);
         if (isset($cache['structure'])) {
             return $this->tables = $cache['structure'];
         }
-        $this->loadFile();
 
-        foreach ($this->dom->documentElement->childNodes as $node) {
-
-            if ($node->nodeType == XML_ELEMENT_NODE) {
-                $this->tables[strtolower($node->nodeName)] = XMLi_Entity::parseNode($node);
-            }
-        }
-        $this->tables['rozvrh'] = XMLi_Entity::parseRootNode($this->dom->documentElement);
+        $this->tables=$this->parser->createStructure();
+        
         $cache->save('structure', $this->tables, array(
             'expire' => time() + 5 * 3600,
             'tags' => array('xml'),
@@ -63,33 +51,22 @@ class XMLImporter extends NControl {
     }
 
     public function buildDatabase($db_name, $owerwrite=FALSE) {
+        $tableCreator = NEnvironment::getContext()->getService('ITableCreator');
         if ($owerwrite) {
-            dibi::query("DROP DATABASE IF EXISTS [" . $db_name . "]");
+            $tableCreator->dropDatabase($db_name);
         } else {
             try {
-                dibi::query("USE [" . $db_name . "]");
+                $tableCreator->setDefaultDatabase($db_name);
                 throw new InvalidStateException("Database " . $db_name . ' already exists.');
             } catch (DibiException $e) {
                 //intentionally
             }
         }
         try {
-            dibi::query("CREATE DATABASE [" . $db_name . "] COLLATE 'utf8_czech_ci'");
-            dibi::query("USE [" . $db_name . "]");
-            dibi::query("SET foreign_key_checks = 0");
+            $tableCreator->createDatabase($db_name);
+            $tableCreator->setDefaultDatabase($db_name);
+            $tableCreator->fillDatabase($this->tables);
 
-            foreach ($this->tables as $table) {
-                $time = microtime(TRUE);
-                $table->createTable();
-                self::$status[$table->name]['create_time'] = microtime(TRUE) - $time;
-            }
-            $table = microtime(TRUE);
-            foreach ($this->tables as $table) {
-                $table->createReferences();
-            }
-            self::$status['Cizí klíče']['create_time'] = microtime(TRUE) - $time;
-
-            //dibi::query("SET foreign_key_checks = 1");
             dibi::insert(":main:import_history", array(
                 "filename" => basename($this->file),
                 "database_name" => $db_name
@@ -97,7 +74,7 @@ class XMLImporter extends NControl {
             return TRUE;
         } catch (DibiException $e) {
             //rollback
-            dibi::query("DROP DATABASE IF EXISTS [" . $db_name . "]");
+            $tableCreator->dropDatabase($db_name);
             throw $e;
         }
     }

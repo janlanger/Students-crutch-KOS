@@ -88,8 +88,4 @@ class DefaultPresenter extends BasePresenter {
         return $this->getApplication()->getContext()->getService('IDownloader');
     }
 
-    protected function createComponentImporter() {
-        return $this->getApplication()->getContext()->getService('IImporter');
-    }
-
 }

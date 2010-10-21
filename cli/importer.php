@@ -2,7 +2,7 @@
 
 // absolute filesystem path to the web root
 define('CLI_DIR', dirname(__FILE__));
-define('WWW_DIR', dirname(__FILE__) . '/../document_root');
+define('WWW_DIR', dirname(__FILE__) . '/../www');
 
 // absolute filesystem path to the application root
 define('APP_DIR', WWW_DIR . '/../app');
@@ -39,7 +39,7 @@ if (isset($return['file'])) {
     //run import
     try {
         NDebug::timer("importer-total");
-        $importer = NEnvironment::getService('IImporter');
+        $importer = new XMLImporter(NULL, 'importer');
 
         /* @var $importer XMLImporter */
         $importer->setFile(basename($return['file']));

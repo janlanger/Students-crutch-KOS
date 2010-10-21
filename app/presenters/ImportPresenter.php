@@ -51,8 +51,8 @@ class ImportPresenter extends BasePresenter {
         $this->redirect('Import:analyze', array('file' => $values['choice']));
     }
 
-    public function createComponentImporter() {
-        return $this->getApplication()->getContext()->getService('IImporter');
+    public function createComponentImporter($name) {
+        return new XMLImporter($this, $name);
     }
 
     public function createComponentColumnDefForm($name) {

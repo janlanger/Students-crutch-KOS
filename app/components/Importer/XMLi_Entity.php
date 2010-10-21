@@ -14,7 +14,6 @@
  */
 class XMLi_Entity extends NObject {
 
-    public static $cacheNamespace;
     private $name = NULL;
     private $columns = array();
     private $rows = array();
@@ -51,7 +50,7 @@ class XMLi_Entity extends NObject {
         }
         $_this->columns['import_time'] = new XMLi_Column('import_time', "datetime");
         $_this->rows[0]['import_time'] = date("Y-m-d H:i:s");
-        NEnvironment::getCache(self::$cacheNamespace)->save($node->nodeName, $_this->rows, array(
+        NEnvironment::getCache(XMLImporter::$cacheNamespace)->save($node->nodeName, $_this->rows, array(
             'expire' => time() + 5 * 3600,
             'tags' => array('xml')
         ));
@@ -60,7 +59,7 @@ class XMLi_Entity extends NObject {
 
     private function analyzeNode(DOMNode $node) {
         $storeData = TRUE;
-        $cache = NEnvironment::getCache(self::$cacheNamespace);
+        $cache = NEnvironment::getCache(XMLImporter::$cacheNamespace);
         if (isset($cache[$node->nodeName])) {
             $this->rows = $cache[$node->nodeName];
             $storeData = FALSE;
@@ -126,12 +125,12 @@ class XMLi_Entity extends NObject {
         $this->rows = array();
     }
 
-    public function createTable() {
+    /*public function createTable() {
         if (!count($this->columns))
             return;
         $tableCreator = NEnvironment::getContext()->getService('ITableCreator');
         /* @var $tableCreator MySQLTableCreator */
-        $this->columns['hash']=new XMLi_Column('hash', 'varchar(200)');
+ /*       $this->columns['hash']=new XMLi_Column('hash', 'varchar(200)');
         $tableCreator->setName($this->name)
                 ->setColumns($this->columns)
                 ->setPrimaryKeys($this->primaryKeys)
@@ -146,23 +145,23 @@ class XMLi_Entity extends NObject {
         for ($i = 0; $i < count($rows); $i++) {
             dibi::query("INSERT INTO [" . $this->name . "] %ex", $rows[$i]); //data
         }
-    }
-    private function makeHash(&$item,$key) {
+    }*/
+ /*   private function makeHash(&$item,$key) {
         if(!isset($item['hash'])) {
             $item['hash']=md5(serialize($item));
         }
-    }
+    }*/
 
-    public function createReferences() {
+/*    public function createReferences() {
         if(!count($this->foreignKeys)) {
             return;
         }
         $tableCreator = NEnvironment::getContext()->getService('ITableCreator');
         /* @var $tableCreator MySQLTableCreator */
-        $tableCreator->setName($this->name)
+   /*     $tableCreator->setName($this->name)
                 ->setForeignKeys($this->foreignKeys)
                 ->createReferences();
-    }
+    }*/
 
     public function getGuessedPrimaryKeys() {
         if (isset($this->columns['id']) && isset($this->columns['sem_id']) && !isset($this->columns['predmet_id'])) {
@@ -204,7 +203,7 @@ class XMLi_Entity extends NObject {
     }
 
     public function getRows() {
-        $cache = NEnvironment::getCache(self::$cacheNamespace);
+        $cache = NEnvironment::getCache(XMLImporter::$cacheNamespace);
         if (isset($cache[$this->name])) {
             return $cache[$this->name];
         }
