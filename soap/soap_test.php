@@ -13,9 +13,15 @@ Ndebug::timer();
 $soap=new SoapClient(NULL,array("location"=>'http://bp.local/soap/berlicka',"uri"=>'http://bp.local/soap/berlicka'));
 
 $soap->authenticate('berlicka','test');
-echo $soap->getLastError();
-$return=($soap->getStudentClasses(355981000,'B101'));
+dump($soap->useRevision('testing'));
+try{
+$return=($soap->getStudentsInfo(355981000,'B101'));
+} catch(SoapFault $e) {
+    dump($e);
+    
+}
+dump($soap->getLastError());
 echo NDebug::timer();
-dump($return);
+
 
 ?>

@@ -89,17 +89,21 @@ class SoapTestPresenter extends BasePresenter {
                 $params[] = $values['param' . $key];
             }
         }
-
-        $handler = new ServiceHandler();
-        SoapIdentity::$testCall = TRUE;
-        $credintals = @reset(Application::find(array("app_id" => $this->app_id)));
-        $handler->authenticate($credintals['login'], NULL);
-        $revision=@reset(Revision::find(array("rev_id"=>$values['revision'],'app_id'=>  $this->app_id)));
+        try {
+            $handler = new ServiceHandler();
+            SoapIdentity::$testCall = TRUE;
+            $credintals = @reset(Application::find(array("app_id" => $this->app_id)));
+            $handler->authenticate($credintals['login'], NULL);
+            $revision=@reset(Revision::find(array("rev_id"=>$values['revision'],'app_id'=>  $this->app_id)));
         
         $handler->useRevision($revision->alias);
 
 
         $this->template->soapReturn = NDebug::dump(call_user_func_array(array($handler, $operation['name']), $params), TRUE);
+        
+        } catch (Exception $e) {
+            $this->flashMessage('Chyba při vykonávání požadavku: '.$e->getMessage(),'error');
+        }
         $this->template->sql = $handler->getQuery();
     }
 

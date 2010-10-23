@@ -17,6 +17,9 @@ class ServiceHandler {
             if ($this->user == NULL) {
                 throw new InvalidStateException('Unauthorized!');
             }
+
+            dibi::query("USE [".$this->getRevision()->db_name."]");
+            
             $operation = Operation::getSQL(array("name" => $name, "rev_id" => $this->getRevision()->rev_id));
             if (!($operation instanceof DibiRow)) {
                 throw new InvalidArgumentException("Operation " . $name . ' is not defined.');
@@ -41,10 +44,10 @@ class ServiceHandler {
             } else {
                 return $q->fetchSingle();
             }
-        } catch (Exception $e) {
+        } catch (Exception $e) {            
             $this->latestError = $e;
             NEnvironment::getContext()->getService('ILogger')->logMessage($this->getLastError(), Logger::WARNING, 'SOAP service');
-            return FALSE;
+            throw $e;
         }
     }
 
@@ -54,10 +57,9 @@ class ServiceHandler {
             $this->user->authenticate($client, $password);
             return TRUE;
         } catch (NAuthenticationException $e) {
-
             NEnvironment::getContext()->getService('ILogger')->logMessage("Failed login attempt for " . $client . "@" . $_SERVER['REMOTE_ADDR'], Logger::WARNING, 'SOAP service');
             $this->latestError = $e;
-            return FALSE;
+            throw $e;
         }
     }
 
@@ -65,11 +67,12 @@ class ServiceHandler {
         $revision=Revision::find(array("app_id"=>  $this->user->getApp_id(),'alias'=>$alias));
         if(count($revision)==1) {
             $this->revision=@reset($revision);
-            dibi::query("USE [".$this->revision->db_name."]");
             //dibi::query("SET search_path TO [".$this->revision->db_name."]"); postgre
             return TRUE;
         }
-        return FALSE;
+        $e = new InvalidArgumentException("Revision wasn't found.");
+        $this->latestError=$e;
+        throw $e;
     }
 
 
@@ -84,7 +87,7 @@ class ServiceHandler {
         if ($this->revision == NULL) {
             $revision = @reset(Revision::find(array("app_id" => $this->user->getApp_id(), "isMain" => TRUE)));
             $this->revision = $revision;
-            dibi::query("USE [" . $revision['db_name'] . "]");
+            
         }
         return $this->revision;
     }
