@@ -1,18 +1,42 @@
 <?php
+/* The MIT Licence
+ *
+ * Copyright (c) 2009 Jan langer <kontakt@janlanger.cz>
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
+ */
 
+/**
+ * Provides Datagrid
+ * @author Jan Langer
+ */
 class Datagrid extends NControl {
 
     private $data;
-    /**
-     *
-     * @var NPaginator
-     */
+    /** @var NPaginator */
     private $paginator;
+    /** @var array */
     private $columns;
-    /**
-     *
-     * @var DatagridSQL
-     */
+    /** @var DatagridSQL */
     private $sql;
 
 
@@ -24,6 +48,11 @@ class Datagrid extends NControl {
 
     private $actions=NULL;
 
+    /**
+     *
+     * @param IComponentContainer $parent
+     * @param string $name
+     */
     public function __construct(IComponentContainer $parent = NULL, $name = NULL) {
         parent::__construct($parent, $name);
         $this->paginator=new NPaginator();
@@ -44,10 +73,17 @@ class Datagrid extends NControl {
 
     }
 
+    /**
+     * Renders Datagrid
+     */
     public function render() {
         echo $this->__toString();
     }
 
+    /**
+     * Returns HTML code of the Datagrid
+     * @return string HTML code
+     */
     public function __toString() {
         $uriParams='';
         $a=explode("?",$_SERVER['REQUEST_URI']);

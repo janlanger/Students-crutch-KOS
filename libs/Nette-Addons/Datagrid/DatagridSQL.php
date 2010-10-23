@@ -52,7 +52,7 @@ class DatagridSQL {
         }
         $this->query=dibi::select($this->columns)->from($this->dataTable);
         foreach ($this->queryParams as $x) {
-            if($x['command']=='where' || $x['command']=='limit' || $x['command']=='offset') {
+            if(/*$x['command']=='where' ||*/ $x['command']=='limit' || $x['command']=='offset') {
                 continue;
             }
 

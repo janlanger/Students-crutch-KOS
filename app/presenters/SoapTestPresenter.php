@@ -30,15 +30,20 @@ class SoapTestPresenter extends BasePresenter {
     public function createComponentDatagrid($name) {
         $grid = new Datagrid($this, $name);
         $grid->setDataTable(':main:operations_def');
-        $grid->getSql()->where(array("app_id" => $this->getHttpRequest()->getQuery('app_id')));
         $grid->setColumns(array("met_id" => 'ID#', 'return' => 'Návratový typ', 'name' => 'Název', 'params' => 'Parametry'));
         $grid->setColumnFormat('params', DatagridFormatter::CALLBACK, function ($record) {
+            if($record=="") {
+                echo  "žádné";
+                return;
+            }
                     $data = unserialize($record);
                     foreach ($data as $item) {
                         echo $item['type'] . ' ' . $item['name'] . ' ';
                     }
                 });
         $grid->addAction(array("action" => 'test', 'param' => 'met_id'), "Test", 'test');
+
+        $grid->getSql()->where(array("app_id" => $this->app_id));
     }
 
     public function createComponentForm($name) {
