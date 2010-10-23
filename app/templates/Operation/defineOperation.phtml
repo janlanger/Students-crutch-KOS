@@ -1,0 +1,19 @@
+{extends ../@layout.phtml}
+{block content}
+
+
+{if $edit}
+    {control editOperationForm}
+{else}
+    {control addOperationForm}
+{/if}
+
+<strong>Způsob získání výsledků:</strong>
+<ul>
+    <li><b>Jednoduchý</b> - vrátí všechny výsledky které vyhovují dotazu v poli indexovaném od 0.</li>
+    <li><b>Asociativní</b> - vrátí všechny výsledky vyhovující dotazu v poli indexovaném podle daného pole databáze (typicky index tabulky). <br />
+        Název asociativního klíče se volí při tvorbe SQL dotazu.</li>
+    <li><b>Jednu hodnotu</b> - vrátí jednu hodnotu (možné pouze v kombinaci s návratovým typem string nebo integer).<br />
+        Odpovídá konstrukci <code class="jush-php">return mysql_result(resource dotazu, 1);</code></li>
+</ul>
+

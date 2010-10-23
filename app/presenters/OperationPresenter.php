@@ -23,11 +23,17 @@ class OperationPresenter extends BasePresenter {
 
     /*     * **************************** OPERATION ********************************* */
 
-    public function actionAddOperation() {
-
+    public function actionAddOperation($app_id) {
+        $this['header']->addTitle('Přidání operace');
+        $this->template->setFile(NEnvironment::expand("%appDir%/templates/Operation/defineOperation.phtml"));
+        $this->template->edit=FALSE;
+        $this['addOperationForm']['app_id']->setValue($app_id);
     }
 
     public function actionEditOperation($met_id) {
+        $this['header']->addTitle('Úprava operace');
+        $this->template->setFile(NEnvironment::expand("%appDir%/templates/Operation/defineOperation.phtml"));
+        $this->template->edit=TRUE;
         $operation = Operation::find(array("met_id" => $met_id));
         if (count($operation) == 1) {
             $operation = @reset($operation);
@@ -73,11 +79,17 @@ class OperationPresenter extends BasePresenter {
         $form->addSelect('return', 'Návratový typ', array('----------', 'array' => 'array', "string" => "string", 'integer' => 'integer'))
                 ->skipFirst()
                 ->setRequired('Vyberte návratový typ.');
+                
 
         $form->addSelect('fetchType', 'Způsob získání výsledků', array('----------', 'simple' => 'Jednoduchý', 'assoc' => 'Podle asociativního klíče', 'single' => 'Jednu hodnotu'))
                 ->skipFirst()
-                ->addRule(NForm::FILLED, 'Vyberte zpúsob získání');
-
+                ->addRule(NForm::FILLED, 'Vyberte zpúsob získání')
+                ->addConditionOn($form['return'], NForm::EQUAL, array("string",'integer'))
+                ->addRule(NForm::EQUAL, "Pokud operace nemá vracet pole, musíte vybrat způsob získání 'Jednu hodnotu'. (a samozřejmě tomu uzpůsobit SQL dotaz)", "single");
+        $form['fetchType']->addConditionOn($form['return'], NForm::EQUAL, "array")
+                ->addRule(NForm::EQUAL, 'Pokud chcete vracet pole, musíte vybrat asociativní nebo jednoduché získání výsledků', array("simple",'assoc'));
+                
+        
         $form->addSubmit('submitButton', 'Odeslat')->onClick[] = callback($this, 'processOperationForm');
 
 
