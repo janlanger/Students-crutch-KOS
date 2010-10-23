@@ -17,6 +17,7 @@ abstract class BasePresenter extends NPresenter {
 
 
 
+
     public function createComponentHeader() {
         NEnvironment::getSession()->start();
         $header = new HeaderControl($this, 'header');

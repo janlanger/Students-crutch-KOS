@@ -15,9 +15,9 @@
  */
 class DefaultPresenter extends BasePresenter {
 
-    public function actionImport() {
+/*    public function actionImport() {
         $this['header']->addTitle('Import');
-    }
+    }*/
 
     public function actionShowLog() {
         $this['header']->addTitle('Log');
@@ -26,15 +26,22 @@ class DefaultPresenter extends BasePresenter {
     protected function createComponentLogGrid($name) {
         $grid=new Datagrid($this, $name);
         $grid->setDataTable(':main:log');
-        $grid->setColumns(array('log_id'=>'ID#','component'=>'Komponenta','severity'=>'Závažnost','message'=>'Zpráva','timestamp'=>'Čas'));
+        $grid->setColumns(array('timestamp'=>'Čas','severity'=>'Z.','component'=>'Komponenta','message'=>'Zpráva'));
         $grid->setDefaultSort('timestamp', 'desc');
         $grid->setColumnFormat('timestamp', DatagridFormatter::DATE);
-        $grid->setColumnFormat('severity', DatagridFormatter::SUBST, array('info'=>'Info','critical'=>'Kritická','notice'=>'Poznámka','error'=>'Chyba','warning'=>'Varování'));
-        $grid->setItemsPerPage(50);
+        $grid->setColumnFormat('severity', DatagridFormatter::CALLBACK,  function ($record) {
+            
+            if(in_array($record, array("notice",'info','warning','error','critical'))) {
+                echo NHtml::el("img")->src("/images/icons/".$record.".png");
+            }
+            else echo $record;
+        });
+
+        $grid->setItemsPerPage(25);
         
     }
 
-    public function actionDownload() {
+/*    public function actionDownload() {
         $this['header']->addTitle('Stažení XML');
     }
 
@@ -86,6 +93,6 @@ class DefaultPresenter extends BasePresenter {
 
     protected function createComponentDownloader() {
         return $this->getApplication()->getContext()->getService('IDownloader');
-    }
+    }*/
 
 }

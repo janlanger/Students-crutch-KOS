@@ -125,44 +125,6 @@ class XMLi_Entity extends NObject {
         $this->rows = array();
     }
 
-    /*public function createTable() {
-        if (!count($this->columns))
-            return;
-        $tableCreator = NEnvironment::getContext()->getService('ITableCreator');
-        /* @var $tableCreator MySQLTableCreator */
- /*       $this->columns['hash']=new XMLi_Column('hash', 'varchar(200)');
-        $tableCreator->setName($this->name)
-                ->setColumns($this->columns)
-                ->setPrimaryKeys($this->primaryKeys)
-                ->setIndexes($this->indexes)
-                ->create();
-        $rows=$this->getRows();
-        array_walk($rows, array($this,'makeHash'));
-
-        $maxRowsPerInsert = 1000;
-        $rows = array_chunk($rows, $maxRowsPerInsert);
-        
-        for ($i = 0; $i < count($rows); $i++) {
-            dibi::query("INSERT INTO [" . $this->name . "] %ex", $rows[$i]); //data
-        }
-    }*/
- /*   private function makeHash(&$item,$key) {
-        if(!isset($item['hash'])) {
-            $item['hash']=md5(serialize($item));
-        }
-    }*/
-
-/*    public function createReferences() {
-        if(!count($this->foreignKeys)) {
-            return;
-        }
-        $tableCreator = NEnvironment::getContext()->getService('ITableCreator');
-        /* @var $tableCreator MySQLTableCreator */
-   /*     $tableCreator->setName($this->name)
-                ->setForeignKeys($this->foreignKeys)
-                ->createReferences();
-    }*/
-
     public function getGuessedPrimaryKeys() {
         if (isset($this->columns['id']) && isset($this->columns['sem_id']) && !isset($this->columns['predmet_id'])) {
             //vyjimka pro tabulku predmety
@@ -183,12 +145,6 @@ class XMLi_Entity extends NObject {
         return $this->indexes;
     }
 
-    /* private function getTableIndexes() {
-      foreach ($this->tableIndexes as $key=>$index) {
-      $this->tableIndexes[$key]="INDEX ([".$index."])";
-      }
-      return implode(", ",  $this->tableIndexes);
-      } */
 
     public function getName() {
         return strtolower($this->name);
