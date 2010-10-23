@@ -1,12 +1,14 @@
 
 {block content}
 
+<a href="{link addOperation}">Vytvořit novou operaci</a>
 
 
 {var $previous=""}
 {foreach $operations as $op}
+{dump $op}
     {if $op->name!=$previous}
-        <h3>{$op->return} {$op->name} (
+        <h3>{$op->name} (
                 {if $op->params!=NULL}
                 {foreach unserialize($op->params) as $param}
                     {if !$iterator->isFirst()}, {/if}
@@ -14,14 +16,27 @@
                 {/foreach}
                 {/if})</h3>
         {var $previous=$op->name}
+        <b>Návratový typ:</b> {$op->return}, <b>způsob získání:</b> {$op->fetchType} 
+        - <a href="{link editOperation,met_id=>$op->met_id}">Upravit</a>
+        - <a href="{link deleteOperation,met_id=>$op->met_id}"
+             onclick="if(confirm('Opravdu chcete tuto operaci kompletně odstranit? Zároveň budou smazány také závislé definice SQL příkazů.')) location.href={link deleteOperation,met_id=>$op->met_id}; return(false);">Odstranit</a>
     {/if}
     <ul n:inner-foreach="$revisions as $rev">
-        <li><b>Revize: </b>{$rev->alias} {if $rev->isMain}(Výchozí){/if} - databáze {$rev->db_name}<br />
-            {if isset($op['sql']) && isset($op['sql'][$rev['rev_id']])}
-            <code class="jush-sql">{$op['sql'][$rev['rev_id']]['sql']}</code>
+
+        <li>
+            <b>Revize: </b>{$rev->alias}
+            {if $rev->isMain}(Výchozí){/if}
+            - <b>databáze</b> {$rev->db_name}{*
+
+          *}{if isset($op['sql']) && isset($op['sql'][$rev['rev_id']])}{*
+              *}{if $op->fetchType=='assoc'}, <b>asociativní klíč:</b> {$op->sql[$rev['rev_id']]->assocKey}{/if}
+              - <a href="{link editSql,sql_id=>$op->sql[$rev->rev_id]->sql_id}">Upravit SQL definici</a>
+                <br />
+                <code class="jush-sql">{$op['sql'][$rev['rev_id']]['sql']}</code>
             {else}
-            <em>Není definováno</em>
-                {/if}
+                <br />
+                <em>Není definováno</em> - <a href="{link defineSql,met_id=>$op->met_id,rev_id=>$rev->rev_id}">Definovat</a>
+            {/if}
         </li>
     </ul>
     

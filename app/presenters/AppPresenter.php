@@ -19,8 +19,10 @@ class AppPresenter extends BasePresenter {
             $this->flashMessage('Aplikace byla smazána.', 'success');
             
         }
-        $this->flashMessage('Záznam '.$app_id.' nenalezen.', 'error');
-        $this->redirect("App:");
+        else {
+            $this->flashMessage('Záznam '.$app_id.' nenalezen.', 'error');
+        }
+        $this->redirect("default");
 
 
     }

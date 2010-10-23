@@ -1,0 +1,12 @@
+{extends ../@layout.phtml}
+{block content}
+
+Parametry operace:
+<ul n:inner-foreach="$params as $param">
+    <li>{$param['type']} {$param['name']}</li>
+</ul>
+{if $edit}
+    {control editSQLForm}
+{else}
+    {control addSQLForm}
+{/if}

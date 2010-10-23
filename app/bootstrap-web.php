@@ -14,10 +14,7 @@ $application->errorPresenter = 'Error';
 // Step 4: Setup application router
 $router = $application->getRouter();
 
-$router[] = new NCliRouter(array(
-    "presenter"=>'Console',
-    "action"=>"default"
-));
+
 
 $router[] = new NRoute('index.php', array(
 	'presenter' => 'Homepage',

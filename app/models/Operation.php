@@ -30,7 +30,7 @@ class Operation extends Model {
     public static function getWithSQLs($where = NULL, $order = NULL, $offset = NULL, $limit = NULL) {
         $met=self::find($where, $order, $offset, $limit);
         $keys = array_keys($met);
-        $sqls = dibi::select(array("met_id", 'rev_id', 'sql'))->from("[:main:operations_sql]")->where("met_id")->in($keys)->execute()->fetchAssoc("met_id,rev_id");
+        $sqls = dibi::select("met_id,rev_id, sql_id,[sql],assocKey")->from("[:main:operations_sql]")->where("met_id")->in($keys)->execute()->fetchAssoc("met_id,rev_id");
         foreach ($sqls as $key => $sql) {
             $met[$key]['sql'] = $sql;
         }
@@ -47,6 +47,32 @@ class Operation extends Model {
         return $q->execute()->fetch();
 
     }
+
+    public static function create($values) {
+        $_this=new self($values);
+        return $_this;
+    }
+
+    public function save() {
+        if(isset($this->met_id) && $this->met_id > 0) {
+            //$this->app_id=NULL;
+            $met_id=$this->met_id;
+            unset($this->met_id);
+            dibi::update(':main:operations_def', $this)->where(array("met_id"=>$met_id))->execute();
+            return TRUE;
+        } else {
+            $this->met_id=NULL;
+
+            dibi::insert(':main:operations_def', $this)->execute();
+            return TRUE;
+        }
+    }
+    public function delete() {
+        dibi::delete(":main:operations_def")->where(array("met_id"=>$this->met_id))->execute();
+    }
+
+    
+
 
 }
 
