@@ -31,6 +31,9 @@ class Application extends Model {
             if($this->password!="") {
                 $this->password=self::hashPassword($this->password);
             }
+            else {
+                unset($this->password);
+            }
             $app_id=$this->app_id;
             unset($this->app_id);
             dibi::update(':main:application', $this)->where(array("app_id"=>$app_id))->execute();
