@@ -1,72 +1,37 @@
 <?php
-/* 
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+/* The MIT Licence
+ *
+ * Copyright (c) 2010 Jan langer <kontakt@janlanger.cz>
+ *
+ * Permission is hereby granted, free of charge, to any person
+ * obtaining a copy of this software and associated documentation
+ * files (the "Software"), to deal in the Software without
+ * restriction, including without limitation the rights to use,
+ * copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following
+ * conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
+ * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ * OTHER DEALINGS IN THE SOFTWARE.
  */
 
 /**
- * Description of DatagridRow
+ * Extension of DibiRow for datagrid.
  *
- * @author Honza
+ * @author Jan Langer
+ * @see DibiRow
  */
 class DatagridRow extends DibiRow {
-
-    private static $actions=array();
-
-    
-
-    public function __construct($arr) {
-        parent::__construct($arr);
-        
-    }
-
-    public static function addAction($type,$link,$title=NULL,$useJsConfirm=FALSE) {
-        self::$actions[]=array(
-            "type"=>strtolower($type),
-            "link"=>  $link,
-            "title"=>(is_null($title)?'['.strtoupper($type).']':$title),
-            "useJsConfirm"=>$useJsConfirm
-        );
-    }
-
-    public function getActionLinks() {
-
-        
-
-        if(!(count(self::$actions)>0)) {
-            return;
-        }
-        
-        $search=array();
-        foreach($this as $key=>$item) {
-            $search[]='%'.$key.'%';
-            $replace[]=$item;
-        }
-        foreach(self::$actions as $item) {
-            $link=NHtml::el('a')->href($item['link'])
-                    ->setText($item['title']);
-            $link->class[]=$item['type'];
-
-
-            /*if($item['useJsConfirm'] || $item['type']=='del' || $item['type']=='delete') {
-                $return[]=NHtml::el('a')->onclick('if(confirm(\'Opravdu chcete provést tuto akci? ('.$item['type'].')\')) location.href=\''.str_ireplace($search, $replace, $item['link']).'\'; return(false);')
-                    ->href("#")
-                    ->setHtml(
-                    NHtml::el('img')
-                    ->src(self::$actionsIconsMap[$ico])->title($item['title'])
-                    ->alt($item['title']));
-            }
-            else {
-                $return[]=NHtml::el('a')->href($item['link'])
-                    ->setText($item['title'])->class=$item['type'];
-            }
-            dump($item);*/
-            $return[]=$link;
-        }
-        return $return;
-    }
-
-    
-    
+ 
 }
 ?>
