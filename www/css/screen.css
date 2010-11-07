@@ -217,3 +217,7 @@ padding: 4px 5px;
     border-color:#c0c0c0;
     color:#606060;
 }
+form fieldset {
+    border: none;
+    border-top: 1px solid black;
+}
