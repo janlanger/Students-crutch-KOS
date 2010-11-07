@@ -1,0 +1,16 @@
+
+{block content}
+
+{control editForm}
+
+<hr />
+<h3>Detaily revize</h3>
+<ul>
+    <li><b>Založena: </b>{$revision->created_time|date:'d.m.Y H:i'}</li>
+    <li><b>Databáze: </b>{$revision->db_name} (velikost: {$revision->getDatabaseSize()|bytes})</li>
+    <li><b>Tabluky v databázi:</b>
+        <ul n:inner-foreach="$revision->getTables() as $table">
+            <li>{$table}</li>
+        </ul>
+
+</ul>
