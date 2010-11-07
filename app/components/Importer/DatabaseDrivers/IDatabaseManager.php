@@ -9,7 +9,7 @@
  *
  * @author Honza
  */
-interface ITableCreator {
+interface IDatabaseManager {
     public function dropDatabase($name);
     public function setDefaultDatabase($name);
     public function createDatabase($name);
