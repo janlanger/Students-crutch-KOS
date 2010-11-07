@@ -113,7 +113,11 @@ class MySQLDatabaseManager extends NObject implements IDatabaseManager {
     }
 
     public function createDatabase($name) {
-        dibi::query("CREATE DATABASE [" . $name . "] COLLATE 'utf8_czech_ci'");
+        try {
+            dibi::query("CREATE DATABASE [" . $name . "] COLLATE 'utf8_czech_ci'");
+        } catch (DibiException $e) {
+            throw new DatabaseManagerException('Unable to create database. Already exists?', 0, $e);
+        }
     }
 
     public function dropDatabase($name) {
@@ -135,6 +139,36 @@ class MySQLDatabaseManager extends NObject implements IDatabaseManager {
 
     public function setDefaultDatabase($name) {
         dibi::query("USE [$name]");
+    }
+
+    public function getTables($database) {
+        $result=dibi::query('SHOW TABLES IN ['.$database.']');
+        $tables=array();
+        foreach($result as $table) {
+            $tables[]=$table['Tables_in_'.$database];
+        }
+        return $tables;
+    }
+
+    public function createRevision($fromDb, $toDb, $tables) {
+        try {
+            $this->createDatabase($toDb);
+            foreach($tables as $table) {
+                $this->copyTable($table,$fromDb,$toDb);
+            }
+        } catch (DatabaseManagerException $e) {
+            //rollback
+            $this->dropDatabase($toDb);
+            throw $e;
+        }
+    }
+
+    public function copyTable($table,$fromDb,$toDb) {
+        try {
+            dibi::query("CREATE TABLE [$toDb.$table] SELECT * FROM [$fromDb.$table]");
+        } catch (DibiException $e) {
+            throw new DatabaseManagerException("Unable to copy table. ".$e->getMessage(), NULL, $e);
+        }
     }
 
 }
