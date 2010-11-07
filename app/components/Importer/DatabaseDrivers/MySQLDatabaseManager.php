@@ -171,6 +171,14 @@ class MySQLDatabaseManager extends NObject implements IDatabaseManager {
         }
     }
 
+    public function getDatabaseSize($database) {
+        try {
+            return dibi::query("SELECT SUM([data_length] + [index_length]) AS [size] FROM [information_schema.tables] WHERE [table_schema]=%s",$database)->fetchSingle();
+        } catch (DibiException $e) {
+            throw new DatabaseManagerException($e->getMessage(), NULL, $e);
+        }
+    }
+
 }
 
 ?>
