@@ -5,17 +5,11 @@
  */
 
 /**
- * Description of Model
+ * Description of DatabaseManagerException
  *
- 
  * @author Honza
  */
-class Model extends DibiRow {
-
-    
-   
+class DatabaseManagerException extends RuntimeException {
+    //put your code here
 }
-
-class ModelException extends Exception {}
-
 ?>
