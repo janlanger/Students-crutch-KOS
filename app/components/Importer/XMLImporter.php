@@ -51,7 +51,7 @@ class XMLImporter extends NControl {
     }
 
     public function buildDatabase($db_name, $owerwrite=FALSE) {
-        $tableCreator = NEnvironment::getContext()->getService('ITableCreator');
+        $tableCreator = NEnvironment::getContext()->getService('IDatabaseManager');
         if ($owerwrite) {
             $tableCreator->dropDatabase($db_name);
         } else {

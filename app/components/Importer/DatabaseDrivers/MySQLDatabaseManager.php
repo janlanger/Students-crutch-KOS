@@ -10,7 +10,7 @@
  *
  * @author Honza
  */
-class MySQLTableCreator extends NObject implements ITableCreator {
+class MySQLDatabaseManager extends NObject implements IDatabaseManager {
     /* private $name;
       private $columns;
       private $primaryKeys;
