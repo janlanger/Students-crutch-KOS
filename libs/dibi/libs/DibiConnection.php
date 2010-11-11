@@ -1,12 +1,12 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
  * @package    dibi
  */
 
@@ -15,8 +15,7 @@
 /**
  * dibi connection.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  *
  * @property-read bool $connected
  * @property-read mixed $config
@@ -112,6 +111,7 @@ class DibiConnection extends DibiObject
 		}
 
 		if (!empty($profilerCfg['run'])) {
+			class_exists('dibi'); // ensure dibi.php is processed
 			$class = isset($profilerCfg['class']) ? $profilerCfg['class'] : 'DibiProfiler';
 			if (!class_exists($class)) {
 				throw new DibiException("Unable to create instance of dibi profiler '$class'.");
@@ -340,7 +340,7 @@ class DibiConnection extends DibiObject
 
 		dibi::$sql = $sql;
 		if ($res = $this->driver->query($sql)) { // intentionally =
-			$res = new DibiResult($res, $this->config['result']);
+			$res = $this->createResultSet($res);
 		} else {
 			$res = $this->driver->getAffectedRows();
 		}
@@ -462,6 +462,18 @@ class DibiConnection extends DibiObject
 		if (isset($ticket)) {
 			$this->profiler->after($ticket);
 		}
+	}
+
+
+
+	/**
+	 * Result set factory.
+	 * @param  IDibiResultDriver
+	 * @return DibiResult
+	 */
+	public function createResultSet(IDibiResultDriver $resultDriver)
+	{
+		return new DibiResult($resultDriver, $this->config['result']);
 	}
 
 

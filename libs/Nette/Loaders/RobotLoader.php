@@ -7,8 +7,12 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Loaders
  */
+
+namespace Nette\Loaders;
+
+use Nette,
+	Nette\String;
 
 
 
@@ -17,7 +21,7 @@
  *
  * @author     David Grudl
  */
-class NRobotLoader extends NAutoLoader
+class RobotLoader extends AutoLoader
 {
 	/** @var array */
 	public $scanDirs;
@@ -40,7 +44,7 @@ class NRobotLoader extends NAutoLoader
 	/** @var bool */
 	private $rebuilt = FALSE;
 
-	/** @var ICacheStorage */
+	/** @var Nette\Caching\ICacheStorage */
 	private $cacheStorage;
 
 
@@ -50,7 +54,7 @@ class NRobotLoader extends NAutoLoader
 	public function __construct()
 	{
 		if (!extension_loaded('tokenizer')) {
-			throw new Exception("PHP extension Tokenizer is not loaded.");
+			throw new \Exception("PHP extension Tokenizer is not loaded.");
 		}
 	}
 
@@ -70,8 +74,8 @@ class NRobotLoader extends NAutoLoader
 			$this->rebuild();
 		}
 
-		if (isset($this->list[strtolower(__CLASS__)]) && class_exists('NNetteLoader', FALSE)) {
-			NNetteLoader::getInstance()->unregister();
+		if (isset($this->list[strtolower(__CLASS__)]) && class_exists('Nette\Loaders\NetteLoader', FALSE)) {
+			NetteLoader::getInstance()->unregister();
 		}
 
 		parent::register();
@@ -108,7 +112,7 @@ class NRobotLoader extends NAutoLoader
 		}
 
 		if (isset($this->list[$type][0])) {
-			NLimitedScope::load($this->list[$type][0]);
+			LimitedScope::load($this->list[$type][0]);
 			self::$count++;
 		}
 	}
@@ -162,14 +166,14 @@ class NRobotLoader extends NAutoLoader
 	 * Add directory (or directories) to list.
 	 * @param  string|array
 	 * @return void
-	 * @throws DirectoryNotFoundException if path is not found
+	 * @throws \DirectoryNotFoundException if path is not found
 	 */
 	public function addDirectory($path)
 	{
 		foreach ((array) $path as $val) {
 			$real = realpath($val);
 			if ($real === FALSE) {
-				throw new DirectoryNotFoundException("Directory '$val' not found.");
+				throw new \DirectoryNotFoundException("Directory '$val' not found.");
 			}
 			$this->scanDirs[] = $real;
 		}
@@ -188,11 +192,8 @@ class NRobotLoader extends NAutoLoader
 	{
 		$lClass = strtolower($class);
 		if (isset($this->list[$lClass][0]) && $this->list[$lClass][0] !== $file && is_file($this->list[$lClass][0])) {
-			$e = new InvalidStateException("Ambiguous class '$class' resolution; defined in $file and in " . $this->list[$lClass][0] . ".");
-			if (PHP_VERSION_ID < 50300) {
-				NDebug::_exceptionHandler($e);
-				exit;
-			} else {
+			$e = new \InvalidStateException("Ambiguous class '$class' resolution; defined in $file and in " . $this->list[$lClass][0] . ".");
+			{
 				throw $e;
 			}
 		}
@@ -210,26 +211,26 @@ class NRobotLoader extends NAutoLoader
 	{
 		if (is_dir($dir)) {
 			$disallow = array();
-			$iterator = NFinder::findFiles(NString::split($this->acceptFiles, '#[,\s]+#'))
-				->filter(create_function('$file', 'extract(NClosureFix::$vars['.NClosureFix::uses(array('disallow'=>&$disallow)).'], EXTR_REFS); 
+			$iterator = Nette\Finder::findFiles(String::split($this->acceptFiles, '#[,\s]+#'))
+				->filter(function($file) use (&$disallow){
 					return !isset($disallow[$file->getPathname()]);
-				'))
+				})
 				->from($dir)
-				->exclude(NString::split($this->ignoreDirs, '#[,\s]+#'))
-				->filter($filter = create_function('$dir', 'extract(NClosureFix::$vars['.NClosureFix::uses(array('disallow'=>&$disallow)).'], EXTR_REFS); 
+				->exclude(String::split($this->ignoreDirs, '#[,\s]+#'))
+				->filter($filter = function($dir) use (&$disallow){
 					$path = $dir->getPathname();
 					if (is_file("$path/netterobots.txt")) {
 						foreach (file("$path/netterobots.txt") as $s) {
-							if ($matches = NString::match($s, \'#^disallow\\\\s*:\\\\s*(\\\\S+)#i\')) {
-								$disallow[$path . str_replace(\'/\', DIRECTORY_SEPARATOR, rtrim(\'/\' . ltrim($matches[1], \'/\'), \'/\'))] = TRUE;
+							if ($matches = String::match($s, '#^disallow\\s*:\\s*(\\S+)#i')) {
+								$disallow[$path . str_replace('/', DIRECTORY_SEPARATOR, rtrim('/' . ltrim($matches[1], '/'), '/'))] = TRUE;
 							}
 						}
 					}
 					return !isset($disallow[$path]);
-				'));
-			$filter(new SplFileInfo($dir));
+				});
+			$filter(new \SplFileInfo($dir));
 		} else {
-			$iterator = new ArrayIterator(array(new SplFileInfo($dir)));
+			$iterator = new \ArrayIterator(array(new \SplFileInfo($dir)));
 		}
 
 		foreach ($iterator as $entry) {
@@ -258,7 +259,7 @@ class NRobotLoader extends NAutoLoader
 		$time = filemtime($file);
 		$s = file_get_contents($file);
 
-		if ($matches = NString::match($s, '#//nette'.'loader=(\S*)#')) {
+		if ($matches = String::match($s, '#//nette'.'loader=(\S*)#')) {
 			foreach (explode(',', $matches[1]) as $name) {
 				$this->addClass($name, $file, $time);
 			}
@@ -325,10 +326,10 @@ class NRobotLoader extends NAutoLoader
 
 
 	/**
-	 * @param  NCache
-	 * @return NRobotLoader
+	 * @param  Nette\Caching\Cache
+	 * @return RobotLoader
 	 */
-	public function setCacheStorage(ICacheStorage $storage)
+	public function setCacheStorage(Nette\Caching\ICacheStorage $storage)
 	{
 		$this->cacheStorage = $storage;
 		return $this;
@@ -337,7 +338,7 @@ class NRobotLoader extends NAutoLoader
 
 
 	/**
-	 * @return NCache
+	 * @return Nette\Caching\Cache
 	 */
 	public function getCacheStorage()
 	{
@@ -347,15 +348,15 @@ class NRobotLoader extends NAutoLoader
 
 
 	/**
-	 * @return NCache
+	 * @return Nette\Caching\Cache
 	 */
 	protected function getCache()
 	{
 		if (!$this->cacheStorage) {
 			trigger_error('Missing cache storage.', E_USER_WARNING);
-			$this->cacheStorage = new NDummyStorage;
+			$this->cacheStorage = new Nette\Caching\DummyStorage;
 		}
-		return new NCache($this->cacheStorage, 'Nette.RobotLoader');
+		return new Nette\Caching\Cache($this->cacheStorage, 'Nette.RobotLoader');
 	}
 
 

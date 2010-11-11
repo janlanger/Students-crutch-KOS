@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NTextInput extends NTextBase
+class TextInput extends TextBase
 {
 
 	/**
@@ -44,10 +47,10 @@ class NTextInput extends NTextBase
 	 */
 	public function sanitize($value)
 	{
-		if ($this->control->maxlength && NString::length($value) > $this->control->maxlength) {
+		if ($this->control->maxlength && Nette\String::length($value) > $this->control->maxlength) {
 			$value = iconv_substr($value, 0, $this->control->maxlength, 'UTF-8');
 		}
-		return NString::trim(strtr($value, "\r\n", '  '));
+		return Nette\String::trim(strtr($value, "\r\n", '  '));
 	}
 
 
@@ -55,7 +58,7 @@ class NTextInput extends NTextBase
 	/**
 	 * Changes control's type attribute.
 	 * @param  string
-	 * @return NFormControl  provides a fluent interface
+	 * @return FormControl  provides a fluent interface
 	 */
 	public function setType($type)
 	{
@@ -76,7 +79,7 @@ class NTextInput extends NTextBase
 
 	/**
 	 * Generates control's HTML element.
-	 * @return NHtml
+	 * @return Nette\Web\Html
 	 */
 	public function getControl()
 	{
@@ -89,7 +92,7 @@ class NTextInput extends NTextBase
 
 
 
-	public function notifyRule(NRule $rule)
+	public function notifyRule(Rule $rule)
 	{
 		if (is_string($rule->operation) && strcasecmp($rule->operation, ':range') === 0 && !$rule->isNegative && $this->control->type !== 'text') {
 			list($this->control->min, $this->control->max) = $rule->arg; // for HTML 5

@@ -7,17 +7,20 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
 /**
- * Simple parser for Nette NObject Notation.
+ * Simple parser for Nette Object Notation.
  *
  * @author     David Grudl
  */
-class NNeonParser extends NObject
+class NeonParser extends Object
 {
 	/** @var array */
 	private static $patterns = array(
@@ -30,7 +33,7 @@ class NNeonParser extends NObject
 		'?: +', // whitespace
 	);
 
-	/** @var NTokenizer */
+	/** @var Tokenizer */
 	private static $tokenizer;
 
 	private static $brackets = array(
@@ -52,7 +55,7 @@ class NNeonParser extends NObject
 	public function parse($input)
 	{
 		if (!self::$tokenizer) { // speed-up
-			self::$tokenizer = new NTokenizer(self::$patterns, 'mi');
+			self::$tokenizer = new Tokenizer(self::$patterns, 'mi');
 		}
 		$input = str_replace("\r", '', $input);
 		$input = strtr($input, "\t", ' ');
@@ -75,7 +78,7 @@ class NNeonParser extends NObject
 
 
 	/**
-	 * NTokenizer & parser.
+	 * Tokenizer & parser.
 	 * @param  int  indentation (for block-parser)
 	 * @param  string  end char (for inline-hash/array parser)
 	 * @return array
@@ -134,7 +137,7 @@ class NNeonParser extends NObject
 				}
 				return $result; // inline parser exit point
 
-			} elseif ($t[0] === '@') { // NObject
+			} elseif ($t[0] === '@') { // Object
 				$object = $t; // TODO
 
 			} elseif ($t[0] === "\n") { // Indent
@@ -206,7 +209,7 @@ class NNeonParser extends NObject
 			}
 		}
 
-		throw new NNeonException('Unexpected end of file.');
+		throw new NeonException('Unexpected end of file.');
 	}
 
 
@@ -214,7 +217,7 @@ class NNeonParser extends NObject
 	private function error()
 	{
 		list(, $line, $col) = self::$tokenizer->getOffset($this->n);
-		throw new NNeonException("Unexpected '" . str_replace("\n", '\n', substr(self::$tokenizer->tokens[$this->n], 0, 10))
+		throw new NeonException("Unexpected '" . str_replace("\n", '\n', substr(self::$tokenizer->tokens[$this->n], 0, 10))
 			. "' on line " . ($line - 1) . ", column $col.");
 	}
 
@@ -225,6 +228,6 @@ class NNeonParser extends NObject
 /**
  * The exception that indicates error of NEON decoding.
  */
-class NNeonException extends Exception
+class NeonException extends \Exception
 {
 }

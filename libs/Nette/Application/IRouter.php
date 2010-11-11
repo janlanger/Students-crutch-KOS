@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
@@ -25,18 +28,18 @@ interface IRouter
 	/**#@-*/
 
 	/**
-	 * Maps HTTP request to a NPresenterRequest object.
-	 * @param  IHttpRequest
-	 * @return NPresenterRequest|NULL
+	 * Maps HTTP request to a PresenterRequest object.
+	 * @param  Nette\Web\IHttpRequest
+	 * @return PresenterRequest|NULL
 	 */
-	function match(IHttpRequest $httpRequest);
+	function match(Nette\Web\IHttpRequest $httpRequest);
 
 	/**
-	 * Constructs absolute URL from NPresenterRequest object.
-	 * @param  IHttpRequest
-	 * @param  NPresenterRequest
+	 * Constructs absolute URL from PresenterRequest object.
+	 * @param  Nette\Web\IHttpRequest
+	 * @param  PresenterRequest
 	 * @return string|NULL
 	 */
-	function constructUrl(NPresenterRequest $appRequest, IHttpRequest $httpRequest);
+	function constructUrl(PresenterRequest $appRequest, Nette\Web\IHttpRequest $httpRequest);
 
 }

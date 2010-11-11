@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NHiddenField extends NFormControl
+class HiddenField extends FormControl
 {
 	/** @var string */
 	private $forcedValue;
@@ -48,7 +51,7 @@ class NHiddenField extends NFormControl
 	/**
 	 * Sets control's value.
 	 * @param  string
-	 * @return NHiddenField  provides a fluent interface
+	 * @return HiddenField  provides a fluent interface
 	 */
 	public function setValue($value)
 	{
@@ -60,7 +63,7 @@ class NHiddenField extends NFormControl
 
 	/**
 	 * Generates control's HTML element.
-	 * @return NHtml
+	 * @return Nette\Web\Html
 	 */
 	public function getControl()
 	{

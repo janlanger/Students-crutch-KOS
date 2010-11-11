@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-final class NRule extends NObject
+final class Rule extends Nette\Object
 {
 	/** type */
 	const CONDITION = 1;
@@ -46,7 +49,7 @@ final class NRule extends NObject
 	/** @var string (only for VALIDATOR type) */
 	public $message;
 
-	/** @var NRules (only for CONDITION type)  */
+	/** @var Rules (only for CONDITION type)  */
 	public $subRules;
 
 }

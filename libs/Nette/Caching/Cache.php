@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Caching
  */
+
+namespace Nette\Caching;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NCache extends NObject implements ArrayAccess
+class Cache extends Nette\Object implements \ArrayAccess
 {
 	/**#@+ dependency */
 	const PRIORITY = 'priority';
@@ -54,7 +57,7 @@ class NCache extends NObject implements ArrayAccess
 		$this->namespace = (string) $namespace;
 
 		if (strpos($this->namespace, self::NAMESPACE_SEPARATOR) !== FALSE) {
-			throw new InvalidArgumentException("Namespace name contains forbidden NUL character.");
+			throw new \InvalidArgumentException("Namespace name contains forbidden NUL character.");
 		}
 	}
 
@@ -96,31 +99,31 @@ class NCache extends NObject implements ArrayAccess
 	/**
 	 * Writes item into the cache.
 	 * Dependencies are:
-	 * - NCache::PRIORITY => (int) priority
-	 * - NCache::EXPIRE => (timestamp) expiration
-	 * - NCache::SLIDING => (bool) use sliding expiration?
-	 * - NCache::TAGS => (array) tags
-	 * - NCache::FILES => (array|string) file names
-	 * - NCache::ITEMS => (array|string) cache items
-	 * - NCache::CONSTS => (array|string) cache items
+	 * - Cache::PRIORITY => (int) priority
+	 * - Cache::EXPIRE => (timestamp) expiration
+	 * - Cache::SLIDING => (bool) use sliding expiration?
+	 * - Cache::TAGS => (array) tags
+	 * - Cache::FILES => (array|string) file names
+	 * - Cache::ITEMS => (array|string) cache items
+	 * - Cache::CONSTS => (array|string) cache items
 	 *
 	 * @param  string key
 	 * @param  mixed  value
 	 * @param  array  dependencies
 	 * @return mixed  value itself
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function save($key, $data, array $dp = NULL)
 	{
 		if (!is_string($key) && !is_int($key)) {
-			throw new InvalidArgumentException("Cache key name must be string or integer, " . gettype($key) . " given.");
+			throw new \InvalidArgumentException("Cache key name must be string or integer, " . gettype($key) . " given.");
 		}
 		$this->key = (string) $key;
 		$key = $this->namespace . self::NAMESPACE_SEPARATOR . $key;
 
 		// convert expire into relative amount of seconds
-		if (isset($dp[NCache::EXPIRE])) {
-			$dp[NCache::EXPIRE] = NTools::createDateTime($dp[NCache::EXPIRE])->format('U') - time();
+		if (isset($dp[Cache::EXPIRE])) {
+			$dp[Cache::EXPIRE] = Nette\Tools::createDateTime($dp[Cache::EXPIRE])->format('U') - time();
 		}
 
 		// convert FILES into CALLBACKS
@@ -148,15 +151,15 @@ class NCache extends NObject implements ArrayAccess
 			unset($dp[self::CONSTS]);
 		}
 
-		if ($data instanceof NCallback || $data instanceof Closure) {
-			NTools::enterCriticalSection();
+		if ($data instanceof Nette\Callback || $data instanceof \Closure) {
+			Nette\Tools::enterCriticalSection();
 			$data = $data->__invoke();
-			NTools::leaveCriticalSection();
+			Nette\Tools::leaveCriticalSection();
 		}
 
 		if (is_object($data)) {
 			$dp[self::CALLBACKS][] = array(array(__CLASS__, 'checkSerializationVersion'), get_class($data),
-				NClassReflection::from($data)->getAnnotation('serializationVersion'));
+				Nette\Reflection\ClassReflection::from($data)->getAnnotation('serializationVersion'));
 		}
 
 		$this->data = $data;
@@ -173,9 +176,9 @@ class NCache extends NObject implements ArrayAccess
 	/**
 	 * Removes items from the cache by conditions.
 	 * Conditions are:
-	 * - NCache::PRIORITY => (int) priority
-	 * - NCache::TAGS => (array) tags
-	 * - NCache::ALL => TRUE
+	 * - Cache::PRIORITY => (int) priority
+	 * - Cache::TAGS => (array) tags
+	 * - Cache::ALL => TRUE
 	 *
 	 * @param  array
 	 * @return void
@@ -188,16 +191,16 @@ class NCache extends NObject implements ArrayAccess
 
 
 
-	/********************* interface ArrayAccess ****************d*g**/
+	/********************* interface \ArrayAccess ****************d*g**/
 
 
 
 	/**
-	 * Inserts (replaces) item into the cache (ArrayAccess implementation).
+	 * Inserts (replaces) item into the cache (\ArrayAccess implementation).
 	 * @param  string key
 	 * @param  mixed
 	 * @return void
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function offsetSet($key, $data)
 	{
@@ -207,15 +210,15 @@ class NCache extends NObject implements ArrayAccess
 
 
 	/**
-	 * Retrieves the specified item from the cache or NULL if the key is not found (ArrayAccess implementation).
+	 * Retrieves the specified item from the cache or NULL if the key is not found (\ArrayAccess implementation).
 	 * @param  string key
 	 * @return mixed|NULL
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function offsetGet($key)
 	{
 		if (!is_string($key) && !is_int($key)) {
-			throw new InvalidArgumentException("Cache key name must be string or integer, " . gettype($key) . " given.");
+			throw new \InvalidArgumentException("Cache key name must be string or integer, " . gettype($key) . " given.");
 		}
 
 		$key = (string) $key;
@@ -230,10 +233,10 @@ class NCache extends NObject implements ArrayAccess
 
 
 	/**
-	 * Exists item in cache? (ArrayAccess implementation).
+	 * Exists item in cache? (\ArrayAccess implementation).
 	 * @param  string key
 	 * @return bool
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function offsetExists($key)
 	{
@@ -246,7 +249,7 @@ class NCache extends NObject implements ArrayAccess
 	 * Removes the specified item from the cache.
 	 * @param  string key
 	 * @return void
-	 * @throws InvalidArgumentException
+	 * @throws \InvalidArgumentException
 	 */
 	public function offsetUnset($key)
 	{
@@ -311,7 +314,7 @@ class NCache extends NObject implements ArrayAccess
 	 */
 	private static function checkSerializationVersion($class, $value)
 	{
-		return NClassReflection::from($class)->getAnnotation('serializationVersion') === $value;
+		return Nette\Reflection\ClassReflection::from($class)->getAnnotation('serializationVersion') === $value;
 	}
 
 }

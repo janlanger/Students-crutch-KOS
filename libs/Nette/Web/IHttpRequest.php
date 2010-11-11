@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Web
  */
+
+namespace Nette\Web;
+
+use Nette;
 
 
 
@@ -30,7 +33,7 @@ interface IHttpRequest
 
 	/**
 	 * Returns URL object.
-	 * @return NUriScript
+	 * @return UriScript
 	 */
 	function getUri();
 
@@ -63,7 +66,7 @@ interface IHttpRequest
 	/**
 	 * Returns uploaded file.
 	 * @param  string key (or more keys)
-	 * @return NHttpUploadedFile
+	 * @return HttpUploadedFile
 	 */
 	function getFile($key);
 

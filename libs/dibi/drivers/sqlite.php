@@ -1,13 +1,13 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
- * @package    drivers
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
+ * @package    dibi\drivers
  */
 
 
@@ -28,8 +28,8 @@ require_once dirname(__FILE__) . '/sqlite.reflector.php';
  *   - resource (resource) => existing connection resource
  *   - lazy, profiler, result, substitutes, ... => see DibiConnection options
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    drivers
+ * @author     David Grudl
+ * @package    dibi\drivers
  */
 class DibiSqliteDriver extends DibiObject implements IDibiDriver, IDibiResultDriver
 {
@@ -122,15 +122,16 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 
 		DibiDriverException::tryError();
 		if ($this->buffered) {
-			$this->resultSet = sqlite_query($this->connection, $sql);
+			$res = sqlite_query($this->connection, $sql);
 		} else {
-			$this->resultSet = sqlite_unbuffered_query($this->connection, $sql);
+			$res = sqlite_unbuffered_query($this->connection, $sql);
 		}
 		if (DibiDriverException::catchError($msg)) {
 			throw new DibiDriverException($msg, sqlite_last_error($this->connection), $sql);
-		}
 
-		return is_resource($this->resultSet) ? clone $this : NULL;
+		} elseif (is_resource($res)) {
+			return $this->createResultDriver($res);
+		}
 	}
 
 
@@ -214,6 +215,20 @@ class DibiSqliteDriver extends DibiObject implements IDibiDriver, IDibiResultDri
 	public function getReflector()
 	{
 		return new DibiSqliteReflector($this);
+	}
+
+
+
+	/**
+	 * Result set driver factory.
+	 * @param  resource
+	 * @return IDibiResultDriver
+	 */
+	public function createResultDriver($resource)
+	{
+		$res = clone $this;
+		$res->resultSet = $resource;
+		return $res;
 	}
 
 

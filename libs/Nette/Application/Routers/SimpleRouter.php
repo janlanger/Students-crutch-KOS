@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NSimpleRouter extends NObject implements IRouter
+class SimpleRouter extends Nette\Object implements IRouter
 {
 	const PRESENTER_KEY = 'presenter';
 	const MODULE_KEY = 'module';
@@ -59,42 +62,42 @@ class NSimpleRouter extends NObject implements IRouter
 
 
 	/**
-	 * Maps HTTP request to a NPresenterRequest object.
-	 * @param  IHttpRequest
-	 * @return NPresenterRequest|NULL
+	 * Maps HTTP request to a PresenterRequest object.
+	 * @param  Nette\Web\IHttpRequest
+	 * @return PresenterRequest|NULL
 	 */
-	public function match(IHttpRequest $httpRequest)
+	public function match(Nette\Web\IHttpRequest $httpRequest)
 	{
 		// combine with precedence: get, (post,) defaults
 		$params = $httpRequest->getQuery();
 		$params += $this->defaults;
 
 		if (!isset($params[self::PRESENTER_KEY])) {
-			throw new InvalidStateException('Missing presenter.');
+			throw new \InvalidStateException('Missing presenter.');
 		}
 
 		$presenter = $this->module . $params[self::PRESENTER_KEY];
 		unset($params[self::PRESENTER_KEY]);
 
-		return new NPresenterRequest(
+		return new PresenterRequest(
 			$presenter,
 			$httpRequest->getMethod(),
 			$params,
 			$httpRequest->getPost(),
 			$httpRequest->getFiles(),
-			array(NPresenterRequest::SECURED => $httpRequest->isSecured())
+			array(PresenterRequest::SECURED => $httpRequest->isSecured())
 		);
 	}
 
 
 
 	/**
-	 * Constructs absolute URL from NPresenterRequest object.
-	 * @param  IHttpRequest
-	 * @param  NPresenterRequest
+	 * Constructs absolute URL from PresenterRequest object.
+	 * @param  Nette\Web\IHttpRequest
+	 * @param  PresenterRequest
 	 * @return string|NULL
 	 */
-	public function constructUrl(NPresenterRequest $appRequest, IHttpRequest $httpRequest)
+	public function constructUrl(PresenterRequest $appRequest, Nette\Web\IHttpRequest $httpRequest)
 	{
 		$params = $appRequest->getParams();
 

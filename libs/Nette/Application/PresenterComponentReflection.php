@@ -7,18 +7,21 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
 /**
- * Helpers for NPresenter & NPresenterComponent.
+ * Helpers for Presenter & PresenterComponent.
  *
  * @author     David Grudl
  * @internal
  */
-class NPresenterComponentReflection extends NClassReflection
+class PresenterComponentReflection extends Nette\Reflection\ClassReflection
 {
 	/** @var array getPersistentParams cache */
 	private static $ppCache = array();
@@ -40,7 +43,7 @@ class NPresenterComponentReflection extends NClassReflection
 		$params = & self::$ppCache[$class];
 		if ($params !== NULL) return $params;
 		$params = array();
-		if (is_subclass_of($class, 'NPresenterComponent')) {
+		if (is_subclass_of($class, 'Nette\Application\PresenterComponent')) {
 			// $class::getPersistentParams() in PHP 5.3
 			$defaults = get_class_vars($class);
 			foreach (call_user_func(array($class, 'getPersistentParams'), $class) as $name => $meta) {
@@ -66,7 +69,7 @@ class NPresenterComponentReflection extends NClassReflection
 		$components = & self::$pcCache[$class];
 		if ($components !== NULL) return $components;
 		$components = array();
-		if (is_subclass_of($class, 'NPresenter')) {
+		if (is_subclass_of($class, 'Nette\Application\Presenter')) {
 			// $class::getPersistentComponents() in PHP 5.3
 			foreach (call_user_func(array($class, 'getPersistentComponents'), $class) as $name => $meta) {
 				if (is_string($meta)) $name = $meta;
@@ -91,9 +94,9 @@ class NPresenterComponentReflection extends NClassReflection
 		$cache = & self::$mcCache[strtolower($class . ':' . $method)];
 		if ($cache === NULL) try {
 			$cache = FALSE;
-			$rm = NMethodReflection::from($class, $method);
+			$rm = Nette\Reflection\MethodReflection::from($class, $method);
 			$cache = $this->isInstantiable() && $rm->isPublic() && !$rm->isAbstract() && !$rm->isStatic();
-		} catch (ReflectionException $e) {
+		} catch (\ReflectionException $e) {
 		}
 		return $cache;
 	}

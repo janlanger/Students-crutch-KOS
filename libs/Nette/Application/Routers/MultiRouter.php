@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NMultiRouter extends NArrayList implements IRouter
+class MultiRouter extends Nette\ArrayList implements IRouter
 {
 	/** @var array */
 	private $cachedRoutes;
@@ -25,11 +28,11 @@ class NMultiRouter extends NArrayList implements IRouter
 
 
 	/**
-	 * Maps HTTP request to a NPresenterRequest object.
-	 * @param  IHttpRequest
-	 * @return NPresenterRequest|NULL
+	 * Maps HTTP request to a PresenterRequest object.
+	 * @param  Nette\Web\IHttpRequest
+	 * @return PresenterRequest|NULL
 	 */
-	public function match(IHttpRequest $httpRequest)
+	public function match(Nette\Web\IHttpRequest $httpRequest)
 	{
 		foreach ($this as $route) {
 			$appRequest = $route->match($httpRequest);
@@ -43,19 +46,19 @@ class NMultiRouter extends NArrayList implements IRouter
 
 
 	/**
-	 * Constructs absolute URL from NPresenterRequest object.
-	 * @param  IHttpRequest
-	 * @param  NPresenterRequest
+	 * Constructs absolute URL from PresenterRequest object.
+	 * @param  Nette\Web\IHttpRequest
+	 * @param  PresenterRequest
 	 * @return string|NULL
 	 */
-	public function constructUrl(NPresenterRequest $appRequest, IHttpRequest $httpRequest)
+	public function constructUrl(PresenterRequest $appRequest, Nette\Web\IHttpRequest $httpRequest)
 	{
 		if ($this->cachedRoutes === NULL) {
 			$routes = array();
 			$routes['*'] = array();
 
 			foreach ($this as $route) {
-				$presenter = $route instanceof NRoute ? $route->getTargetPresenter() : NULL;
+				$presenter = $route instanceof Route ? $route->getTargetPresenter() : NULL;
 
 				if ($presenter === FALSE) continue;
 
@@ -100,7 +103,7 @@ class NMultiRouter extends NArrayList implements IRouter
 	public function offsetSet($index, $route)
 	{
 		if (!($route instanceof IRouter)) {
-			throw new InvalidArgumentException("Argument must be IRouter descendant.");
+			throw new \InvalidArgumentException("Argument must be IRouter descendant.");
 		}
 		parent::offsetSet($index, $route);
 	}

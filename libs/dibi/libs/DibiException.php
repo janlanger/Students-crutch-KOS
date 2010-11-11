@@ -1,12 +1,12 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
  * @package    dibi
  */
 
@@ -15,8 +15,7 @@
 /**
  * dibi common exception.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  */
 class DibiException extends Exception implements IDebugPanel
 {
@@ -59,7 +58,7 @@ class DibiException extends Exception implements IDebugPanel
 
 
 
-	/********************* interface IDebugPanel ****************d*g**/
+	/********************* interface Nette\IDebugPanel ****************d*g**/
 
 
 
@@ -98,11 +97,11 @@ class DibiException extends Exception implements IDebugPanel
 
 
 
+
 /**
  * database server exception.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  */
 class DibiDriverException extends DibiException
 {
@@ -145,7 +144,7 @@ class DibiDriverException extends DibiException
 
 	/**
 	 * Internal error handler. Do not call directly.
-	 * @ignore internal
+	 * @internal
 	 */
 	public static function _errorHandler($code, $message)
 	{

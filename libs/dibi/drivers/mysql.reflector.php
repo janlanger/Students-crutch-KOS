@@ -1,22 +1,22 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
- * @package    drivers
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
+ * @package    dibi\drivers
  */
 
 
 /**
  * The dibi reflector for MySQL databases.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    drivers
- * @ignore internal
+ * @author     David Grudl
+ * @package    dibi\drivers
+ * @internal
  */
 class DibiMySqlReflector extends DibiObject implements IDibiReflector
 {
@@ -51,7 +51,6 @@ class DibiMySqlReflector extends DibiObject implements IDibiReflector
 				'view' => isset($row[1]) && $row[1] === 'VIEW',
 			);
 		}
-		$res->free();
 		return $tables;
 	}
 
@@ -86,7 +85,6 @@ class DibiMySqlReflector extends DibiObject implements IDibiReflector
 				'vendor' => $row,
 			);
 		}
-		$res->free();
 		return $columns;
 	}
 
@@ -114,7 +112,6 @@ class DibiMySqlReflector extends DibiObject implements IDibiReflector
 			$indexes[$row['Key_name']]['primary'] = $row['Key_name'] === 'PRIMARY';
 			$indexes[$row['Key_name']]['columns'][$row['Seq_in_index'] - 1] = $row['Column_name'];
 		}
-		$res->free();
 		return array_values($indexes);
 	}
 

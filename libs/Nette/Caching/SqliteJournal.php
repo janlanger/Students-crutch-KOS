@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Caching
  */
+
+namespace Nette\Caching;
+
+use Nette;
 
 
 
@@ -17,15 +20,15 @@
  *
  * @author     Jan Smitka
  */
-class NSqliteJournal extends NObject implements ICacheJournal
+class SqliteJournal extends Nette\Object implements ICacheJournal
 {
-	/** @var SQLite3|SQLiteMimic */
+	/** @var \SQLite3|SQLiteMimic */
 	private $database;
 
 
 
 	/**
-	 * Returns whether the NSqliteJournal is able to operate.
+	 * Returns whether the SqliteJournal is able to operate.
 	 * @return bool
 	 */
 	public static function isAvailable()
@@ -38,10 +41,10 @@ class NSqliteJournal extends NObject implements ICacheJournal
 	public function __construct($file)
 	{
 		if (!self::isAvailable()) {
-			throw new NotSupportedException("SQLite or SQLite3 extension is required for storing tags and priorities.");
+			throw new \NotSupportedException("SQLite or SQLite3 extension is required for storing tags and priorities.");
 		}
 
-		$this->database = extension_loaded('sqlite') ? new SQLiteMimic($file) : new SQLite3($file);
+		$this->database = extension_loaded('sqlite') ? new SQLiteMimic($file) : new \SQLite3($file);
 		@$this->database->exec( // simulates IGNORE IF EXISTS (available since SQLite3 )
 			'CREATE TABLE cache (entry VARCHAR NOT NULL, priority INTEGER, tag VARCHAR); '
 			. 'CREATE INDEX IDX_ENTRY ON cache (entry); '
@@ -62,13 +65,13 @@ class NSqliteJournal extends NObject implements ICacheJournal
 	{
 		$entry = $this->database->escapeString($key);
 		$query = '';
-		if (!empty($dependencies[NCache::TAGS])) {
-			foreach ((array) $dependencies[NCache::TAGS] as $tag) {
+		if (!empty($dependencies[Cache::TAGS])) {
+			foreach ((array) $dependencies[Cache::TAGS] as $tag) {
 				$query .= "INSERT INTO cache (entry, tag) VALUES ('$entry', '" . $this->database->escapeString($tag) . "'); ";
 			}
 		}
-		if (!empty($dependencies[NCache::PRIORITY])) {
-			$query .= "INSERT INTO cache (entry, priority) VALUES ('$entry', '" . ((int) $dependencies[NCache::PRIORITY]) . "'); ";
+		if (!empty($dependencies[Cache::PRIORITY])) {
+			$query .= "INSERT INTO cache (entry, priority) VALUES ('$entry', '" . ((int) $dependencies[Cache::PRIORITY]) . "'); ";
 		}
 
 		if (!$this->database->exec("BEGIN; DELETE FROM cache WHERE entry = '$entry'; $query COMMIT;")) {
@@ -88,29 +91,29 @@ class NSqliteJournal extends NObject implements ICacheJournal
 	 */
 	public function clean(array $conditions)
 	{
-		if (!empty($conditions[NCache::ALL])) {
+		if (!empty($conditions[Cache::ALL])) {
 			$this->database->exec('DELETE FROM CACHE;');
 			return;
 		}
 
 		$query = array();
-		if (!empty($conditions[NCache::TAGS])) {
+		if (!empty($conditions[Cache::TAGS])) {
 			$tags = array();
-			foreach ((array) $conditions[NCache::TAGS] as $tag) {
+			foreach ((array) $conditions[Cache::TAGS] as $tag) {
 				$tags[] = "'" . $this->database->escapeString($tag) . "'";
 			}
 			$query[] = 'tag IN(' . implode(', ', $tags) . ')';
 		}
 
-		if (isset($conditions[NCache::PRIORITY])) {
-			$query[] = 'priority <= ' . ((int) $conditions[NCache::PRIORITY]);
+		if (isset($conditions[Cache::PRIORITY])) {
+			$query[] = 'priority <= ' . ((int) $conditions[Cache::PRIORITY]);
 		}
 
 		$entries = array();
 		if (!empty($query)) {
 			$query = implode(' OR ', $query);
 			$result = $this->database->query("SELECT entry FROM cache WHERE $query");
-			if ($result instanceof SQLiteResult) {
+			if ($result instanceof \SQLiteResult) {
 				while ($entry = $result->fetchSingle()) $entries[] = $entry;
 			} else {
 				while ($entry = $result->fetchArray(SQLITE3_NUM)) $entries[] = $entry[0];
@@ -131,7 +134,7 @@ if (class_exists('SQLiteDatabase')) {
 	 * @author     David Grudl
 	 * @internal
 	 */
-	class SQLiteMimic extends SQLiteDatabase
+	class SQLiteMimic extends \SQLiteDatabase
 	{
 
 		function exec($sql)

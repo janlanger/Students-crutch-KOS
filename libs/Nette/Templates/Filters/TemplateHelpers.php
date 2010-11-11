@@ -7,8 +7,14 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Templates
  */
+
+namespace Nette\Templates;
+
+use Nette,
+	Nette\String,
+	Nette\Forms\Form,
+	Nette\Web\Html;
 
 
 
@@ -17,7 +23,7 @@
  *
  * @author     David Grudl
  */
-final class NTemplateHelpers
+final class TemplateHelpers
 {
 
 	/** @var string default date format */
@@ -28,7 +34,7 @@ final class NTemplateHelpers
 	 */
 	final public function __construct()
 	{
-		throw new LogicException("Cannot instantiate static class " . get_class($this));
+		throw new \LogicException("Cannot instantiate static class " . get_class($this));
 	}
 
 
@@ -40,11 +46,11 @@ final class NTemplateHelpers
 	 */
 	public static function loader($helper)
 	{
-		$callback = callback('NTemplateHelpers', $helper);
+		$callback = callback('Nette\Templates\TemplateHelpers', $helper);
 		if ($callback->isCallable()) {
 			return $callback;
 		}
-		$callback = callback('NString', $helper);
+		$callback = callback('Nette\String', $helper);
 		if ($callback->isCallable()) {
 			return $callback;
 		}
@@ -59,7 +65,7 @@ final class NTemplateHelpers
 	 */
 	public static function escapeHtml($s)
 	{
-		if (is_object($s) && ($s instanceof ITemplate || $s instanceof NHtml || $s instanceof NForm)) {
+		if (is_object($s) && ($s instanceof ITemplate || $s instanceof Html || $s instanceof Form)) {
 			return $s->__toString(TRUE);
 		}
 		return htmlSpecialChars($s, ENT_QUOTES);
@@ -126,10 +132,10 @@ final class NTemplateHelpers
 	 */
 	public static function escapeJs($s)
 	{
-		if (is_object($s) && ($s instanceof ITemplate || $s instanceof NHtml || $s instanceof NForm)) {
+		if (is_object($s) && ($s instanceof ITemplate || $s instanceof Html || $s instanceof Form)) {
 			$s = $s->__toString(TRUE);
 		}
-		return str_replace(']]>', ']]\x3E', NJson::encode($s));
+		return str_replace(']]>', ']]\x3E', Nette\Json::encode($s));
 	}
 
 
@@ -153,12 +159,12 @@ final class NTemplateHelpers
 	 */
 	public static function strip($s)
 	{
-		return NString::replace(
+		return String::replace(
 			$s,
 			'#(</textarea|</pre|</script|^).*?(?=<textarea|<pre|<script|$)#si',
-			callback(create_function('$m', '
-				return trim(preg_replace("#[ \\t\\r\\n]+#", " ", $m[0]));
-			')));
+			function($m) {
+				return trim(preg_replace("#[ \t\r\n]+#", " ", $m[0]));
+			});
 	}
 
 
@@ -173,10 +179,10 @@ final class NTemplateHelpers
 	public static function indent($s, $level = 1, $chars = "\t")
 	{
 		if ($level >= 1) {
-			$s = NString::replace($s, '#<(textarea|pre).*?</\\1#si', callback(create_function('$m', '
-				return strtr($m[0], " \\t\\r\\n", "\\x1F\\x1E\\x1D\\x1A");
-			')));
-			$s = NString::indent($s, $level, $chars);
+			$s = String::replace($s, '#<(textarea|pre).*?</\\1#si', function($m) {
+				return strtr($m[0], " \t\r\n", "\x1F\x1E\x1D\x1A");
+			});
+			$s = String::indent($s, $level, $chars);
 			$s = strtr($s, "\x1F\x1E\x1D\x1A", " \t\r\n");
 		}
 		return $s;
@@ -200,7 +206,7 @@ final class NTemplateHelpers
 			$format = self::$dateFormat;
 		}
 
-		$time = NTools::createDateTime($time);
+		$time = Nette\Tools::createDateTime($time);
 		return strpos($format, '%') === FALSE
 			? $time->format($format) // formats using date()
 			: strftime($format, $time->format('U')); // formats according to locales
@@ -234,7 +240,7 @@ final class NTemplateHelpers
 	 */
 	public static function length($var)
 	{
-		return is_string($var) ? NString::length($var) : count($var);
+		return is_string($var) ? String::length($var) : count($var);
 	}
 
 

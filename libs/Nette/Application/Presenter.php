@@ -7,27 +7,31 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette,
+	Nette\Environment;
 
 
 
 /**
- * NPresenter object represents a webpage instance. It executes all the logic for the request.
+ * Presenter object represents a webpage instance. It executes all the logic for the request.
  *
  * @author     David Grudl
  *
- * @property-read NPresenterRequest $request
+ * @property-read PresenterRequest $request
  * @property-read array $signal
  * @property-read string $action
  * @property   string $view
  * @property   string $layout
  * @property-read mixed $payload
- * @property-read NApplication $application
+ * @property-read Application $application
  */
-abstract class NPresenter extends NControl implements IPresenter
+abstract class Presenter extends Control implements IPresenter
 {
-	/**#@+ bad link handling {@link NPresenter::$invalidLinkMode} */
+	/**#@+ bad link handling {@link Presenter::$invalidLinkMode} */
 	const INVALID_LINK_SILENT = 1;
 	const INVALID_LINK_WARNING = 2;
 	const INVALID_LINK_EXCEPTION = 3;
@@ -45,10 +49,10 @@ abstract class NPresenter extends NControl implements IPresenter
 	/** @var int */
 	public static $invalidLinkMode;
 
-	/** @var array of function(NPresenter $sender, IPresenterResponse $response = NULL); Occurs when the presenter is shutting down */
+	/** @var array of function(Presenter $sender, IPresenterResponse $response = NULL); Occurs when the presenter is shutting down */
 	public $onShutdown;
 
-	/** @var NPresenterRequest */
+	/** @var PresenterRequest */
 	private $request;
 
 	/** @var IPresenterResponse */
@@ -93,7 +97,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	/** @var bool */
 	private $startupCheck;
 
-	/** @var NPresenterRequest */
+	/** @var PresenterRequest */
 	private $lastCreatedRequest;
 
 	/** @var array */
@@ -102,7 +106,7 @@ abstract class NPresenter extends NControl implements IPresenter
 
 
 	/**
-	 * @return NPresenterRequest
+	 * @return PresenterRequest
 	 */
 	final public function getRequest()
 	{
@@ -113,7 +117,7 @@ abstract class NPresenter extends NControl implements IPresenter
 
 	/**
 	 * Returns self.
-	 * @return NPresenter
+	 * @return Presenter
 	 */
 	final public function getPresenter($need = TRUE)
 	{
@@ -138,10 +142,10 @@ abstract class NPresenter extends NControl implements IPresenter
 
 
 	/**
-	 * @param  NPresenterRequest
+	 * @param  PresenterRequest
 	 * @return IPresenterResponse
 	 */
-	public function run(NPresenterRequest $request)
+	public function run(PresenterRequest $request)
 	{
 		try {
 			// STARTUP
@@ -153,7 +157,7 @@ abstract class NPresenter extends NControl implements IPresenter
 			$this->startup();
 			if (!$this->startupCheck) {
 				$class = $this->reflection->getMethod('startup')->getDeclaringClass()->getName();
-				throw new InvalidStateException("Method $class::startup() or its descendant doesn't call parent::startup().");
+				throw new \InvalidStateException("Method $class::startup() or its descendant doesn't call parent::startup().");
 			}
 			// calls $this->action<Action>()
 			$this->tryCall($this->formatActionMethod($this->getAction()), $this->params);
@@ -184,24 +188,24 @@ abstract class NPresenter extends NControl implements IPresenter
 			// finish template rendering
 			$this->sendTemplate();
 
-		} catch (NAbortException $e) {
+		} catch (AbortException $e) {
 			// continue with shutting down
 		} /* finally */ {
 
 			if ($this->isAjax()) try {
 				$hasPayload = (array) $this->payload; unset($hasPayload['state']);
-				if ($this->response instanceof NRenderResponse && ($this->isControlInvalid() || $hasPayload)) { // snippets - TODO
-					NSnippetHelper::$outputAllowed = FALSE;
+				if ($this->response instanceof RenderResponse && ($this->isControlInvalid() || $hasPayload)) { // snippets - TODO
+					Nette\Templates\SnippetHelper::$outputAllowed = FALSE;
 					$this->response->send();
 					$this->sendPayload();
 
 				} elseif (!$this->response && $hasPayload) { // back compatibility for use terminate() instead of sendPayload()
 					$this->sendPayload();
 				}
-			} catch (NAbortException $e) { }
+			} catch (AbortException $e) { }
 
 			if ($this->hasFlashSession()) {
-				$this->getFlashSession()->setExpiration($this->response instanceof NRedirectingResponse ? '+ 30 seconds': '+ 3 seconds');
+				$this->getFlashSession()->setExpiration($this->response instanceof RedirectingResponse ? '+ 30 seconds': '+ 3 seconds');
 			}
 
 			// SHUTDOWN
@@ -260,7 +264,7 @@ abstract class NPresenter extends NControl implements IPresenter
 
 	/**
 	 * @return void
-	 * @throws NBadSignalException
+	 * @throws BadSignalException
 	 */
 	public function processSignal()
 	{
@@ -268,10 +272,10 @@ abstract class NPresenter extends NControl implements IPresenter
 
 		$component = $this->signalReceiver === '' ? $this : $this->getComponent($this->signalReceiver, FALSE);
 		if ($component === NULL) {
-			throw new NBadSignalException("The signal receiver component '$this->signalReceiver' is not found.");
+			throw new BadSignalException("The signal receiver component '$this->signalReceiver' is not found.");
 
 		} elseif (!$component instanceof ISignalReceiver) {
-			throw new NBadSignalException("The signal receiver component '$this->signalReceiver' is not ISignalReceiver implementor.");
+			throw new BadSignalException("The signal receiver component '$this->signalReceiver' is not ISignalReceiver implementor.");
 		}
 
 		$component->signalReceived($this->signal);
@@ -299,7 +303,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	 */
 	final public function isSignalReceiver($component, $signal = NULL)
 	{
-		if ($component instanceof NComponent) {
+		if ($component instanceof Nette\Component) {
 			$component = $component === $this ? '' : $component->lookupPath(__CLASS__, TRUE);
 		}
 
@@ -342,12 +346,12 @@ abstract class NPresenter extends NControl implements IPresenter
 	 */
 	public function changeAction($action)
 	{
-		if (NString::match($action, "#^[a-zA-Z0-9][a-zA-Z0-9_\x7f-\xff]*$#")) {
+		if (Nette\String::match($action, "#^[a-zA-Z0-9][a-zA-Z0-9_\x7f-\xff]*$#")) {
 			$this->action = $action;
 			$this->view = $action;
 
 		} else {
-			throw new NBadRequestException("Action name '$action' is not alphanumeric string.");
+			throw new BadRequestException("Action name '$action' is not alphanumeric string.");
 		}
 	}
 
@@ -367,7 +371,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	/**
 	 * Changes current view. Any name is allowed.
 	 * @param  string
-	 * @return NPresenter  provides a fluent interface
+	 * @return Presenter  provides a fluent interface
 	 */
 	public function setView($view)
 	{
@@ -391,7 +395,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	/**
 	 * Changes or disables layout.
 	 * @param  string|FALSE
-	 * @return NPresenter  provides a fluent interface
+	 * @return Presenter  provides a fluent interface
 	 */
 	public function setLayout($layout)
 	{
@@ -403,15 +407,15 @@ abstract class NPresenter extends NControl implements IPresenter
 
 	/**
 	 * @return void
-	 * @throws NBadRequestException if no template found
-	 * @throws NAbortException
+	 * @throws BadRequestException if no template found
+	 * @throws AbortException
 	 */
 	public function sendTemplate()
 	{
 		$template = $this->getTemplate();
 		if (!$template) return;
 
-		if ($template instanceof IFileTemplate && !$template->getFile()) {
+		if ($template instanceof Nette\Templates\IFileTemplate && !$template->getFile()) {
 
 			// content template
 			$files = $this->formatTemplateFiles($this->getName(), $this->view);
@@ -423,8 +427,8 @@ abstract class NPresenter extends NControl implements IPresenter
 			}
 
 			if (!$template->getFile()) {
-				$file = str_replace(NEnvironment::getVariable('appDir'), "\xE2\x80\xA6", reset($files));
-				throw new NBadRequestException("Page not found. Missing template '$file'.");
+				$file = str_replace(Environment::getVariable('appDir'), "\xE2\x80\xA6", reset($files));
+				throw new BadRequestException("Page not found. Missing template '$file'.");
 			}
 
 			// layout template
@@ -439,13 +443,13 @@ abstract class NPresenter extends NControl implements IPresenter
 				}
 
 				if (empty($template->layout) && $this->layout !== NULL) {
-					$file = str_replace(NEnvironment::getVariable('appDir'), "\xE2\x80\xA6", reset($files));
-					throw new FileNotFoundException("Layout not found. Missing template '$file'.");
+					$file = str_replace(Environment::getVariable('appDir'), "\xE2\x80\xA6", reset($files));
+					throw new \FileNotFoundException("Layout not found. Missing template '$file'.");
 				}
 			}
 		}
 
-		$this->sendResponse(new NRenderResponse($template));
+		$this->sendResponse(new RenderResponse($template));
 	}
 
 
@@ -458,7 +462,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	 */
 	public function formatLayoutTemplateFiles($presenter, $layout)
 	{
-		$appDir = NEnvironment::getVariable('appDir');
+		$appDir = Environment::getVariable('appDir');
 		$path = '/' . str_replace(':', 'Module/', $presenter);
 		$pathP = substr_replace($path, '/templates', strrpos($path, '/'), 0);
 		$list = array(
@@ -481,7 +485,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	 */
 	public function formatTemplateFiles($presenter, $view)
 	{
-		$appDir = NEnvironment::getVariable('appDir');
+		$appDir = Environment::getVariable('appDir');
 		$path = '/' . str_replace(':', 'Module/', $presenter);
 		$pathP = substr_replace($path, '/templates', strrpos($path, '/'), 0);
 		$path = substr_replace($path, '/templates', strrpos($path, '/'));
@@ -549,11 +553,11 @@ abstract class NPresenter extends NControl implements IPresenter
 	/**
 	 * Sends AJAX payload to the output.
 	 * @return void
-	 * @throws NAbortException
+	 * @throws AbortException
 	 */
 	public function sendPayload()
 	{
-		$this->sendResponse(new NJsonResponse($this->payload));
+		$this->sendResponse(new JsonResponse($this->payload));
 	}
 
 
@@ -566,7 +570,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	 * Sends response and terminates presenter.
 	 * @param  IPresenterResponse
 	 * @return void
-	 * @throws NAbortException
+	 * @throws AbortException
 	 */
 	public function sendResponse(IPresenterResponse $response)
 	{
@@ -579,7 +583,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	/**
 	 * Correctly terminates presenter.
 	 * @return void
-	 * @throws NAbortException
+	 * @throws AbortException
 	 */
 	public function terminate()
 	{
@@ -587,22 +591,22 @@ abstract class NPresenter extends NControl implements IPresenter
 			trigger_error(__METHOD__ . ' is not intended to send a PresenterResponse; use sendResponse() instead.', E_USER_WARNING);
 			$this->sendResponse(func_get_arg(0));
 		}
-		throw new NAbortException();
+		throw new AbortException();
 	}
 
 
 
 	/**
 	 * Forward to another presenter or action.
-	 * @param  string|NPresenterRequest
+	 * @param  string|PresenterRequest
 	 * @param  array|mixed
 	 * @return void
-	 * @throws NAbortException
+	 * @throws AbortException
 	 */
 	public function forward($destination, $args = array())
 	{
-		if ($destination instanceof NPresenterRequest) {
-			$this->sendResponse(new NForwardingResponse($destination));
+		if ($destination instanceof PresenterRequest) {
+			$this->sendResponse(new ForwardingResponse($destination));
 
 		} elseif (!is_array($args)) {
 			$args = func_get_args();
@@ -610,7 +614,7 @@ abstract class NPresenter extends NControl implements IPresenter
 		}
 
 		$this->createRequest($this, $destination, $args, 'forward');
-		$this->sendResponse(new NForwardingResponse($this->lastCreatedRequest));
+		$this->sendResponse(new ForwardingResponse($this->lastCreatedRequest));
 	}
 
 
@@ -620,7 +624,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	 * @param  string
 	 * @param  int HTTP error code
 	 * @return void
-	 * @throws NAbortException
+	 * @throws AbortException
 	 */
 	public function redirectUri($uri, $code = NULL)
 	{
@@ -629,15 +633,15 @@ abstract class NPresenter extends NControl implements IPresenter
 			$this->sendPayload();
 
 		} elseif (!$code) {
-			$code = $this->getHttpRequest()->isMethod('post') ? IHttpResponse::S303_POST_GET : IHttpResponse::S302_FOUND;
+			$code = $this->getHttpRequest()->isMethod('post') ? Nette\Web\IHttpResponse::S303_POST_GET : Nette\Web\IHttpResponse::S302_FOUND;
 		}
-		$this->sendResponse(new NRedirectingResponse($uri, $code));
+		$this->sendResponse(new RedirectingResponse($uri, $code));
 	}
 
 
 
 	/**
-	 * NLink to myself.
+	 * Link to myself.
 	 * @return string
 	 */
 	public function backlink()
@@ -648,8 +652,8 @@ abstract class NPresenter extends NControl implements IPresenter
 
 
 	/**
-	 * Returns the last created NPresenterRequest.
-	 * @return NPresenterRequest
+	 * Returns the last created PresenterRequest.
+	 * @return PresenterRequest
 	 */
 	public function getLastCreatedRequest()
 	{
@@ -659,7 +663,7 @@ abstract class NPresenter extends NControl implements IPresenter
 
 
 	/**
-	 * Returns the last created NPresenterRequest flag.
+	 * Returns the last created PresenterRequest flag.
 	 * @param  string
 	 * @return bool
 	 */
@@ -673,14 +677,14 @@ abstract class NPresenter extends NControl implements IPresenter
 	/**
 	 * Conditional redirect to canonicalized URI.
 	 * @return void
-	 * @throws NAbortException
+	 * @throws AbortException
 	 */
 	public function canonicalize()
 	{
 		if (!$this->isAjax() && ($this->request->isMethod('get') || $this->request->isMethod('head'))) {
 			$uri = $this->createRequest($this, $this->action, $this->getGlobalState() + $this->request->params, 'redirectX');
 			if ($uri !== NULL && !$this->getHttpRequest()->getUri()->isEqual($uri)) {
-				$this->sendResponse(new NRedirectingResponse($uri, IHttpResponse::S301_MOVED_PERMANENTLY));
+				$this->sendResponse(new RedirectingResponse($uri, Nette\Web\IHttpResponse::S301_MOVED_PERMANENTLY));
 			}
 		}
 	}
@@ -693,12 +697,12 @@ abstract class NPresenter extends NControl implements IPresenter
 	 * @param  string strong entity tag validator
 	 * @param  mixed  optional expiration time
 	 * @return void
-	 * @throws NAbortException
+	 * @throws AbortException
 	 * @deprecated
 	 */
 	public function lastModified($lastModified, $etag = NULL, $expire = NULL)
 	{
-		if (!NEnvironment::isProduction()) {
+		if (!Environment::isProduction()) {
 			return;
 		}
 
@@ -714,13 +718,13 @@ abstract class NPresenter extends NControl implements IPresenter
 
 
 	/**
-	 * NPresenterRequest/URL factory.
-	 * @param  NPresenterComponent  base
+	 * PresenterRequest/URL factory.
+	 * @param  PresenterComponent  base
 	 * @param  string   destination in format "[[module:]presenter:]action" or "signal!" or "this"
 	 * @param  array    array of arguments
 	 * @param  string   forward|redirect|link
 	 * @return string   URL
-	 * @throws NInvalidLinkException
+	 * @throws InvalidLinkException
 	 * @internal
 	 */
 	final protected function createRequest($component, $destination, array $args, $mode)
@@ -764,7 +768,7 @@ abstract class NPresenter extends NControl implements IPresenter
 		}
 
 		// 4) signal or empty
-		if (!($component instanceof NPresenter) || substr($destination, -1) === '!') {
+		if (!($component instanceof Presenter) || substr($destination, -1) === '!') {
 			$signal = rtrim($destination, '!');
 			$a = strrpos($signal, ':');
 			if ($a !== FALSE) {
@@ -772,13 +776,13 @@ abstract class NPresenter extends NControl implements IPresenter
 				$signal = (string) substr($signal, $a + 1);
 			}
 			if ($signal == NULL) {  // intentionally ==
-				throw new NInvalidLinkException("Signal must be non-empty string.");
+				throw new InvalidLinkException("Signal must be non-empty string.");
 			}
 			$destination = 'this';
 		}
 
 		if ($destination == NULL) {  // intentionally ==
-			throw new NInvalidLinkException("Destination must be non-empty string.");
+			throw new InvalidLinkException("Destination must be non-empty string.");
 		}
 
 		// 5) presenter: action
@@ -793,7 +797,7 @@ abstract class NPresenter extends NControl implements IPresenter
 			$action = (string) substr($destination, $a + 1);
 			if ($destination[0] === ':') { // absolute
 				if ($a < 2) {
-					throw new NInvalidLinkException("Missing presenter name in '$destination'.");
+					throw new InvalidLinkException("Missing presenter name in '$destination'.");
 				}
 				$presenter = substr($destination, 1, $a - 1);
 
@@ -811,18 +815,18 @@ abstract class NPresenter extends NControl implements IPresenter
 
 		// PROCESS SIGNAL ARGUMENTS
 		if (isset($signal)) { // $component must be IStatePersistent
-			$reflection = new NPresenterComponentReflection(get_class($component));
+			$reflection = new PresenterComponentReflection(get_class($component));
 			if ($signal === 'this') { // means "no signal"
 				$signal = '';
 				if (array_key_exists(0, $args)) {
-					throw new NInvalidLinkException("Unable to pass parameters to 'this!' signal.");
+					throw new InvalidLinkException("Unable to pass parameters to 'this!' signal.");
 				}
 
-			} elseif (strpos($signal, self::NAME_SEPARATOR) === FALSE) { // TODO: NAppForm exception
+			} elseif (strpos($signal, self::NAME_SEPARATOR) === FALSE) { // TODO: AppForm exception
 				// counterpart of signalReceived() & tryCall()
 				$method = $component->formatSignalMethod($signal);
 				if (!$reflection->hasCallableMethod($method)) {
-					throw new NInvalidLinkException("Unknown signal '$signal', missing handler {$reflection->name}::$method()");
+					throw new InvalidLinkException("Unknown signal '$signal', missing handler {$reflection->name}::$method()");
 				}
 				if ($args) { // convert indexed parameters to named
 					self::argsToParams(get_class($component), $method, $args);
@@ -846,17 +850,17 @@ abstract class NPresenter extends NControl implements IPresenter
 		// PROCESS ARGUMENTS
 		if (is_subclass_of($presenterClass, __CLASS__)) {
 			if ($action === '') {
-				$action = self::$defaultAction;
+				$action = $presenterClass::$defaultAction;
 			}
 
 			$current = ($action === '*' || $action === $this->action) && $presenterClass === get_class($this); // TODO
 
-			$reflection = new NPresenterComponentReflection($presenterClass);
+			$reflection = new PresenterComponentReflection($presenterClass);
 			if ($args || $destination === 'this') {
 				// counterpart of run() & tryCall()
-				$method = call_user_func(array($presenterClass, 'formatActionMethod'), $action);
+				$method = $presenterClass::formatActionMethod($action);
 				if (!$reflection->hasCallableMethod($method)) {
-					$method = call_user_func(array($presenterClass, 'formatRenderMethod'), $action);
+					$method = $presenterClass::formatRenderMethod($action);
 					if (!$reflection->hasCallableMethod($method)) {
 						$method = NULL;
 					}
@@ -865,7 +869,7 @@ abstract class NPresenter extends NControl implements IPresenter
 				// convert indexed parameters to named
 				if ($method === NULL) {
 					if (array_key_exists(0, $args)) {
-						throw new NInvalidLinkException("Unable to pass parameters to action '$presenter:$action', missing corresponding method.");
+						throw new InvalidLinkException("Unable to pass parameters to action '$presenter:$action', missing corresponding method.");
 					}
 
 				} elseif ($destination === 'this') {
@@ -904,9 +908,9 @@ abstract class NPresenter extends NControl implements IPresenter
 			$args[self::FLASH_KEY] = $this->getParam(self::FLASH_KEY);
 		}
 
-		$this->lastCreatedRequest = new NPresenterRequest(
+		$this->lastCreatedRequest = new PresenterRequest(
 			$presenter,
-			NPresenterRequest::FORWARD,
+			PresenterRequest::FORWARD,
 			$args,
 			array(),
 			array()
@@ -920,7 +924,7 @@ abstract class NPresenter extends NControl implements IPresenter
 		if ($uri === NULL) {
 			unset($args[self::ACTION_KEY]);
 			$params = urldecode(http_build_query($args, NULL, ', '));
-			throw new NInvalidLinkException("No route for $presenter:$action($params)");
+			throw new InvalidLinkException("No route for $presenter:$action($params)");
 		}
 
 		// make URL relative if possible
@@ -943,14 +947,14 @@ abstract class NPresenter extends NControl implements IPresenter
 	 * @param  array   arguments
 	 * @param  array   supplemental arguments
 	 * @return void
-	 * @throws NInvalidLinkException
+	 * @throws InvalidLinkException
 	 */
 	private static function argsToParams($class, $method, & $args, $supplemental = array())
 	{
 		static $cache;
 		$params = & $cache[strtolower($class . ':' . $method)];
 		if ($params === NULL) {
-			$params = NMethodReflection::from($class, $method)->getDefaultParameters();
+			$params = Nette\Reflection\MethodReflection::from($class, $method)->getDefaultParameters();
 		}
 		$i = 0;
 		foreach ($params as $name => $def) {
@@ -978,8 +982,8 @@ abstract class NPresenter extends NControl implements IPresenter
 		}
 
 		if (array_key_exists($i, $args)) {
-			$method = NMethodReflection::from($class, $method)->getName();
-			throw new NInvalidLinkException("Passed more parameters than method $class::$method() expects.");
+			$method = Nette\Reflection\MethodReflection::from($class, $method)->getName();
+			throw new InvalidLinkException("Passed more parameters than method $class::$method() expects.");
 		}
 	}
 
@@ -987,14 +991,14 @@ abstract class NPresenter extends NControl implements IPresenter
 
 	/**
 	 * Invalid link handler. Descendant can override this method to change default behaviour.
-	 * @param  NInvalidLinkException
+	 * @param  InvalidLinkException
 	 * @return string
-	 * @throws NInvalidLinkException
+	 * @throws InvalidLinkException
 	 */
 	protected function handleInvalidLink($e)
 	{
 		if (self::$invalidLinkMode === NULL) {
-			self::$invalidLinkMode = NEnvironment::isProduction()
+			self::$invalidLinkMode = Environment::isProduction()
 				? self::INVALID_LINK_SILENT : self::INVALID_LINK_WARNING;
 		}
 
@@ -1022,7 +1026,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	 */
 	public static function getPersistentComponents()
 	{
-		return (array) NClassReflection::from(func_get_arg(0))->getAnnotation('persistent');
+		return (array) Nette\Reflection\ClassReflection::from(get_called_class())->getAnnotation('persistent');
 	}
 
 
@@ -1043,7 +1047,7 @@ abstract class NPresenter extends NControl implements IPresenter
 					$state[$prefix . $key] = $val;
 				}
 			}
-			$this->saveState($state, $forClass ? new NPresenterComponentReflection($forClass) : NULL);
+			$this->saveState($state, $forClass ? new PresenterComponentReflection($forClass) : NULL);
 
 			if ($sinces === NULL) {
 				$sinces = array();
@@ -1053,7 +1057,7 @@ abstract class NPresenter extends NControl implements IPresenter
 			}
 
 			$components = $this->getReflection()->getPersistentComponents();
-			$iterator = $this->getComponents(TRUE, 'IStatePersistent');
+			$iterator = $this->getComponents(TRUE, 'Nette\Application\IStatePersistent');
 			foreach ($iterator as $name => $component)
 			{
 				if ($iterator->getDepth() === 0) {
@@ -1116,7 +1120,7 @@ abstract class NPresenter extends NControl implements IPresenter
 	/**
 	 * Initializes $this->globalParams, $this->signal & $this->signalReceiver, $this->action, $this->view. Called by run().
 	 * @return void
-	 * @throws NBadRequestException if action name is not valid
+	 * @throws BadRequestException if action name is not valid
 	 */
 	private function initGlobalParams()
 	{
@@ -1200,7 +1204,7 @@ abstract class NPresenter extends NControl implements IPresenter
 
 	/**
 	 * Returns session namespace provided to pass temporary data between redirects.
-	 * @return NSessionNamespace
+	 * @return Nette\Web\SessionNamespace
 	 */
 	public function getFlashSession()
 	{
@@ -1217,61 +1221,61 @@ abstract class NPresenter extends NControl implements IPresenter
 
 
 	/**
-	 * @return NHttpRequest
+	 * @return Nette\Web\HttpRequest
 	 */
 	protected function getHttpRequest()
 	{
-		return NEnvironment::getHttpRequest();
+		return Environment::getHttpRequest();
 	}
 
 
 
 	/**
-	 * @return NHttpResponse
+	 * @return Nette\Web\HttpResponse
 	 */
 	protected function getHttpResponse()
 	{
-		return NEnvironment::getHttpResponse();
+		return Environment::getHttpResponse();
 	}
 
 
 
 	/**
-	 * @return NHttpContext
+	 * @return Nette\Web\HttpContext
 	 */
 	protected function getHttpContext()
 	{
-		return NEnvironment::getHttpContext();
+		return Environment::getHttpContext();
 	}
 
 
 
 	/**
-	 * @return NApplication
+	 * @return Application
 	 */
 	public function getApplication()
 	{
-		return NEnvironment::getApplication();
+		return Environment::getApplication();
 	}
 
 
 
 	/**
-	 * @return NSession
+	 * @return Nette\Web\Session
 	 */
 	public function getSession($namespace = NULL)
 	{
-		return NEnvironment::getSession($namespace);
+		return Environment::getSession($namespace);
 	}
 
 
 
 	/**
-	 * @return NUser
+	 * @return Nette\Web\User
 	 */
 	public function getUser()
 	{
-		return NEnvironment::getUser();
+		return Environment::getUser();
 	}
 
 }

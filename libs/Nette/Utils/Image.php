@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
@@ -16,7 +19,7 @@
  * Basic manipulation with images.
  *
  * <code>
- * $image = NImage::fromFile('nette.jpg');
+ * $image = Image::fromFile('nette.jpg');
  * $image->resize(150, 100);
  * $image->sharpen();
  * $image->send();
@@ -28,7 +31,7 @@
  * @property-read int $height
  * @property-read resource $imageResource
  */
-class NImage extends NObject
+class Image extends Object
 {
 	/** {@link resize()} allows enlarging image (it only shrinks images by default) */
 	const ENLARGE = 1;
@@ -82,34 +85,34 @@ class NImage extends NObject
 	 * Opens image from file.
 	 * @param  string
 	 * @param  mixed  detected image format
-	 * @return NImage
+	 * @return Image
 	 */
 	public static function fromFile($file, & $format = NULL)
 	{
 		if (!extension_loaded('gd')) {
-			throw new Exception("PHP extension GD is not loaded.");
+			throw new \Exception("PHP extension GD is not loaded.");
 		}
 
 		$info = @getimagesize($file); // @ - files smaller than 12 bytes causes read error
 		if (self::$useImageMagick && (empty($info) || $info[0] * $info[1] > 9e5)) { // cca 1024x768
-			return new NImageMagick($file, $format);
+			return new ImageMagick($file, $format);
 		}
 
 		switch ($format = $info[2]) {
 		case self::JPEG:
-			return new self(imagecreatefromjpeg($file));
+			return new static(imagecreatefromjpeg($file));
 
 		case self::PNG:
-			return new self(imagecreatefrompng($file));
+			return new static(imagecreatefrompng($file));
 
 		case self::GIF:
-			return new self(imagecreatefromgif($file));
+			return new static(imagecreatefromgif($file));
 
 		default:
 			if (self::$useImageMagick) {
-				return new NImageMagick($file, $format);
+				return new ImageMagick($file, $format);
 			}
-			throw new Exception("Unknown image type or file '$file' not found.");
+			throw new \Exception("Unknown image type or file '$file' not found.");
 		}
 	}
 
@@ -143,17 +146,17 @@ class NImage extends NObject
 	 * Create a new image from the image stream in the string.
 	 * @param  string
 	 * @param  mixed  detected image format
-	 * @return NImage
+	 * @return Image
 	 */
 	public static function fromString($s, & $format = NULL)
 	{
 		if (!extension_loaded('gd')) {
-			throw new Exception("PHP extension GD is not loaded.");
+			throw new \Exception("PHP extension GD is not loaded.");
 		}
 
-		$format = self::getFormatFromString($s);
+		$format = static::getFormatFromString($s);
 
-		return new self(imagecreatefromstring($s));
+		return new static(imagecreatefromstring($s));
 	}
 
 
@@ -163,18 +166,18 @@ class NImage extends NObject
 	 * @param  int
 	 * @param  int
 	 * @param  array
-	 * @return NImage
+	 * @return Image
 	 */
 	public static function fromBlank($width, $height, $color = NULL)
 	{
 		if (!extension_loaded('gd')) {
-			throw new Exception("PHP extension GD is not loaded.");
+			throw new \Exception("PHP extension GD is not loaded.");
 		}
 
 		$width = (int) $width;
 		$height = (int) $height;
 		if ($width < 1 || $height < 1) {
-			throw new InvalidArgumentException('Image width and height must be greater than zero.');
+			throw new \InvalidArgumentException('Image width and height must be greater than zero.');
 		}
 
 		$image = imagecreatetruecolor($width, $height);
@@ -185,7 +188,7 @@ class NImage extends NObject
 			imagefilledrectangle($image, 0, 0, $width - 1, $height - 1, $color);
 			imagealphablending($image, TRUE);
 		}
-		return new self($image);
+		return new static($image);
 	}
 
 
@@ -226,12 +229,12 @@ class NImage extends NObject
 	/**
 	 * Sets image resource.
 	 * @param  resource
-	 * @return NImage  provides a fluent interface
+	 * @return Image  provides a fluent interface
 	 */
 	protected function setImageResource($image)
 	{
 		if (!is_resource($image) || get_resource_type($image) !== 'gd') {
-			throw new InvalidArgumentException('Image is not valid.');
+			throw new \InvalidArgumentException('Image is not valid.');
 		}
 		$this->image = $image;
 		return $this;
@@ -255,7 +258,7 @@ class NImage extends NObject
 	 * @param  mixed  width in pixels or percent
 	 * @param  mixed  height in pixels or percent
 	 * @param  int    flags
-	 * @return NImage  provides a fluent interface
+	 * @return Image  provides a fluent interface
 	 */
 	public function resize($width, $height, $flags = self::FIT)
 	{
@@ -313,7 +316,7 @@ class NImage extends NObject
 
 		if ($flags & self::STRETCH) { // non-proportional
 			if (empty($newWidth) || empty($newHeight)) {
-				throw new InvalidArgumentException('For stretching must be both width and height specified.');
+				throw new \InvalidArgumentException('For stretching must be both width and height specified.');
 			}
 
 			if (($flags & self::ENLARGE) === 0) {
@@ -323,7 +326,7 @@ class NImage extends NObject
 
 		} else {  // proportional
 			if (empty($newWidth) && empty($newHeight)) {
-				throw new InvalidArgumentException('At least width or height must be specified.');
+				throw new \InvalidArgumentException('At least width or height must be specified.');
 			}
 
 			$scale = array();
@@ -359,7 +362,7 @@ class NImage extends NObject
 	 * @param  mixed  y-offset in pixels or percent
 	 * @param  int    width
 	 * @param  int    height
-	 * @return NImage  provides a fluent interface
+	 * @return Image  provides a fluent interface
 	 */
 	public function crop($left, $top, $width, $height)
 	{
@@ -390,7 +393,7 @@ class NImage extends NObject
 
 	/**
 	 * Sharpen image.
-	 * @return NImage  provides a fluent interface
+	 * @return Image  provides a fluent interface
 	 */
 	public function sharpen()
 	{
@@ -406,13 +409,13 @@ class NImage extends NObject
 
 	/**
 	 * Puts another image into this image.
-	 * @param  NImage
+	 * @param  Image
 	 * @param  mixed  x-coordinate in pixels or percent
 	 * @param  mixed  y-coordinate in pixels or percent
 	 * @param  int  opacity 0..100
-	 * @return NImage  provides a fluent interface
+	 * @return Image  provides a fluent interface
 	 */
-	public function place(NImage $image, $left = 0, $top = 0, $opacity = 100)
+	public function place(Image $image, $left = 0, $top = 0, $opacity = 100)
 	{
 		$opacity = max(0, min(100, (int) $opacity));
 
@@ -471,7 +474,7 @@ class NImage extends NObject
 			return $file === NULL ? imagegif($this->getImageResource()) : imagegif($this->getImageResource(), $file); // PHP bug #44591
 
 		default:
-			throw new Exception("Unsupported image type.");
+			throw new \Exception("Unsupported image type.");
 		}
 	}
 
@@ -501,8 +504,8 @@ class NImage extends NObject
 		try {
 			return $this->toString();
 
-		} catch (Exception $e) {
-			NDebug::toStringException($e);
+		} catch (\Exception $e) {
+			Debug::toStringException($e);
 		}
 	}
 
@@ -517,7 +520,7 @@ class NImage extends NObject
 	public function send($type = self::JPEG, $quality = NULL)
 	{
 		if ($type !== self::GIF && $type !== self::PNG && $type !== self::JPEG) {
-			throw new Exception("Unsupported image type.");
+			throw new \Exception("Unsupported image type.");
 		}
 		header('Content-Type: ' . image_type_to_mime_type($type));
 		return $this->save(NULL, $quality, $type);
@@ -531,7 +534,7 @@ class NImage extends NObject
 	 * @param  string  method name
 	 * @param  array   arguments
 	 * @return mixed
-	 * @throws MemberAccessException
+	 * @throws \MemberAccessException
 	 */
 	public function __call($name, $args)
 	{

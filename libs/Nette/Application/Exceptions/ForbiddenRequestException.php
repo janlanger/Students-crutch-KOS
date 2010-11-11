@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NForbiddenRequestException extends NBadRequestException
+class ForbiddenRequestException extends BadRequestException
 {
 	/** @var int */
 	protected $defaultCode = 403;

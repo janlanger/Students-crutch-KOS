@@ -7,17 +7,21 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette,
+	Nette\Config\Config;
 
 
 
 /**
- * NEnvironment helper.
+ * Nette\Environment helper.
  *
  * @author     David Grudl
  */
-class NConfigurator extends NObject
+class Configurator extends Object
 {
 	/** @var string */
 	public $defaultConfigFile = '%appDir%/config.ini';
@@ -25,13 +29,13 @@ class NConfigurator extends NObject
 	/** @var array */
 	public $defaultServices = array(
 		'Nette\\Application\\Application' => array(__CLASS__, 'createApplication'),
-		'Nette\\Web\\HttpContext' => 'NHttpContext',
-		'Nette\\Web\\IHttpRequest' => 'NHttpRequest',
-		'Nette\\Web\\IHttpResponse' => 'NHttpResponse',
-		'Nette\\Web\\IUser' => 'NUser',
+		'Nette\\Web\\HttpContext' => 'Nette\Web\HttpContext',
+		'Nette\\Web\\IHttpRequest' => 'Nette\Web\HttpRequest',
+		'Nette\\Web\\IHttpResponse' => 'Nette\Web\HttpResponse',
+		'Nette\\Web\\IUser' => 'Nette\Web\User',
 		'Nette\\Caching\\ICacheStorage' => array(__CLASS__, 'createCacheStorage'),
 		'Nette\\Caching\\ICacheJournal' => array(__CLASS__, 'createCacheJournal'),
-		'Nette\\Web\\Session' => 'NSession',
+		'Nette\\Web\\Session' => 'Nette\Web\Session',
 		'Nette\\Loaders\\RobotLoader' => array(__CLASS__, 'createRobotLoader'),
 	);
 
@@ -48,10 +52,10 @@ class NConfigurator extends NObject
 		case 'environment':
 			// environment name autodetection
 			if ($this->detect('console')) {
-				return NEnvironment::CONSOLE;
+				return Environment::CONSOLE;
 
 			} else {
-				return NEnvironment::getMode('production') ? NEnvironment::PRODUCTION : NEnvironment::DEVELOPMENT;
+				return Environment::getMode('production') ? Environment::PRODUCTION : Environment::DEVELOPMENT;
 			}
 
 		case 'production':
@@ -87,14 +91,14 @@ class NConfigurator extends NObject
 
 	/**
 	 * Loads global configuration from file and process it.
-	 * @param  string|NConfig  file name or NConfig object
-	 * @return NConfig
+	 * @param  string|Nette\Config\Config  file name or Config object
+	 * @return Nette\Config\Config
 	 */
 	public function loadConfig($file)
 	{
-		$name = NEnvironment::getName();
+		$name = Environment::getName();
 
-		if ($file instanceof NConfig) {
+		if ($file instanceof Config) {
 			$config = $file;
 			$file = NULL;
 
@@ -102,28 +106,28 @@ class NConfigurator extends NObject
 			if ($file === NULL) {
 				$file = $this->defaultConfigFile;
 			}
-			$file = NEnvironment::expand($file);
-			$config = NConfig::fromFile($file, $name);
+			$file = Environment::expand($file);
+			$config = Config::fromFile($file, $name);
 		}
 
 		// process environment variables
-		if ($config->variable instanceof NConfig) {
+		if ($config->variable instanceof Config) {
 			foreach ($config->variable as $key => $value) {
-				NEnvironment::setVariable($key, $value);
+				Environment::setVariable($key, $value);
 			}
 		}
 
 		// expand variables
-		$iterator = new RecursiveIteratorIterator($config);
+		$iterator = new \RecursiveIteratorIterator($config);
 		foreach ($iterator as $key => $value) {
 			$tmp = $iterator->getDepth() ? $iterator->getSubIterator($iterator->getDepth() - 1)->current() : $config;
-			$tmp[$key] = NEnvironment::expand($value);
+			$tmp[$key] = Environment::expand($value);
 		}
 
 		// process services
 		$runServices = array();
-		$context = NEnvironment::getContext();
-		if ($config->service instanceof NConfig) {
+		$context = Environment::getContext();
+		if ($config->service instanceof Config) {
 			foreach ($config->service as $key => $value) {
 				$key = strtr($key, '-', '\\'); // limited INI chars
 				if (is_string($value)) {
@@ -150,13 +154,13 @@ class NConfigurator extends NObject
 			unset($config->set);
 		}
 
-		if ($config->php instanceof NConfig) {
+		if ($config->php instanceof Config) {
 			if (PATH_SEPARATOR !== ';' && isset($config->php->include_path)) {
 				$config->php->include_path = str_replace(';', PATH_SEPARATOR, $config->php->include_path);
 			}
 
 			foreach (clone $config->php as $key => $value) { // flatten INI dots
-				if ($value instanceof NConfig) {
+				if ($value instanceof Config) {
 					unset($config->php->$key);
 					foreach ($value as $k => $v) {
 						$config->php->{"$key.$k"} = $v;
@@ -168,7 +172,7 @@ class NConfigurator extends NObject
 				$key = strtr($key, '-', '.'); // backcompatibility
 
 				if (!is_scalar($value)) {
-					throw new InvalidStateException("Configuration value for directive '$key' is not scalar.");
+					throw new \InvalidStateException("Configuration value for directive '$key' is not scalar.");
 				}
 
 				if ($key === 'date.timezone') { // PHP bug #47466
@@ -202,7 +206,7 @@ class NConfigurator extends NObject
 						break;
 					default:
 						if (ini_get($key) != $value) { // intentionally ==
-							throw new NotSupportedException('Required function ini_set() is disabled.');
+							throw new \NotSupportedException('Required function ini_set() is disabled.');
 						}
 					}
 				}
@@ -210,7 +214,7 @@ class NConfigurator extends NObject
 		}
 
 		// define constants
-		if ($config->const instanceof NConfig) {
+		if ($config->const instanceof Config) {
 			foreach ($config->const as $key => $value) {
 				define($key, $value);
 			}
@@ -219,7 +223,7 @@ class NConfigurator extends NObject
 		// set modes
 		if (isset($config->mode)) {
 			foreach($config->mode as $mode => $state) {
-				NEnvironment::setMode($mode, $state);
+				Environment::setMode($mode, $state);
 			}
 		}
 
@@ -243,7 +247,7 @@ class NConfigurator extends NObject
 	 */
 	public function createContext()
 	{
-		$context = new NContext;
+		$context = new Context;
 		foreach ($this->defaultServices as $name => $service) {
 			$context->addService($name, $service);
 		}
@@ -253,73 +257,73 @@ class NConfigurator extends NObject
 
 
 	/**
-	 * @return NApplication
+	 * @return Nette\Application\Application
 	 */
 	public static function createApplication()
 	{
-		if (NEnvironment::getVariable('baseUri', NULL) === NULL) {
-			NEnvironment::setVariable('baseUri', NEnvironment::getHttpRequest()->getUri()->getBasePath());
+		if (Environment::getVariable('baseUri', NULL) === NULL) {
+			Environment::setVariable('baseUri', Environment::getHttpRequest()->getUri()->getBasePath());
 		}
 
-		$context = clone NEnvironment::getContext();
-		$context->addService('Nette\\Application\\IRouter', 'NMultiRouter');
+		$context = clone Environment::getContext();
+		$context->addService('Nette\\Application\\IRouter', 'Nette\Application\MultiRouter');
 
 		if (!$context->hasService('Nette\\Application\\IPresenterLoader')) {
-			$context->addService('Nette\\Application\\IPresenterLoader', callback(create_function('', '
-				return new NPresenterLoader(NEnvironment::getVariable(\'appDir\'));
-			')));
+			$context->addService('Nette\\Application\\IPresenterLoader', function() {
+				return new Nette\Application\PresenterLoader(Environment::getVariable('appDir'));
+			});
 		}
 
-		$application = new NApplication;
+		$application = new Nette\Application\Application;
 		$application->setContext($context);
-		$application->catchExceptions = NEnvironment::isProduction();
+		$application->catchExceptions = Environment::isProduction();
 		return $application;
 	}
 
 
 
 	/**
-	 * @return ICacheStorage
+	 * @return Nette\Caching\ICacheStorage
 	 */
 	public static function createCacheStorage()
 	{
-		$context = new NContext;
+		$context = new Context;
 		$context->addService('Nette\\Caching\\ICacheJournal', array(__CLASS__, 'createCacheJournal'));
-		$dir = NEnvironment::getVariable('tempDir') . '/cache';
+		$dir = Environment::getVariable('tempDir') . '/cache';
 		umask(0000);
 		@mkdir($dir, 0755); // @ - directory may exists
-		return new NFileStorage($dir, $context);
+		return new Nette\Caching\FileStorage($dir, $context);
 	}
 
 
 
 	/**
-	 * @return ICacheJournal
+	 * @return Nette\Caching\ICacheJournal
 	 */
 	public static function createCacheJournal()
 	{
-		/*if (NSqliteJournal::isAvailable()) {
-			return new NSqliteJournal(NEnvironment::getVariable('tempDir') . '/cache/cachejournal.db');
+		/*if (Nette\Caching\SqliteJournal::isAvailable()) {
+			return new Nette\Caching\SqliteJournal(Environment::getVariable('tempDir') . '/cache/cachejournal.db');
 		} else*/ {
-			return new NFileJournal(NEnvironment::getVariable('tempDir') . '/cache');
+			return new Nette\Caching\FileJournal(Environment::getVariable('tempDir') . '/cache');
 		}
 	}
 
 
 
 	/**
-	 * @return NRobotLoader
+	 * @return Nette\Loaders\RobotLoader
 	 */
 	public static function createRobotLoader($options)
 	{
-		$loader = new NRobotLoader;
-		$loader->autoRebuild = isset($options['autoRebuild']) ? $options['autoRebuild'] : !NEnvironment::isProduction();
-		$loader->setCacheStorage(NEnvironment::getService('Nette\\Caching\\ICacheStorage'));
+		$loader = new Nette\Loaders\RobotLoader;
+		$loader->autoRebuild = isset($options['autoRebuild']) ? $options['autoRebuild'] : !Environment::isProduction();
+		$loader->setCacheStorage(Environment::getService('Nette\\Caching\\ICacheStorage'));
 		if (isset($options['directory'])) {
 			$loader->addDirectory($options['directory']);
 		} else {
 			foreach (array('appDir', 'libsDir') as $var) {
-				if ($dir = NEnvironment::getVariable($var, NULL)) {
+				if ($dir = Environment::getVariable($var, NULL)) {
 					$loader->addDirectory($dir);
 				}
 			}

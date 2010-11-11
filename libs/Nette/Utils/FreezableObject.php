@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
@@ -19,7 +22,7 @@
  *
  * @property-read bool $frozen
  */
-abstract class NFreezableObject extends NObject implements IFreezable
+abstract class FreezableObject extends Object implements IFreezable
 {
 	/** @var bool */
 	private $frozen = FALSE;
@@ -65,7 +68,7 @@ abstract class NFreezableObject extends NObject implements IFreezable
 	protected function updating()
 	{
 		if ($this->frozen) {
-			throw new InvalidStateException("Cannot modify a frozen object {$this->reflection->name}.");
+			throw new \InvalidStateException("Cannot modify a frozen object {$this->reflection->name}.");
 		}
 	}
 

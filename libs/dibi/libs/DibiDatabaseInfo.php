@@ -1,12 +1,12 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
  * @package    dibi
  */
 
@@ -15,8 +15,7 @@
 /**
  * Reflection metadata class for a database.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  *
  * @property-read string $name
  * @property-read array $tables
@@ -128,11 +127,11 @@ class DibiDatabaseInfo extends DibiObject
 
 
 
+
 /**
  * Reflection metadata class for a database table.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  *
  * @property-read string $name
  * @property-read bool $view
@@ -336,11 +335,11 @@ class DibiTableInfo extends DibiObject
 
 
 
+
 /**
  * Reflection metadata class for a result set.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  *
  * @property-read array $columns
  * @property-read array $columnNames
@@ -442,11 +441,11 @@ class DibiResultInfo extends DibiObject
 
 
 
+
 /**
  * Reflection metadata class for a table or result set column.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  *
  * @property-read string $name
  * @property-read string $fullName
@@ -621,7 +620,7 @@ class DibiColumnInfo extends DibiObject
 	 * Heuristic type detection.
 	 * @param  string
 	 * @return string
-	 * @ignore internal
+	 * @internal
 	 */
 	public static function detectType($type)
 	{
@@ -648,11 +647,11 @@ class DibiColumnInfo extends DibiObject
 
 
 
+
 /**
  * Reflection metadata class for a foreign key.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  * @todo
  *
  * @property-read string $name
@@ -698,11 +697,11 @@ class DibiForeignKeyInfo extends DibiObject
 
 
 
+
 /**
  * Reflection metadata class for a index or primary key.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  *
  * @property-read string $name
  * @property-read array $columns

@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
@@ -25,7 +28,7 @@
  *
  * @author     David Grudl
  */
-final class NSafeStream
+final class SafeStream
 {
 	/**
 	 * Name of stream protocol - safe://

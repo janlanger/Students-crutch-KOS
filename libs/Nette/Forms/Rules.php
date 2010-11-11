@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-final class NRules extends NObject implements IteratorAggregate
+final class Rules extends Nette\Object implements \IteratorAggregate
 {
 	/** @internal */
 	const VALIDATE_PREFIX = 'validate';
@@ -27,10 +30,10 @@ final class NRules extends NObject implements IteratorAggregate
 		':protection' => 'Security token did not match. Possible CSRF attack.',
 	);
 
-	/** @var array of NRule */
+	/** @var array of Rule */
 	private $rules = array();
 
-	/** @var NRules */
+	/** @var Rules */
 	private $parent;
 
 	/** @var array */
@@ -53,16 +56,16 @@ final class NRules extends NObject implements IteratorAggregate
 	 * @param  mixed      rule type
 	 * @param  string     message to display for invalid data
 	 * @param  mixed      optional rule arguments
-	 * @return NRules      provides a fluent interface
+	 * @return Rules      provides a fluent interface
 	 */
 	public function addRule($operation, $message = NULL, $arg = NULL)
 	{
-		$rule = new NRule;
+		$rule = new Rule;
 		$rule->control = $this->control;
 		$rule->operation = ($operation === ':protection' ? ':equal' : $operation);
 		$this->adjustOperation($rule);
 		$rule->arg = $arg;
-		$rule->type = NRule::VALIDATOR;
+		$rule->type = Rule::VALIDATOR;
 		if ($message === NULL && is_string($operation) && isset(self::$defaultMessages[$operation])) {
 			$rule->message = self::$defaultMessages[$operation];
 		} else {
@@ -83,7 +86,7 @@ final class NRules extends NObject implements IteratorAggregate
 	 * Adds a validation condition a returns new branch.
 	 * @param  mixed      condition type
 	 * @param  mixed      optional condition arguments
-	 * @return NRules      new branch
+	 * @return Rules      new branch
 	 */
 	public function addCondition($operation, $arg = NULL)
 	{
@@ -97,16 +100,16 @@ final class NRules extends NObject implements IteratorAggregate
 	 * @param  IFormControl form control
 	 * @param  mixed      condition type
 	 * @param  mixed      optional condition arguments
-	 * @return NRules      new branch
+	 * @return Rules      new branch
 	 */
 	public function addConditionOn(IFormControl $control, $operation, $arg = NULL)
 	{
-		$rule = new NRule;
+		$rule = new Rule;
 		$rule->control = $control;
 		$rule->operation = $operation;
 		$this->adjustOperation($rule);
 		$rule->arg = $arg;
-		$rule->type = NRule::CONDITION;
+		$rule->type = Rule::CONDITION;
 		$rule->subRules = new self($this->control);
 		$rule->subRules->parent = $this;
 
@@ -118,7 +121,7 @@ final class NRules extends NObject implements IteratorAggregate
 
 	/**
 	 * Adds a else statement.
-	 * @return NRules      else branch
+	 * @return Rules      else branch
 	 */
 	public function elseCondition()
 	{
@@ -134,7 +137,7 @@ final class NRules extends NObject implements IteratorAggregate
 
 	/**
 	 * Ends current validation condition.
-	 * @return NRules      parent branch
+	 * @return Rules      parent branch
 	 */
 	public function endCondition()
 	{
@@ -147,7 +150,7 @@ final class NRules extends NObject implements IteratorAggregate
 	 * Toggles HTML elememnt visibility.
 	 * @param  string     element id
 	 * @param  bool       hide element?
-	 * @return NRules      provides a fluent interface
+	 * @return Rules      provides a fluent interface
 	 */
 	public function toggle($id, $hide = TRUE)
 	{
@@ -170,12 +173,12 @@ final class NRules extends NObject implements IteratorAggregate
 
 			$success = ($rule->isNegative xor $this->getCallback($rule)->invoke($rule->control, $rule->arg));
 
-			if ($rule->type === NRule::CONDITION && $success) {
+			if ($rule->type === Rule::CONDITION && $success) {
 				if (!$rule->subRules->validate($onlyCheck)) {
 					return FALSE;
 				}
 
-			} elseif ($rule->type === NRule::VALIDATOR && !$success) {
+			} elseif ($rule->type === Rule::VALIDATOR && !$success) {
 				if (!$onlyCheck) {
 					$rule->control->addError(self::formatMessage($rule, TRUE));
 				}
@@ -189,11 +192,11 @@ final class NRules extends NObject implements IteratorAggregate
 
 	/**
 	 * Iterates over ruleset.
-	 * @return ArrayIterator
+	 * @return \ArrayIterator
 	 */
 	final public function getIterator()
 	{
-		return new ArrayIterator($this->rules);
+		return new \ArrayIterator($this->rules);
 	}
 
 
@@ -210,7 +213,7 @@ final class NRules extends NObject implements IteratorAggregate
 
 	/**
 	 * Process 'operation' string.
-	 * @param  NRule
+	 * @param  Rule
 	 * @return void
 	 */
 	private function adjustOperation($rule)
@@ -222,7 +225,7 @@ final class NRules extends NObject implements IteratorAggregate
 
 		if (!$this->getCallback($rule)->isCallable()) {
 			$operation = is_scalar($rule->operation) ? " '$rule->operation'" : '';
-			throw new InvalidArgumentException("Unknown operation$operation for control '{$rule->control->name}'.");
+			throw new \InvalidArgumentException("Unknown operation$operation for control '{$rule->control->name}'.");
 		}
 	}
 

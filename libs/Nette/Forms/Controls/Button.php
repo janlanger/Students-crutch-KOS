@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NButton extends NFormControl
+class Button extends FormControl
 {
 
 	/**
@@ -45,7 +48,7 @@ class NButton extends NFormControl
 	/**
 	 * Generates control's HTML element.
 	 * @param  string
-	 * @return NHtml
+	 * @return Nette\Web\Html
 	 */
 	public function getControl($caption = NULL)
 	{

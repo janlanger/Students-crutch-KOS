@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Mail
  */
+
+namespace Nette\Mail;
+
+use Nette;
 
 
 
@@ -17,35 +20,35 @@
  *
  * @author     David Grudl
  */
-class NSendmailMailer extends NObject implements IMailer
+class SendmailMailer extends Nette\Object implements IMailer
 {
 
 	/**
 	 * Sends e-mail.
-	 * @param  NMail
+	 * @param  Mail
 	 * @return void
 	 */
-	public function send(NMail $mail)
+	public function send(Mail $mail)
 	{
 		$tmp = clone $mail;
 		$tmp->setHeader('Subject', NULL);
 		$tmp->setHeader('To', NULL);
 
-		$parts = explode(NMail::EOL . NMail::EOL, $tmp->generateMessage(), 2);
+		$parts = explode(Mail::EOL . Mail::EOL, $tmp->generateMessage(), 2);
 
-		NDebug::tryError();
+		Nette\Debug::tryError();
 		$res = mail(
-			str_replace(NMail::EOL, PHP_EOL, $mail->getEncodedHeader('To')),
-			str_replace(NMail::EOL, PHP_EOL, $mail->getEncodedHeader('Subject')),
-			str_replace(NMail::EOL, PHP_EOL, $parts[1]),
-			str_replace(NMail::EOL, PHP_EOL, $parts[0])
+			str_replace(Mail::EOL, PHP_EOL, $mail->getEncodedHeader('To')),
+			str_replace(Mail::EOL, PHP_EOL, $mail->getEncodedHeader('Subject')),
+			str_replace(Mail::EOL, PHP_EOL, $parts[1]),
+			str_replace(Mail::EOL, PHP_EOL, $parts[0])
 		);
 
-		if (NDebug::catchError($msg)) {
-			throw new InvalidStateException($msg);
+		if (Nette\Debug::catchError($msg)) {
+			throw new \InvalidStateException($msg);
 
 		} elseif (!$res) {
-			throw new InvalidStateException('Unable to send email.');
+			throw new \InvalidStateException('Unable to send email.');
 		}
 	}
 

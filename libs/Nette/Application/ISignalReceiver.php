@@ -7,13 +7,16 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
 /**
- * NComponent with ability to receive signal.
+ * Component with ability to receive signal.
  *
  * @author     David Grudl
  */

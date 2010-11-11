@@ -1,12 +1,12 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
  * @package    dibi
  */
 
@@ -15,7 +15,7 @@
 /**
  * DibiObject is the ultimate ancestor of all instantiable classes.
  *
- * DibiObject is copy of NObject from Nette Framework (http://nette.org).
+ * DibiObject is copy of Nette\Object from Nette Framework (http://nette.org).
  *
  * It defines some handful methods and enhances object core of PHP:
  *   - access to undeclared members throws exceptions
@@ -50,8 +50,7 @@
  * $obj->newMethod($x);
  * </code>
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  */
 abstract class DibiObject
 {
@@ -66,14 +65,14 @@ abstract class DibiObject
 	 */
 	final public /*static*/ function getClass()
 	{
-		return /*get_called_class()*/ ;
+		return /*get_called_class()*/ /**/get_class($this)/**/;
 	}
 
 
 
 	/**
 	 * Access to reflection.
-	 * @return ReflectionObject
+	 * @return \ReflectionObject
 	 */
 	final public function getReflection()
 	{
@@ -87,7 +86,7 @@ abstract class DibiObject
 	 * @param  string  method name
 	 * @param  array   arguments
 	 * @return mixed
-	 * @throws MemberAccessException
+	 * @throws \MemberAccessException
 	 */
 	public function __call($name, $args)
 	{
@@ -104,7 +103,10 @@ abstract class DibiObject
 				$list = $this->$name;
 				if (is_array($list) || $list instanceof Traversable) {
 					foreach ($list as $handler) {
-						{
+						/**/if (is_object($handler)) {
+							call_user_func_array(array($handler, '__invoke'), $args);
+
+						} else /**/{
 							call_user_func_array($handler, $args);
 						}
 					}
@@ -129,7 +131,7 @@ abstract class DibiObject
 	 * @param  string  method name (in lower case!)
 	 * @param  array   arguments
 	 * @return mixed
-	 * @throws MemberAccessException
+	 * @throws \MemberAccessException
 	 */
 	public static function __callStatic($name, $args)
 	{
@@ -205,7 +207,7 @@ abstract class DibiObject
 	 * Returns property value. Do not call directly.
 	 * @param  string  property name
 	 * @return mixed   property value
-	 * @throws MemberAccessException if the property is not defined.
+	 * @throws \MemberAccessException if the property is not defined.
 	 */
 	public function &__get($name)
 	{
@@ -220,7 +222,7 @@ abstract class DibiObject
 		$m = 'get' . $name;
 		if (self::hasAccessor($class, $m)) {
 			// ampersands:
-			// - uses &__get() because declaration should be forward compatible (e.g. with NHtml)
+			// - uses &__get() because declaration should be forward compatible (e.g. with Nette\Web\Html)
 			// - doesn't call &$this->$m because user could bypass property setter by: $x = & $obj->property; $x = 'new value';
 			$val = $this->$m();
 			return $val;
@@ -243,7 +245,7 @@ abstract class DibiObject
 	 * @param  string  property name
 	 * @param  mixed   property value
 	 * @return void
-	 * @throws MemberAccessException if the property is not defined or is read-only
+	 * @throws \MemberAccessException if the property is not defined or is read-only
 	 */
 	public function __set($name, $value)
 	{
@@ -290,7 +292,7 @@ abstract class DibiObject
 	 * Access to undeclared property.
 	 * @param  string  property name
 	 * @return void
-	 * @throws MemberAccessException
+	 * @throws \MemberAccessException
 	 */
 	public function __unset($name)
 	{
@@ -310,7 +312,7 @@ abstract class DibiObject
 	{
 		static $cache;
 		if (!isset($cache[$c])) {
-			// get_class_methods returns private, protected and public methods of NObject (doesn't matter)
+			// get_class_methods returns private, protected and public methods of Object (doesn't matter)
 			// and ONLY PUBLIC methods of descendants (perfect!)
 			// but returns static methods too (nothing doing...)
 			// and is much faster than reflection

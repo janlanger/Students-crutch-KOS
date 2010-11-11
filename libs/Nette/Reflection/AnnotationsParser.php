@@ -7,8 +7,12 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Reflection
  */
+
+namespace Nette\Reflection;
+
+use Nette,
+	Nette\String;
 
 
 
@@ -18,7 +22,7 @@
  * @author     David Grudl
  * @Annotation
  */
-final class NAnnotationsParser
+final class AnnotationsParser
 {
 	/** @internal single & double quoted PHP string */
 	const RE_STRING = '\'(?:\\\\.|[^\'\\\\])*\'|"(?:\\\\.|[^"\\\\])*"';
@@ -42,23 +46,23 @@ final class NAnnotationsParser
 	 */
 	final public function __construct()
 	{
-		throw new LogicException("Cannot instantiate static class " . get_class($this));
+		throw new \LogicException("Cannot instantiate static class " . get_class($this));
 	}
 
 
 
 	/**
 	 * Returns annotations.
-	 * @param  ReflectionClass|ReflectionMethod|ReflectionProperty
+	 * @param  \ReflectionClass|\ReflectionMethod|\ReflectionProperty
 	 * @return array
 	 */
-	public static function getAll(Reflector $r)
+	public static function getAll(\Reflector $r)
 	{
-		if ($r instanceof ReflectionClass) {
+		if ($r instanceof \ReflectionClass) {
 			$type = $r->getName();
 			$member = '';
 
-		} elseif ($r instanceof ReflectionMethod) {
+		} elseif ($r instanceof \ReflectionMethod) {
 			$type = $r->getDeclaringClass()->getName();
 			$member = $r->getName();
 
@@ -68,7 +72,7 @@ final class NAnnotationsParser
 		}
 
 		if (!self::$useReflection) { // auto-expire cache
-			$file = $r instanceof ReflectionClass ? $r->getFileName() : $r->getDeclaringClass()->getFileName(); // will be used later
+			$file = $r instanceof \ReflectionClass ? $r->getFileName() : $r->getDeclaringClass()->getFileName(); // will be used later
 			if ($file && isset(self::$timestamps[$file]) && self::$timestamps[$file] !== filemtime($file)) {
 				unset(self::$cache[$type]);
 			}
@@ -80,7 +84,7 @@ final class NAnnotationsParser
 		}
 
 		if (self::$useReflection === NULL) { // detects whether is reflection available
-			self::$useReflection = (bool) NClassReflection::from(__CLASS__)->getDocComment();
+			self::$useReflection = (bool) Nette\Reflection\ClassReflection::from(__CLASS__)->getDocComment();
 		}
 
 		if (self::$useReflection) {
@@ -117,7 +121,7 @@ final class NAnnotationsParser
 	{
 		static $tokens = array('true' => TRUE, 'false' => FALSE, 'null' => NULL, '' => TRUE);
 
-		$matches = NString::matchAll(
+		$matches = String::matchAll(
 			trim($comment, '/*'),
 			'~
 				(?<=\s)@('.self::RE_IDENTIFIER.')[ \t]*      ##  annotation
@@ -137,7 +141,7 @@ final class NAnnotationsParser
 				$key = '';
 				$val = TRUE;
 				$value[0] = ',';
-				while ($m = NString::match($value, '#\s*,\s*(?>('.self::RE_IDENTIFIER.')\s*=\s*)?('.self::RE_STRING.'|[^\'"),\s][^\'"),]*)#A')) {
+				while ($m = String::match($value, '#\s*,\s*(?>('.self::RE_IDENTIFIER.')\s*=\s*)?('.self::RE_STRING.'|[^\'"),\s][^\'"),]*)#A')) {
 					$value = substr($value, strlen($m[0]));
 					list(, $key, $val) = $m;
 					if ($val[0] === "'" || $val[0] === '"') {
@@ -177,7 +181,7 @@ final class NAnnotationsParser
 				$res[$name][] = new $class(is_array($value) ? $value : array('value' => $value));
 
 			} else {
-				$res[$name][] = is_array($value) ? new ArrayObject($value, ArrayObject::ARRAY_AS_PROPS) : $value;
+				$res[$name][] = is_array($value) ? new \ArrayObject($value, \ArrayObject::ARRAY_AS_PROPS) : $value;
 			}
 		}
 
@@ -198,7 +202,7 @@ final class NAnnotationsParser
 
 		$s = file_get_contents($file);
 
-		if (NString::match($s, '#//nette'.'loader=(\S*)#')) {
+		if (String::match($s, '#//nette'.'loader=(\S*)#')) {
 			return; // TODO: allways ignore?
 		}
 
@@ -291,11 +295,11 @@ final class NAnnotationsParser
 
 
 	/**
-	 * @return NCache
+	 * @return Nette\Caching\Cache
 	 */
 	protected static function getCache()
 	{
-		return NEnvironment::getCache('Nette.Annotations');
+		return Nette\Environment::getCache('Nette.Annotations');
 	}
 
 }

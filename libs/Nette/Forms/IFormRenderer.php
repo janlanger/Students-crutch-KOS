@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette;
 
 
 
@@ -22,9 +25,9 @@ interface IFormRenderer
 
 	/**
 	 * Provides complete form rendering.
-	 * @param  NForm
+	 * @param  Form
 	 * @return string
 	 */
-	function render(NForm $form);
+	function render(Form $form);
 
 }

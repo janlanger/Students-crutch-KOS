@@ -7,22 +7,28 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Templates
  */
+
+namespace Nette\Templates;
+
+use Nette,
+	Nette\Environment,
+	Nette\Caching\Cache,
+	Nette\Loaders\LimitedScope;
 
 
 
 /**
- * NTemplate stored in file.
+ * Template stored in file.
  *
  * @author     David Grudl
  */
-class NFileTemplate extends NTemplate implements IFileTemplate
+class FileTemplate extends Template implements IFileTemplate
 {
 	/** @var int */
 	public static $cacheExpire = NULL;
 
-	/** @var ICacheStorage */
+	/** @var Nette\Caching\ICacheStorage */
 	private static $cacheStorage;
 
 	/** @var string */
@@ -46,12 +52,12 @@ class NFileTemplate extends NTemplate implements IFileTemplate
 	/**
 	 * Sets the path to the template file.
 	 * @param  string  template file path
-	 * @return NFileTemplate  provides a fluent interface
+	 * @return FileTemplate  provides a fluent interface
 	 */
 	public function setFile($file)
 	{
 		if (!is_file($file)) {
-			throw new FileNotFoundException("Missing template file '$file'.");
+			throw new \FileNotFoundException("Missing template file '$file'.");
 		}
 		$this->file = $file;
 		return $this;
@@ -81,14 +87,14 @@ class NFileTemplate extends NTemplate implements IFileTemplate
 	public function render()
 	{
 		if ($this->file == NULL) { // intentionally ==
-			throw new InvalidStateException("Template file name was not specified.");
+			throw new \InvalidStateException("Template file name was not specified.");
 		}
 
 		$this->__set('template', $this);
 
 		$shortName = str_replace(dirname(dirname($this->file)), '', $this->file);
 
-		$cache = new NCache($this->getCacheStorage(), 'Nette.FileTemplate');
+		$cache = new Cache($this->getCacheStorage(), 'Nette.FileTemplate');
 		$key = trim(strtr($shortName, '\\/@', '.._'), '.') . '-' . md5($this->file);
 		$cached = $content = $cache[$key];
 
@@ -98,7 +104,7 @@ class NFileTemplate extends NTemplate implements IFileTemplate
 			}
 
 			if (!$this->getFilters()) {
-				NLimitedScope::load($this->file, $this->getParams());
+				LimitedScope::load($this->file, $this->getParams());
 				return;
 			}
 
@@ -107,21 +113,21 @@ class NFileTemplate extends NTemplate implements IFileTemplate
 				$key,
 				$content,
 				array(
-					NCache::FILES => $this->file,
-					NCache::EXPIRE => self::$cacheExpire,
-					NCache::CONSTS => 'NFramework::REVISION',
+					Cache::FILES => $this->file,
+					Cache::EXPIRE => self::$cacheExpire,
+					Cache::CONSTS => 'Nette\Framework::REVISION',
 				)
 			);
 			$cache->release();
 			$cached = $cache[$key];
 		}
 
-		if ($cached !== NULL && self::$cacheStorage instanceof NTemplateCacheStorage) {
-			NLimitedScope::load($cached['file'], $this->getParams());
+		if ($cached !== NULL && self::$cacheStorage instanceof TemplateCacheStorage) {
+			LimitedScope::load($cached['file'], $this->getParams());
 			fclose($cached['handle']);
 
 		} else {
-			NLimitedScope::evaluate($content, $this->getParams());
+			LimitedScope::evaluate($content, $this->getParams());
 		}
 	}
 
@@ -133,10 +139,10 @@ class NFileTemplate extends NTemplate implements IFileTemplate
 
 	/**
 	 * Set cache storage.
-	 * @param  NCache
+	 * @param  Nette\Caching\Cache
 	 * @return void
 	 */
-	public static function setCacheStorage(ICacheStorage $storage)
+	public static function setCacheStorage(Nette\Caching\ICacheStorage $storage)
 	{
 		self::$cacheStorage = $storage;
 	}
@@ -144,15 +150,15 @@ class NFileTemplate extends NTemplate implements IFileTemplate
 
 
 	/**
-	 * @return ICacheStorage
+	 * @return Nette\Caching\ICacheStorage
 	 */
 	public static function getCacheStorage()
 	{
 		if (self::$cacheStorage === NULL) {
-			$dir = NEnvironment::getVariable('tempDir') . '/cache';
+			$dir = Environment::getVariable('tempDir') . '/cache';
 			umask(0000);
 			@mkdir($dir, 0755); // @ - directory may exists
-			self::$cacheStorage = new NTemplateCacheStorage($dir);
+			self::$cacheStorage = new TemplateCacheStorage($dir);
 		}
 		return self::$cacheStorage;
 	}

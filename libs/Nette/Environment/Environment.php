@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-final class NEnvironment
+final class Environment
 {
 	/**#@+ environment name */
 	const DEVELOPMENT = 'development';
@@ -25,13 +28,13 @@ final class NEnvironment
 	const CONSOLE = 'console';
 	/**#@-*/
 
-	/** @var NConfigurator */
+	/** @var Configurator */
 	private static $configurator;
 
 	/** @var string  the mode of current application */
 	private static $modes = array();
 
-	/** @var ArrayObject */
+	/** @var \ArrayObject */
 	private static $config;
 
 	/** @var IContext */
@@ -58,17 +61,17 @@ final class NEnvironment
 	 */
 	final public function __construct()
 	{
-		throw new LogicException("Cannot instantiate static class " . get_class($this));
+		throw new \LogicException("Cannot instantiate static class " . get_class($this));
 	}
 
 
 
 	/**
-	 * Sets "class behind NEnvironment" configurator.
-	 * @param  NConfigurator
+	 * Sets "class behind Environment" configurator.
+	 * @param  Configurator
 	 * @return void
 	 */
-	public static function setConfigurator(NConfigurator $configurator)
+	public static function setConfigurator(Configurator $configurator)
 	{
 		self::$configurator = $configurator;
 	}
@@ -76,13 +79,13 @@ final class NEnvironment
 
 
 	/**
-	 * Gets "class behind NEnvironment" configurator.
-	 * @return NConfigurator
+	 * Gets "class behind Environment" configurator.
+	 * @return Configurator
 	 */
 	public static function getConfigurator()
 	{
 		if (self::$configurator === NULL) {
-			self::$configurator = new NConfigurator;
+			self::$configurator = new Configurator;
 		}
 		return self::$configurator;
 	}
@@ -97,7 +100,7 @@ final class NEnvironment
 	 * Sets the current environment name.
 	 * @param  string
 	 * @return void
-	 * @throws InvalidStateException
+	 * @throws \InvalidStateException
 	 */
 	public static function setName($name)
 	{
@@ -105,7 +108,7 @@ final class NEnvironment
 			self::setVariable('environment', $name, FALSE);
 
 		} else {
-			throw new InvalidStateException('Environment name has already been set.');
+			throw new \InvalidStateException('Environment name has already been set.');
 		}
 	}
 
@@ -205,7 +208,7 @@ final class NEnvironment
 	 * @param  string
 	 * @param  mixed  default value to use if key not found
 	 * @return mixed
-	 * @throws InvalidStateException
+	 * @throws \InvalidStateException
 	 */
 	public static function getVariable($name, $default = NULL)
 	{
@@ -229,7 +232,7 @@ final class NEnvironment
 				return $default;
 
 			} else {
-				throw new InvalidStateException("Unknown environment variable '$name'.");
+				throw new \InvalidStateException("Unknown environment variable '$name'.");
 			}
 		}
 	}
@@ -255,7 +258,7 @@ final class NEnvironment
 	 * Returns expanded variable.
 	 * @param  string
 	 * @return string
-	 * @throws InvalidStateException
+	 * @throws \InvalidStateException
 	 */
 	public static function expand($var)
 	{
@@ -263,30 +266,30 @@ final class NEnvironment
 		if (is_string($var) && strpos($var, '%') !== FALSE) {
 			return @preg_replace_callback(
 				'#%([a-z0-9_-]*)%#i',
-				create_function('$m', 'extract(NClosureFix::$vars['.NClosureFix::uses(array('livelock'=>& $livelock)).'], EXTR_REFS); 
+				function ($m) use (& $livelock) {
 					list(, $var) = $m;
-					if ($var === \'\') return \'%\';
+					if ($var === '') return '%';
 
 					if (isset($livelock[$var])) {
-						throw new InvalidStateException("Circular reference detected for variables: "
-							. implode(\', \', array_keys($livelock)) . ".");
+						throw new \InvalidStateException("Circular reference detected for variables: "
+							. implode(', ', array_keys($livelock)) . ".");
 					}
 
 					try {
 						$livelock[$var] = TRUE;
-						$val = NEnvironment::getVariable($var);
+						$val = Environment::getVariable($var);
 						unset($livelock[$var]);
-					} catch (Exception $e) {
+					} catch (\Exception $e) {
 						$livelock = array();
 						throw $e;
 					}
 
 					if (!is_scalar($val)) {
-						throw new InvalidStateException("Environment variable \'$var\' is not scalar.");
+						throw new \InvalidStateException("Environment variable '$var' is not scalar.");
 					}
 
 					return $val;
-				'),
+				},
 				$var
 			); // intentionally @ due PHP bug #39257
 		}
@@ -327,7 +330,7 @@ final class NEnvironment
 
 
 	/**
-	 * Adds new NEnvironment::get<Service>() method.
+	 * Adds new Environment::get<Service>() method.
 	 * @param  string  service name
 	 * @param  string  alias name
 	 * @return void
@@ -350,14 +353,14 @@ final class NEnvironment
 		if (isset(self::$aliases[$name])) {
 			return self::getContext()->getService(self::$aliases[$name], $args);
 		} else {
-			throw new MemberAccessException("Call to undefined static method Nette\\Environment::$name().");
+			throw new \MemberAccessException("Call to undefined static method Nette\\Environment::$name().");
 		}
 	}
 
 
 
 	/**
-	 * @return NHttpRequest
+	 * @return Nette\Web\HttpRequest
 	 */
 	public static function getHttpRequest()
 	{
@@ -367,7 +370,7 @@ final class NEnvironment
 
 
 	/**
-	 * @return NHttpContext
+	 * @return Nette\Web\HttpContext
 	 */
 	public static function getHttpContext()
 	{
@@ -377,7 +380,7 @@ final class NEnvironment
 
 
 	/**
-	 * @return NHttpResponse
+	 * @return Nette\Web\HttpResponse
 	 */
 	public static function getHttpResponse()
 	{
@@ -387,7 +390,7 @@ final class NEnvironment
 
 
 	/**
-	 * @return NApplication
+	 * @return Nette\Application\Application
 	 */
 	public static function getApplication()
 	{
@@ -397,7 +400,7 @@ final class NEnvironment
 
 
 	/**
-	 * @return NUser
+	 * @return Nette\Web\User
 	 */
 	public static function getUser()
 	{
@@ -407,7 +410,7 @@ final class NEnvironment
 
 
 	/**
-	 * @return NRobotLoader
+	 * @return Nette\Loaders\RobotLoader
 	 */
 	public static function getRobotLoader()
 	{
@@ -422,11 +425,11 @@ final class NEnvironment
 
 	/**
 	 * @param  string
-	 * @return NCache
+	 * @return Nette\Caching\Cache
 	 */
 	public static function getCache($namespace = '')
 	{
-		return new NCache(
+		return new Nette\Caching\Cache(
 			self::getService('Nette\\Caching\\ICacheStorage'),
 			$namespace
 		);
@@ -437,7 +440,7 @@ final class NEnvironment
 	/**
 	 * Returns instance of session or session namespace.
 	 * @param  string
-	 * @return NSession
+	 * @return Nette\Web\Session
 	 */
 	public static function getSession($namespace = NULL)
 	{
@@ -453,8 +456,8 @@ final class NEnvironment
 
 	/**
 	 * Loads global configuration from file and process it.
-	 * @param  string|NConfig  file name or NConfig object
-	 * @return ArrayObject
+	 * @param  string|Nette\Config\Config  file name or Config object
+	 * @return \ArrayObject
 	 */
 	public static function loadConfig($file = NULL)
 	{

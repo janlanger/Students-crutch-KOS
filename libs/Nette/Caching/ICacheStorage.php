@@ -7,13 +7,16 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Caching
  */
+
+namespace Nette\Caching;
+
+use Nette;
 
 
 
 /**
- * NCache storage.
+ * Cache storage.
  *
  * @author     David Grudl
  */

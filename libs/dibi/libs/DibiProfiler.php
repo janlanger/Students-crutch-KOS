@@ -1,12 +1,12 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
  * @package    dibi
  */
 
@@ -19,8 +19,7 @@
  *   - 'explain' - explain SELECT queries?
  *   - 'filter' - which queries to log?
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  */
 class DibiProfiler extends DibiObject implements IDibiProfiler, IDebugPanel
 {
@@ -52,15 +51,19 @@ class DibiProfiler extends DibiObject implements IDibiProfiler, IDebugPanel
 
 	public function __construct(array $config)
 	{
-		if (is_callable('NDebug::addPanel')) {
-			call_user_func('NDebug::addPanel', $this);
-		} elseif (is_callable('NDebug::addPanel')) {
-			NDebug::addPanel($this);
+		if (is_callable('Nette\Debug::addPanel')) {
+			call_user_func('Nette\Debug::addPanel', $this);
+		} elseif (is_callable('\Nette\Debug::addPanel')) {
+			\Nette\Debug::addPanel($this);
 		} elseif (is_callable('Debug::addPanel')) {
-			NDebug::addPanel($this);
+			Debug::addPanel($this);
 		}
 
 		$this->useFirebug = isset($_SERVER['HTTP_USER_AGENT']) && strpos($_SERVER['HTTP_USER_AGENT'], 'FirePHP/');
+
+		if (isset($config['file'])) {
+			$this->setFile($config['file']);
+		}
 
 		if (isset($config['filter'])) {
 			$this->setFilter($config['filter']);
@@ -237,7 +240,7 @@ class DibiProfiler extends DibiObject implements IDibiProfiler, IDebugPanel
 
 
 
-	/********************* interface IDebugPanel ****************d*g**/
+	/********************* interface Nette\IDebugPanel ****************d*g**/
 
 
 
@@ -247,8 +250,8 @@ class DibiProfiler extends DibiObject implements IDibiProfiler, IDebugPanel
 	 */
 	public function getTab()
 	{
-		return '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAEYSURBVBgZBcHPio5hGAfg6/2+R980k6wmJgsJ5U/ZOAqbSc2GnXOwUg7BESgLUeIQ1GSjLFnMwsKGGg1qxJRmPM97/1zXFAAAAEADdlfZzr26miup2svnelq7d2aYgt3rebl585wN6+K3I1/9fJe7O/uIePP2SypJkiRJ0vMhr55FLCA3zgIAOK9uQ4MS361ZOSX+OrTvkgINSjS/HIvhjxNNFGgQsbSmabohKDNoUGLohsls6BaiQIMSs2FYmnXdUsygQYmumy3Nhi6igwalDEOJEjPKP7CA2aFNK8Bkyy3fdNCg7r9/fW3jgpVJbDmy5+PB2IYp4MXFelQ7izPrhkPHB+P5/PjhD5gCgCenx+VR/dODEwD+A3T7nqbxwf1HAAAAAElFTkSuQmCC" />'
-			. dibi::$numOfQueries . ' queries';
+		return '<span title="dibi profiler"><img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAQAAAC1+jfqAAAABGdBTUEAAK/INwWK6QAAABl0RVh0U29mdHdhcmUAQWRvYmUgSW1hZ2VSZWFkeXHJZTwAAAEYSURBVBgZBcHPio5hGAfg6/2+R980k6wmJgsJ5U/ZOAqbSc2GnXOwUg7BESgLUeIQ1GSjLFnMwsKGGg1qxJRmPM97/1zXFAAAAEADdlfZzr26miup2svnelq7d2aYgt3rebl585wN6+K3I1/9fJe7O/uIePP2SypJkiRJ0vMhr55FLCA3zgIAOK9uQ4MS361ZOSX+OrTvkgINSjS/HIvhjxNNFGgQsbSmabohKDNoUGLohsls6BaiQIMSs2FYmnXdUsygQYmumy3Nhi6igwalDEOJEjPKP7CA2aFNK8Bkyy3fdNCg7r9/fW3jgpVJbDmy5+PB2IYp4MXFelQ7izPrhkPHB+P5/PjhD5gCgCenx+VR/dODEwD+A3T7nqbxwf1HAAAAAElFTkSuQmCC" />'
+			. dibi::$numOfQueries . ' queries</span>';
 	}
 
 

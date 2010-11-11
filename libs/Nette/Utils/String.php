@@ -7,17 +7,20 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
 /**
- * NString tools library.
+ * String tools library.
  *
  * @author     David Grudl
  */
-final class NString
+final class String
 {
 
 	/**
@@ -25,7 +28,7 @@ final class NString
 	 */
 	final public function __construct()
 	{
-		throw new LogicException("Cannot instantiate static class " . get_class($this));
+		throw new \LogicException("Cannot instantiate static class " . get_class($this));
 	}
 
 
@@ -326,7 +329,7 @@ final class NString
 	 */
 	public static function split($subject, $pattern, $flags = 0)
 	{
-		NDebug::tryError();
+		Debug::tryError();
 		$res = preg_split($pattern, $subject, -1, $flags | PREG_SPLIT_DELIM_CAPTURE);
 		self::catchPregError($pattern);
 		return $res;
@@ -344,7 +347,7 @@ final class NString
 	 */
 	public static function match($subject, $pattern, $flags = 0, $offset = 0)
 	{
-		NDebug::tryError();
+		Debug::tryError();
 		$res = preg_match($pattern, $subject, $m, $flags, $offset);
 		self::catchPregError($pattern);
 		if ($res) {
@@ -364,7 +367,7 @@ final class NString
 	 */
 	public static function matchAll($subject, $pattern, $flags = 0, $offset = 0)
 	{
-		NDebug::tryError();
+		Debug::tryError();
 		$res = preg_match_all($pattern, $subject, $m, ($flags & PREG_PATTERN_ORDER) ? $flags : ($flags | PREG_SET_ORDER), $offset);
 		self::catchPregError($pattern);
 		return $m;
@@ -382,14 +385,11 @@ final class NString
 	 */
 	public static function replace($subject, $pattern, $replacement = NULL, $limit = -1)
 	{
-		NDebug::tryError();
+		Debug::tryError();
 		if (is_object($replacement) || is_array($replacement)) {
-			if ($replacement instanceof NCallback) {
-				$replacement = $replacement->getNative();
-			}
 			if (!is_callable($replacement, FALSE, $textual)) {
-				NDebug::catchError($foo);
-				throw new InvalidStateException("Callback '$textual' is not callable.");
+				Debug::catchError($foo);
+				throw new \InvalidStateException("Callback '$textual' is not callable.");
 			}
 			$res = preg_replace_callback($pattern, $replacement, $subject, $limit);
 
@@ -408,8 +408,8 @@ final class NString
 	/** @internal */
 	public static function catchPregError($pattern)
 	{
-		if (NDebug::catchError($message)) { // compile error
-			throw new NRegexpException("$message in pattern: $pattern");
+		if (Debug::catchError($message)) { // compile error
+			throw new RegexpException("$message in pattern: $pattern");
 
 		} elseif (preg_last_error()) { // run-time error
 			static $messages = array(
@@ -420,7 +420,7 @@ final class NString
 				5 => 'Offset didn\'t correspond to the begin of a valid UTF-8 code point', // PREG_BAD_UTF8_OFFSET_ERROR
 			);
 			$code = preg_last_error();
-			throw new NRegexpException((isset($messages[$code]) ? $messages[$code] : 'Unknown error') . " (pattern: $pattern)", $code);
+			throw new RegexpException((isset($messages[$code]) ? $messages[$code] : 'Unknown error') . " (pattern: $pattern)", $code);
 		}
 	}
 
@@ -431,6 +431,6 @@ final class NString
 /**
  * The exception that indicates error of the last Regexp execution.
  */
-class NRegexpException extends Exception
+class RegexpException extends \Exception
 {
 }

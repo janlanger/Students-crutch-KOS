@@ -1,13 +1,13 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
- * @package    drivers
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
+ * @package    dibi\drivers
  */
 
 
@@ -22,8 +22,8 @@
  *   - resource (PDO) => existing connection
  *   - lazy, profiler, result, substitutes, ... => see DibiConnection options
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    drivers
+ * @author     David Grudl
+ * @package    dibi\drivers
  */
 class DibiPdoDriver extends DibiObject implements IDibiDriver, IDibiResultDriver
 {
@@ -105,9 +105,9 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver, IDibiResultDriver
 		// must detect if SQL returns result set or num of affected rows
 		$cmd = strtoupper(substr(ltrim($sql), 0, 6));
 		static $list = array('UPDATE'=>1, 'DELETE'=>1, 'INSERT'=>1, 'REPLAC'=>1);
+		$this->affectedRows = FALSE;
 
 		if (isset($list[$cmd])) {
-			$this->resultSet = NULL;
 			$this->affectedRows = $this->connection->exec($sql);
 
 			if ($this->affectedRows === FALSE) {
@@ -115,18 +115,15 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver, IDibiResultDriver
 				throw new DibiDriverException("SQLSTATE[$err[0]]: $err[2]", $err[1], $sql);
 			}
 
-			return NULL;
-
 		} else {
-			$this->resultSet = $this->connection->query($sql);
-			$this->affectedRows = FALSE;
+			$res = $this->connection->query($sql);
 
-			if ($this->resultSet === FALSE) {
+			if ($res === FALSE) {
 				$err = $this->connection->errorInfo();
 				throw new DibiDriverException("SQLSTATE[$err[0]]: $err[2]", $err[1], $sql);
+			} else {
+				return $this->createResultDriver($res);
 			}
-
-			return clone $this;
 		}
 	}
 
@@ -220,6 +217,20 @@ class DibiPdoDriver extends DibiObject implements IDibiDriver, IDibiResultDriver
 	public function getReflector()
 	{
 		throw new NotSupportedException;
+	}
+
+
+
+	/**
+	 * Result set driver factory.
+	 * @param  PDOStatement
+	 * @return IDibiResultDriver
+	 */
+	public function createResultDriver(PDOStatement $resource)
+	{
+		$res = clone $this;
+		$res->resultSet = $resource;
+		return $res;
 	}
 
 

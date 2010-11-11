@@ -7,18 +7,21 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Templates
  */
+
+namespace Nette\Templates;
+
+use Nette;
 
 
 
 /**
- * NControl snippet template helper.
+ * Control snippet template helper.
  *
  * @author     David Grudl
  * @deprecated
  */
-class NSnippetHelper extends NObject
+class SnippetHelper extends Nette\Object
 {
 	/** @var bool */
 	public static $outputAllowed = TRUE;
@@ -38,13 +41,13 @@ class NSnippetHelper extends NObject
 
 
 	/**
-	 * Starts conditional snippet rendering. Returns NSnippetHelper object if snippet was started.
-	 * @param  NControl control
+	 * Starts conditional snippet rendering. Returns SnippetHelper object if snippet was started.
+	 * @param  Control control
 	 * @param  string  snippet name
 	 * @param  string  start element
-	 * @return NSnippetHelper
+	 * @return SnippetHelper
 	 */
-	public static function create(NControl $control, $name = NULL, $tag = 'div')
+	public static function create(Nette\Application\Control $control, $name = NULL, $tag = 'div')
 	{
 		if (self::$outputAllowed) { // rendering flow or non-AJAX request
 			$obj = new self;
@@ -79,7 +82,7 @@ class NSnippetHelper extends NObject
 
 		} else {  // finish snippet buffering
 			if ($this->level !== ob_get_level()) {
-				throw new InvalidStateException("Snippet '$this->id' cannot be ended here.");
+				throw new \InvalidStateException("Snippet '$this->id' cannot be ended here.");
 			}
 			$this->payload->snippets[$this->id] = ob_get_clean();
 			self::$outputAllowed = FALSE;

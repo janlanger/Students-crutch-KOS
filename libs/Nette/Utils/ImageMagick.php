@@ -7,16 +7,19 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
 /**
- * Manipulation with large images using NImageMagick.
+ * Manipulation with large images using ImageMagick.
  *
  * <code>
- * $image = NImage::fromFile('bigphoto.jpg');
+ * $image = Image::fromFile('bigphoto.jpg');
  * $image->resize(150, 100);
  * $image->sharpen();
  * $image->send();
@@ -24,9 +27,9 @@
  *
  * @author     David Grudl
  */
-class NImageMagick extends NImage
+class ImageMagick extends Image
 {
-	/** @var string  path to NImageMagick library */
+	/** @var string  path to ImageMagick library */
 	public static $path = '';
 
 	/** @var string */
@@ -54,7 +57,7 @@ class NImageMagick extends NImage
 	public function __construct($file, & $format = NULL)
 	{
 		if (!is_file($file)) {
-			throw new InvalidArgumentException("File '$file' not found.");
+			throw new \InvalidArgumentException("File '$file' not found.");
 		}
 		$format = $this->setFile(realpath($file));
 		if ($format === 'JPEG') $format = self::JPEG;
@@ -113,7 +116,7 @@ class NImageMagick extends NImage
 	 * @param  mixed  width in pixels or percent
 	 * @param  mixed  height in pixels or percent
 	 * @param  int    flags
-	 * @return NImageMagick  provides a fluent interface
+	 * @return ImageMagick  provides a fluent interface
 	 */
 	public function resize($width, $height, $flags = self::FIT)
 	{
@@ -137,7 +140,7 @@ class NImageMagick extends NImage
 	 * @param  int  y-coordinate
 	 * @param  int  width
 	 * @param  int  height
-	 * @return NImageMagick  provides a fluent interface
+	 * @return ImageMagick  provides a fluent interface
 	 */
 	public function crop($left, $top, $width, $height)
 	{
@@ -191,7 +194,7 @@ class NImageMagick extends NImage
 		$this->file = $file;
 		$res = $this->execute('identify -format "%w,%h,%m" ' . escapeshellarg($this->file));
 		if (!$res) {
-			throw new Exception("Unknown image type in file '$file' or ImageMagick not available.");
+			throw new \Exception("Unknown image type in file '$file' or ImageMagick not available.");
 		}
 		list($this->width, $this->height, $format) = explode(',', $res, 3);
 		return $format;
@@ -220,7 +223,7 @@ class NImageMagick extends NImage
 
 		if ($output) {
 			if ($status != 0) {
-				throw new Exception("Unknown error while calling ImageMagick.");
+				throw new \Exception("Unknown error while calling ImageMagick.");
 			}
 			if ($this->isTemporary) {
 				unlink($this->file);

@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette;
 
 
 
@@ -20,9 +23,9 @@
  * @property-read array $controls
  * @property-read array $options
  */
-class NFormGroup extends NObject
+class FormGroup extends Nette\Object
 {
-	/** @var SplObjectStorage */
+	/** @var \SplObjectStorage */
 	protected $controls;
 
 	/** @var array user options */
@@ -32,13 +35,13 @@ class NFormGroup extends NObject
 
 	public function __construct()
 	{
-		$this->controls = new SplObjectStorage;
+		$this->controls = new \SplObjectStorage;
 	}
 
 
 
 	/**
-	 * @return NFormGroup  provides a fluent interface
+	 * @return FormGroup  provides a fluent interface
 	 */
 	public function add()
 	{
@@ -46,13 +49,13 @@ class NFormGroup extends NObject
 			if ($item instanceof IFormControl) {
 				$this->controls->attach($item);
 
-			} elseif ($item instanceof Traversable || is_array($item)) {
+			} elseif ($item instanceof \Traversable || is_array($item)) {
 				foreach ($item as $control) {
 					$this->controls->attach($control);
 				}
 
 			} else {
-				throw new InvalidArgumentException("Only IFormControl items are allowed, the #$num parameter is invalid.");
+				throw new \InvalidArgumentException("Only IFormControl items are allowed, the #$num parameter is invalid.");
 			}
 		}
 		return $this;
@@ -72,16 +75,16 @@ class NFormGroup extends NObject
 
 	/**
 	 * Sets user-specific option.
-	 * Options recognized by NConventionalRenderer
-	 * - 'label' - textual or NHtml object label
+	 * Options recognized by ConventionalRenderer
+	 * - 'label' - textual or Html object label
 	 * - 'visual' - indicates visual group
-	 * - 'container' - container as NHtml object
-	 * - 'description' - textual or NHtml object description
+	 * - 'container' - container as Html object
+	 * - 'description' - textual or Html object description
 	 * - 'embedNext' - describes how render next group
 	 *
 	 * @param  string key
 	 * @param  mixed  value
-	 * @return NFormGroup  provides a fluent interface
+	 * @return FormGroup  provides a fluent interface
 	 */
 	public function setOption($key, $value)
 	{

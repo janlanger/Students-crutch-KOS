@@ -1,12 +1,12 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
  * @package    dibi
  */
 
@@ -15,8 +15,7 @@
 /**
  * dibi SQL translator.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  */
 final class DibiTranslator extends DibiObject
 {
@@ -122,7 +121,7 @@ final class DibiTranslator extends DibiObject
 							array($this, 'cb'),
 							substr($arg, $toSkip)
 					);
-					if (preg_last_error()) throw new PcreException;
+					if (preg_last_error()) throw new DibiPcreException;
 				}
 				continue;
 			}
@@ -380,7 +379,7 @@ final class DibiTranslator extends DibiObject
 						array($this, 'cb'),
 						substr($value, $toSkip)
 					);
-					if (preg_last_error()) throw new PcreException;
+					if (preg_last_error()) throw new DibiPcreException;
 				}
 				return $value;
 
@@ -564,7 +563,7 @@ final class DibiTranslator extends DibiObject
 	 * Apply substitutions to indentifier and delimites it.
 	 * @param  string indentifier
 	 * @return string
-	 * @ignore internal
+	 * @internal
 	 */
 	public function delimite($value)
 	{

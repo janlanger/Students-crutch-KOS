@@ -7,21 +7,24 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
 /**
- * NControl is renderable component.
+ * Control is renderable component.
  *
  * @author     David Grudl
  *
- * @property-read ITemplate $template
+ * @property-read Nette\Templates\ITemplate $template
  */
-abstract class NControl extends NPresenterComponent implements IPartiallyRenderable
+abstract class Control extends PresenterComponent implements IPartiallyRenderable
 {
-	/** @var ITemplate */
+	/** @var Nette\Templates\ITemplate */
 	private $template;
 
 	/** @var array */
@@ -34,15 +37,15 @@ abstract class NControl extends NPresenterComponent implements IPartiallyRendera
 
 
 	/**
-	 * @return ITemplate
+	 * @return Nette\Templates\ITemplate
 	 */
 	final public function getTemplate()
 	{
 		if ($this->template === NULL) {
 			$value = $this->createTemplate();
-			if (!($value instanceof ITemplate || $value === NULL)) {
+			if (!($value instanceof Nette\Templates\ITemplate || $value === NULL)) {
 				$class = get_class($value);
-				throw new UnexpectedValueException("Object returned by {$this->reflection->name}::createTemplate() must be instance of Nette\\Templates\\ITemplate, '$class' given.");
+				throw new \UnexpectedValueException("Object returned by {$this->reflection->name}::createTemplate() must be instance of Nette\\Templates\\ITemplate, '$class' given.");
 			}
 			$this->template = $value;
 		}
@@ -52,19 +55,19 @@ abstract class NControl extends NPresenterComponent implements IPartiallyRendera
 
 
 	/**
-	 * @return ITemplate
+	 * @return Nette\Templates\ITemplate
 	 */
 	protected function createTemplate()
 	{
-		$template = new NFileTemplate;
+		$template = new Nette\Templates\FileTemplate;
 		$presenter = $this->getPresenter(FALSE);
 		$template->onPrepareFilters[] = callback($this, 'templatePrepareFilters');
 
 		// default parameters
 		$template->control = $this;
 		$template->presenter = $presenter;
-		$template->user = NEnvironment::getUser();
-		$template->baseUri = NEnvironment::getVariable('baseUri', NULL);
+		$template->user = Nette\Environment::getUser();
+		$template->baseUri = Nette\Environment::getVariable('baseUri', NULL);
 		$template->basePath = rtrim($template->baseUri, '/');
 
 		// flash message
@@ -77,16 +80,16 @@ abstract class NControl extends NPresenterComponent implements IPartiallyRendera
 		}
 
 		// default helpers
-		$template->registerHelper('escape', 'NTemplateHelpers::escapeHtml');
+		$template->registerHelper('escape', 'Nette\Templates\TemplateHelpers::escapeHtml');
 		$template->registerHelper('escapeUrl', 'rawurlencode');
 		$template->registerHelper('stripTags', 'strip_tags');
 		$template->registerHelper('nl2br', 'nl2br');
 		$template->registerHelper('substr', 'iconv_substr');
 		$template->registerHelper('repeat', 'str_repeat');
-		$template->registerHelper('replaceRE', 'NString::replace');
+		$template->registerHelper('replaceRE', 'Nette\String::replace');
 		$template->registerHelper('implode', 'implode');
 		$template->registerHelper('number', 'number_format');
-		$template->registerHelperLoader('NTemplateHelpers::loader');
+		$template->registerHelperLoader('Nette\Templates\TemplateHelpers::loader');
 
 		return $template;
 	}
@@ -95,13 +98,13 @@ abstract class NControl extends NPresenterComponent implements IPartiallyRendera
 
 	/**
 	 * Descendant can override this method to customize template compile-time filters.
-	 * @param  NTemplate
+	 * @param  Nette\Templates\Template
 	 * @return void
 	 */
 	public function templatePrepareFilters($template)
 	{
 		// default filters
-		$template->registerFilter(new NLatteFilter);
+		$template->registerFilter(new Nette\Templates\LatteFilter);
 	}
 
 
@@ -109,7 +112,7 @@ abstract class NControl extends NPresenterComponent implements IPartiallyRendera
 	/**
 	 * Returns widget component specified by name.
 	 * @param  string
-	 * @return IComponent
+	 * @return Nette\IComponent
 	 */
 	public function getWidget($name)
 	{

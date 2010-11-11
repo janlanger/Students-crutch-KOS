@@ -1,13 +1,13 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
- * @package    drivers
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
+ * @package    dibi\drivers
  */
 
 
@@ -22,8 +22,8 @@
  *   - resource (resource) => existing connection resource
  *   - lazy, profiler, result, substitutes, ... => see DibiConnection options
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    drivers
+ * @author     David Grudl
+ * @package    dibi\drivers
  */
 class DibiOdbcDriver extends DibiObject implements IDibiDriver, IDibiResultDriver, IDibiReflector
 {
@@ -32,6 +32,9 @@ class DibiOdbcDriver extends DibiObject implements IDibiDriver, IDibiResultDrive
 
 	/** @var resource  Resultset resource */
 	private $resultSet;
+
+	/** @var int|FALSE  Affected rows */
+	private $affectedRows = FALSE;
 
 	/** @var int  Cursor */
 	private $row = 0;
@@ -98,13 +101,16 @@ class DibiOdbcDriver extends DibiObject implements IDibiDriver, IDibiResultDrive
 	 */
 	public function query($sql)
 	{
-		$this->resultSet = @odbc_exec($this->connection, $sql); // intentionally @
+		$this->affectedRows = FALSE;
+		$res = @odbc_exec($this->connection, $sql); // intentionally @
 
-		if ($this->resultSet === FALSE) {
+		if ($res === FALSE) {
 			throw new DibiDriverException(odbc_errormsg($this->connection) . ' ' . odbc_error($this->connection), 0, $sql);
-		}
 
-		return is_resource($this->resultSet) ? clone $this : NULL;
+		} elseif (is_resource($res)) {
+			$this->affectedRows = odbc_num_rows($res);
+			return $this->createResultDriver($res);
+		}
 	}
 
 
@@ -115,7 +121,7 @@ class DibiOdbcDriver extends DibiObject implements IDibiDriver, IDibiResultDrive
 	 */
 	public function getAffectedRows()
 	{
-		return odbc_num_rows($this->resultSet);
+		return $this->affectedRows;
 	}
 
 
@@ -211,6 +217,20 @@ class DibiOdbcDriver extends DibiObject implements IDibiDriver, IDibiResultDrive
 
 
 
+	/**
+	 * Result set driver factory.
+	 * @param  resource
+	 * @return IDibiResultDriver
+	 */
+	public function createResultDriver($resource)
+	{
+		$res = clone $this;
+		$res->resultSet = $resource;
+		return $res;
+	}
+
+
+
 	/********************* SQL ****************d*g**/
 
 
@@ -299,6 +319,17 @@ class DibiOdbcDriver extends DibiObject implements IDibiDriver, IDibiResultDrive
 
 
 	/********************* result set ****************d*g**/
+
+
+
+	/**
+	 * Automatically frees the resources allocated for this result set.
+	 * @return void
+	 */
+	public function __destruct()
+	{
+		$this->resultSet && @$this->free();
+	}
 
 
 

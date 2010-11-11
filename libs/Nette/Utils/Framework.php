@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-final class NFramework
+final class Framework
 {
 
 	/**#@+ Nette Framework version identification */
@@ -35,7 +38,7 @@ final class NFramework
 	 */
 	final public function __construct()
 	{
-		throw new LogicException("Cannot instantiate static class " . get_class($this));
+		throw new \LogicException("Cannot instantiate static class " . get_class($this));
 	}
 
 
@@ -50,15 +53,4 @@ final class NFramework
 			'src="http://files.nette.org/icons/nette-powered.gif" alt="Powered by Nette Framework" width="80" height="15" /></a>';
 	}
 
-}
-
-class NClosureFix
-{
-	static $vars = array();
-
-	static function uses($args)
-	{
-		self::$vars[] = $args;
-		return count(self::$vars)-1;
-	}
 }

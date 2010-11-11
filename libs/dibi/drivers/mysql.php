@@ -1,13 +1,13 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
- * @package    drivers
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
+ * @package    dibi\drivers
  */
 
 
@@ -32,8 +32,8 @@ require_once dirname(__FILE__) . '/mysql.reflector.php';
  *   - resource (resource) => existing connection resource
  *   - lazy, profiler, result, substitutes, ... => see DibiConnection options
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    drivers
+ * @author     David Grudl
+ * @package    dibi\drivers
  */
 class DibiMySqlDriver extends DibiObject implements IDibiDriver, IDibiResultDriver
 {
@@ -156,16 +156,17 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver, IDibiResultDriv
 	public function query($sql)
 	{
 		if ($this->buffered) {
-			$this->resultSet = @mysql_query($sql, $this->connection); // intentionally @
+			$res = @mysql_query($sql, $this->connection); // intentionally @
 		} else {
-			$this->resultSet = @mysql_unbuffered_query($sql, $this->connection); // intentionally @
+			$res = @mysql_unbuffered_query($sql, $this->connection); // intentionally @
 		}
 
 		if (mysql_errno($this->connection)) {
 			throw new DibiDriverException(mysql_error($this->connection), mysql_errno($this->connection), $sql);
-		}
 
-		return is_resource($this->resultSet) ? clone $this : NULL;
+		} elseif (is_resource($res)) {
+			return $this->createResultDriver($res);
+		}
 	}
 
 
@@ -178,7 +179,7 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver, IDibiResultDriv
 	{
 		$res = array();
 		preg_match_all('#(.+?): +(\d+) *#', mysql_info($this->connection), $matches, PREG_SET_ORDER);
-		if (preg_last_error()) throw new PcreException;
+		if (preg_last_error()) throw new DibiPcreException;
 
 		foreach ($matches as $m) {
 			$res[$m[1]] = (int) $m[2];
@@ -267,6 +268,20 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver, IDibiResultDriv
 	public function getReflector()
 	{
 		return new DibiMySqlReflector($this);
+	}
+
+
+
+	/**
+	 * Result set driver factory.
+	 * @param  resource
+	 * @return IDibiResultDriver
+	 */
+	public function createResultDriver($resource)
+	{
+		$res = clone $this;
+		$res->resultSet = $resource;
+		return $res;
 	}
 
 
@@ -361,6 +376,17 @@ class DibiMySqlDriver extends DibiObject implements IDibiDriver, IDibiResultDriv
 
 
 	/********************* result set ****************d*g**/
+
+
+
+	/**
+	 * Automatically frees the resources allocated for this result set.
+	 * @return void
+	 */
+	public function __destruct()
+	{
+		$this->resultSet && @$this->free();
+	}
 
 
 

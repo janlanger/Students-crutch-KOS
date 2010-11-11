@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Web
  */
+
+namespace Nette\Web;
+
+use Nette;
 
 
 
@@ -39,7 +42,7 @@
  * @property-read string $relativeUri
  * @property-read string $pathInfo
  */
-class NUriScript extends NUri
+class UriScript extends Uri
 {
 	/** @var string */
 	private $scriptPath = '';
@@ -49,7 +52,7 @@ class NUriScript extends NUri
 	/**
 	 * Sets the script-path part of URI.
 	 * @param  string
-	 * @return NUriScript  provides a fluent interface
+	 * @return UriScript  provides a fluent interface
 	 */
 	public function setScriptPath($value)
 	{

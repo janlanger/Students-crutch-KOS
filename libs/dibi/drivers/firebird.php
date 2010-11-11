@@ -1,13 +1,13 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
- * @package    drivers
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
+ * @package    dibi\drivers
  */
 
 
@@ -24,8 +24,7 @@
  *   - lazy, profiler, result, substitutes, ... => see DibiConnection options
  *
  * @author     Tomáš Kraina, Roman Sklenář
- * @copyright  Copyright (c) 2010
- * @package    drivers
+ * @package    dibi\drivers
  */
 class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultDriver, IDibiReflector
 {
@@ -116,7 +115,7 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 	{
 		DibiDriverException::tryError();
 		$resource = $this->inTransaction ? $this->transaction : $this->connection;
-		$this->resultSet = ibase_query($resource, $sql);
+		$res = ibase_query($resource, $sql);
 
 		if (DibiDriverException::catchError($msg)) {
 			if (ibase_errcode() == self::ERROR_EXCEPTION_THROWN) {
@@ -128,11 +127,12 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 			}
 		}
 
-		if ($this->resultSet === FALSE) {
+		if ($res === FALSE) {
 			throw new DibiDriverException(ibase_errmsg(), ibase_errcode(), $sql);
-		}
 
-		return is_resource($this->resultSet) ? clone $this : NULL;
+		} elseif (is_resource($res)) {
+			return $this->createResultDriver($res);
+		}
 	}
 
 
@@ -241,6 +241,31 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 
 
 
+	/**
+	 * Returns the connection reflector.
+	 * @return IDibiReflector
+	 */
+	public function getReflector()
+	{
+		return $this;
+	}
+
+
+
+	/**
+	 * Result set driver factory.
+	 * @param  resource
+	 * @return IDibiResultDriver
+	 */
+	public function createResultDriver($resource)
+	{
+		$res = clone $this;
+		$res->resultSet = $resource;
+		return $res;
+	}
+
+
+
 	/********************* SQL ********************/
 
 
@@ -326,6 +351,17 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 
 
 	/********************* result set ********************/
+
+
+
+	/**
+	 * Automatically frees the resources allocated for this result set.
+	 * @return void
+	 */
+	public function __destruct()
+	{
+		$this->resultSet && @$this->free();
+	}
 
 
 
@@ -435,7 +471,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 				'view' => $row[1] === 'TRUE',
 			);
 		}
-		$res->free();
 		return $tables;
 	}
 
@@ -492,7 +527,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 				'autoincrement' => FALSE,
 			);
 		}
-		$res->free();
 		return $columns;
 	}
 
@@ -528,7 +562,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 			$indexes[$key]['table'] = $table;
 			$indexes[$key]['columns'][$row['FIELD_POSITION']] = $row['FIELD_NAME'];
 		}
-		$res->free();
 		return $indexes;
 	}
 
@@ -560,7 +593,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 				'table' => $table,
 			);
 		}
-		$res->free();
 		return $keys;
 	}
 
@@ -584,7 +616,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		while ($row = $res->fetch(FALSE)) {
 			$indices[] = $row[0];
 		}
-		$res->free();
 		return $indices;
 	}
 
@@ -610,7 +641,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		while ($row = $res->fetch(FALSE)) {
 			$constraints[] = $row[0];
 		}
-		$res->free();
 		return $constraints;
 	}
 
@@ -661,7 +691,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 				'enabled' => trim($row['TRIGGER_ENABLED']) === 'TRUE',
 			);
 		}
-		$res->free();
 		return $triggers;
 	}
 
@@ -685,7 +714,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		while ($row = $res->fetch(FALSE)) {
 			$triggers[] = $row[0];
 		}
-		$res->free();
 		return $triggers;
 	}
 
@@ -740,7 +768,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 			$procedures[$key]['params'][$io][$num]['type'] = trim($row['FIELD_TYPE']);
 			$procedures[$key]['params'][$io][$num]['size'] = $row['FIELD_LENGTH'];
 		}
-		$res->free();
 		return $procedures;
 	}
 
@@ -760,7 +787,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		while ($row = $res->fetch(FALSE)) {
 			$procedures[] = $row[0];
 		}
-		$res->free();
 		return $procedures;
 	}
 
@@ -781,7 +807,6 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		while ($row = $res->fetch(FALSE)) {
 			$generators[] = $row[0];
 		}
-		$res->free();
 		return $generators;
 	}
 
@@ -802,11 +827,11 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
 		while ($row = $res->fetch(FALSE)) {
 			$functions[] = $row[0];
 		}
-		$res->free();
 		return $functions;
 	}
 
 }
+
 
 
 
@@ -815,7 +840,7 @@ class DibiFirebirdDriver extends DibiObject implements IDibiDriver, IDibiResultD
  *
  * @author     Roman Sklenář
  * @copyright  Copyright (c) 2010
- * @package    drivers
+ * @package    dibi\drivers
  */
 class DibiProcedureException extends DibiException
 {

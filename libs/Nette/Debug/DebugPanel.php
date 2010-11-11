@@ -7,8 +7,9 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
 
 
 
@@ -17,7 +18,7 @@
  *
  * @author     David Grudl
  */
-class NDebugPanel extends NObject implements IDebugPanel
+class DebugPanel extends Object implements IDebugPanel
 {
 	private $id;
 

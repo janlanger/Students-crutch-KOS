@@ -1,16 +1,17 @@
 <?php
 
 /**
- * NDebug Bar: panel "dumps" template.
+ * Debug Bar: panel "dumps" template.
  *
  * This file is part of the Nette Framework.
  * Copyright (c) 2004, 2010 David Grudl (http://davidgrudl.com)
- * @package Nette
  */
 
+namespace Nette;
 
+use Nette;
 
-if (!function_exists('_netteDumpCb2')) {
+if (!function_exists('Nette\_netteDumpCb2')) {
 
 	function _netteDumpCb2($m)
 	{
@@ -35,7 +36,7 @@ if (!function_exists('_netteDumpCb2')) {
 	<?php foreach ($item['dump'] as $key => $dump): ?>
 	<tr class="<?php echo $i++ % 2 ? 'nette-alt' : '' ?>">
 		<th><?php echo htmlspecialchars($key) ?></th>
-		<td><pre class="nette-dump"><?php echo preg_replace_callback('#^( *)((?>[^(]{1,200}))\((\d+)\) <code>#m', '_netteDumpCb2', $dump) ?></pre></td>
+		<td><pre class="nette-dump"><?php echo preg_replace_callback('#^( *)((?>[^(]{1,200}))\((\d+)\) <code>#m', 'Nette\_netteDumpCb2', $dump) ?></pre></td>
 	</tr>
 	<?php endforeach ?>
 	</table>

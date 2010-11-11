@@ -7,16 +7,19 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
 /**
- * NLink generation exception.
+ * Link generation exception.
  *
  * @author     David Grudl
  */
-class NInvalidLinkException extends Exception
+class InvalidLinkException extends \Exception
 {
 }

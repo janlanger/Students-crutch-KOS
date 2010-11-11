@@ -7,8 +7,12 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette,
+	Nette\Web\Html;
 
 
 
@@ -17,23 +21,23 @@
  *
  * @author     David Grudl
  *
- * @property-read NForm $form
+ * @property-read Form $form
  * @property-read mixed $control
  * @property-read mixed $label
  * @property-read string $htmlName
  * @property   string $htmlId
  * @property-read array $options
- * @property   ITranslator $translator
+ * @property   Nette\ITranslator $translator
  * @property   mixed $value
- * @property-read NHtml $controlPrototype
- * @property-read NHtml $labelPrototype
- * @property-read NRules $rules
+ * @property-read Nette\Web\Html $controlPrototype
+ * @property-read Nette\Web\Html $labelPrototype
+ * @property-read Rules $rules
  * @property-read array $errors
  * @property   bool $disabled
  * @property   bool $rendered
  * @property   bool $required
 */
-abstract class NFormControl extends NComponent implements IFormControl
+abstract class FormControl extends Nette\Component implements IFormControl
 {
 	/** @var string */
 	public static $idMask = 'frm%s-%s';
@@ -44,10 +48,10 @@ abstract class NFormControl extends NComponent implements IFormControl
 	/** @var mixed unfiltered control value */
 	protected $value;
 
-	/** @var NHtml  control element template */
+	/** @var Nette\Web\Html  control element template */
 	protected $control;
 
-	/** @var NHtml  label element template */
+	/** @var Nette\Web\Html  label element template */
 	protected $label;
 
 	/** @var array */
@@ -62,10 +66,10 @@ abstract class NFormControl extends NComponent implements IFormControl
 	/** @var string */
 	private $htmlName;
 
-	/** @var NRules */
+	/** @var Rules */
 	private $rules;
 
-	/** @var ITranslator */
+	/** @var Nette\ITranslator */
 	private $translator = TRUE; // means autodetect
 
 	/** @var array user options */
@@ -78,24 +82,24 @@ abstract class NFormControl extends NComponent implements IFormControl
 	 */
 	public function __construct($caption = NULL)
 	{
-		$this->monitor('NForm');
+		$this->monitor('Nette\Forms\Form');
 		parent::__construct();
-		$this->control = NHtml::el('input');
-		$this->label = NHtml::el('label');
+		$this->control = Html::el('input');
+		$this->label = Html::el('label');
 		$this->caption = $caption;
-		$this->rules = new NRules($this);
+		$this->rules = new Rules($this);
 	}
 
 
 
 	/**
-	 * This method will be called when the component becomes attached to NForm.
+	 * This method will be called when the component becomes attached to Form.
 	 * @param  IComponent
 	 * @return void
 	 */
 	protected function attached($form)
 	{
-		if (!$this->disabled && $form instanceof NForm && $form->isAnchored() && $form->isSubmitted()) {
+		if (!$this->disabled && $form instanceof Form && $form->isAnchored() && $form->isSubmitted()) {
 			$this->htmlName = NULL;
 			$this->loadHttpData();
 		}
@@ -106,11 +110,11 @@ abstract class NFormControl extends NComponent implements IFormControl
 	/**
 	 * Returns form.
 	 * @param  bool   throw exception if form doesn't exist?
-	 * @return NForm
+	 * @return Form
 	 */
 	public function getForm($need = TRUE)
 	{
-		return $this->lookup('NForm', $need);
+		return $this->lookup('Nette\Forms\Form', $need);
 	}
 
 
@@ -124,11 +128,11 @@ abstract class NFormControl extends NComponent implements IFormControl
 		if ($this->htmlName === NULL) {
 			$s = '';
 			$name = $this->getName();
-			$obj = $this->lookup('NFormContainer', TRUE);
-			while (!($obj instanceof NForm)) {
+			$obj = $this->lookup('Nette\Forms\FormContainer', TRUE);
+			while (!($obj instanceof Form)) {
 				$s = "[$name]$s";
 				$name = $obj->getName();
-				$obj = $obj->lookup('NFormContainer', TRUE);
+				$obj = $obj->lookup('Nette\Forms\FormContainer', TRUE);
 			}
 			$name .= $s;
 			if (is_numeric($name) || in_array($name, array('attributes','children','elements','focus','length','reset','style','submit','onsubmit'))) {
@@ -144,7 +148,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	/**
 	 * Changes control's HTML id.
 	 * @param  string new ID, or FALSE or NULL
-	 * @return NFormControl  provides a fluent interface
+	 * @return FormControl  provides a fluent interface
 	 */
 	public function setHtmlId($id)
 	{
@@ -176,7 +180,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	 * Changes control's HTML attribute.
 	 * @param  string name
 	 * @param  mixed  value
-	 * @return NFormControl  provides a fluent interface
+	 * @return FormControl  provides a fluent interface
 	 */
 	public function setAttribute($name, $value = TRUE)
 	{
@@ -191,11 +195,11 @@ abstract class NFormControl extends NComponent implements IFormControl
 	 * Common options:
 	 * - 'rendered' - indicate if method getControl() have been called
 	 * - 'required' - indicate if ':required' rule has been applied
-	 * - 'description' - textual or NHtml object description (recognized by NConventionalRenderer)
+	 * - 'description' - textual or Html object description (recognized by ConventionalRenderer)
 	 *
 	 * @param  string key
 	 * @param  mixed  value
-	 * @return NFormControl  provides a fluent interface
+	 * @return FormControl  provides a fluent interface
 	 */
 	public function setOption($key, $value)
 	{
@@ -240,10 +244,10 @@ abstract class NFormControl extends NComponent implements IFormControl
 
 	/**
 	 * Sets translate adapter.
-	 * @param  ITranslator
-	 * @return NFormControl  provides a fluent interface
+	 * @param  Nette\ITranslator
+	 * @return FormControl  provides a fluent interface
 	 */
-	public function setTranslator(ITranslator $translator = NULL)
+	public function setTranslator(Nette\ITranslator $translator = NULL)
 	{
 		$this->translator = $translator;
 		return $this;
@@ -253,7 +257,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 
 	/**
 	 * Returns translate adapter.
-	 * @return ITranslator|NULL
+	 * @return Nette\ITranslator|NULL
 	 */
 	final public function getTranslator()
 	{
@@ -286,7 +290,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	/**
 	 * Sets control's value.
 	 * @param  mixed
-	 * @return NFormControl  provides a fluent interface
+	 * @return FormControl  provides a fluent interface
 	 */
 	public function setValue($value)
 	{
@@ -310,7 +314,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	/**
 	 * Sets control's default value.
 	 * @param  mixed
-	 * @return NFormControl  provides a fluent interface
+	 * @return FormControl  provides a fluent interface
 	 */
 	public function setDefaultValue($value)
 	{
@@ -330,7 +334,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	public function loadHttpData()
 	{
 		$path = explode('[', strtr(str_replace(array('[]', ']'), '', $this->getHtmlName()), '.', '_'));
-		$this->setValue(NArrayTools::get($this->getForm()->getHttpData(), $path));
+		$this->setValue(Nette\ArrayTools::get($this->getForm()->getHttpData(), $path));
 	}
 
 
@@ -338,7 +342,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	/**
 	 * Disables or enables control.
 	 * @param  bool
-	 * @return NFormControl  provides a fluent interface
+	 * @return FormControl  provides a fluent interface
 	 */
 	public function setDisabled($value = TRUE)
 	{
@@ -365,7 +369,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 
 	/**
 	 * Generates control's HTML element.
-	 * @return NHtml
+	 * @return Nette\Web\Html
 	 */
 	public function getControl()
 	{
@@ -387,7 +391,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	/**
 	 * Generates label's HTML element.
 	 * @param  string
-	 * @return NHtml
+	 * @return Nette\Web\Html
 	 */
 	public function getLabel($caption = NULL)
 	{
@@ -396,7 +400,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 		if ($caption !== NULL) {
 			$label->setText($this->translate($caption));
 
-		} elseif ($this->caption instanceof NHtml) {
+		} elseif ($this->caption instanceof Html) {
 			$label->add($this->caption);
 
 		} else {
@@ -409,7 +413,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 
 	/**
 	 * Returns control's HTML element template.
-	 * @return NHtml
+	 * @return Nette\Web\Html
 	 */
 	final public function getControlPrototype()
 	{
@@ -420,7 +424,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 
 	/**
 	 * Returns label's HTML element template.
-	 * @return NHtml
+	 * @return Nette\Web\Html
 	 */
 	final public function getLabelPrototype()
 	{
@@ -432,7 +436,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	/**
 	 * Sets 'rendered' indicator.
 	 * @param  bool
-	 * @return NFormControl  provides a fluent interface
+	 * @return FormControl  provides a fluent interface
 	 * @deprecated
 	 */
 	public function setRendered($value = TRUE)
@@ -464,7 +468,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	 * @param  mixed      rule type
 	 * @param  string     message to display for invalid data
 	 * @param  mixed      optional rule arguments
-	 * @return NFormControl  provides a fluent interface
+	 * @return FormControl  provides a fluent interface
 	 */
 	public function addRule($operation, $message = NULL, $arg = NULL)
 	{
@@ -478,7 +482,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	 * Adds a validation condition a returns new branch.
 	 * @param  mixed     condition type
 	 * @param  mixed      optional condition arguments
-	 * @return NRules      new branch
+	 * @return Rules      new branch
 	 */
 	public function addCondition($operation, $value = NULL)
 	{
@@ -492,7 +496,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 	 * @param  IFormControl form control
 	 * @param  mixed      condition type
 	 * @param  mixed      optional condition arguments
-	 * @return NRules      new branch
+	 * @return Rules      new branch
 	 */
 	public function addConditionOn(IFormControl $control, $operation, $value = NULL)
 	{
@@ -502,7 +506,7 @@ abstract class NFormControl extends NComponent implements IFormControl
 
 
 	/**
-	 * @return NRules
+	 * @return Rules
 	 */
 	final public function getRules()
 	{
@@ -514,12 +518,12 @@ abstract class NFormControl extends NComponent implements IFormControl
 	/**
 	 * Makes control mandatory.
 	 * @param  string  error message
-	 * @return NFormControl  provides a fluent interface
+	 * @return FormControl  provides a fluent interface
 	 * @deprecated
 	 */
 	final public function setRequired($message = NULL)
 	{
-		$this->rules->addRule(NForm::FILLED, $message);
+		$this->rules->addRule(Form::FILLED, $message);
 		return $this;
 	}
 
@@ -539,10 +543,10 @@ abstract class NFormControl extends NComponent implements IFormControl
 
 	/**
 	 * New rule or condition notification callback.
-	 * @param  NRule
+	 * @param  Rule
 	 * @return void
 	 */
-	public function notifyRule(NRule $rule)
+	public function notifyRule(Rule $rule)
 	{
 		if (is_string($rule->operation) && strcasecmp($rule->operation, ':filled') === 0) {
 			$this->setOption('required', TRUE);
@@ -561,10 +565,10 @@ abstract class NFormControl extends NComponent implements IFormControl
 			if (!is_string($rule->operation)) {
 				continue;
 
-			} elseif ($rule->type === NRule::VALIDATOR) {
+			} elseif ($rule->type === Rule::VALIDATOR) {
 				$item = array('op' => ($rule->isNegative ? '~' : '') . $rule->operation, 'msg' => $rules->formatMessage($rule, FALSE));
 
-			} elseif ($rule->type === NRule::CONDITION) {
+			} elseif ($rule->type === Rule::CONDITION) {
 				$item = array('op' => ($rule->isNegative ? '~' : '') . $rule->operation, 'rules' => self::exportRules($rule->subRules), 'control' => $rule->control->getHtmlName());
 				if ($rule->subRules->getToggles()) {
 					$item['toggle'] = $rule->subRules->getToggles();

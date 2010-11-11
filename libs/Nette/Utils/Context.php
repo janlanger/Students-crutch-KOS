@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NContext extends NFreezableObject implements IContext
+class Context extends FreezableObject implements IContext
 {
 	/** @var array  storage for shared objects */
 	private $registry = array();
@@ -39,23 +42,23 @@ class NContext extends NFreezableObject implements IContext
 	{
 		$this->updating();
 		if (!is_string($name) || $name === '') {
-			throw new InvalidArgumentException("Service name must be a non-empty string, " . gettype($name) . " given.");
+			throw new \InvalidArgumentException("Service name must be a non-empty string, " . gettype($name) . " given.");
 		}
 
 		$lower = strtolower($name);
 		if (isset($this->registry[$lower])) { // only for instantiated services?
-			throw new NAmbiguousServiceException("Service named '$name' has already been registered.");
+			throw new AmbiguousServiceException("Service named '$name' has already been registered.");
 		}
 
-		if (is_object($service) && !($service instanceof Closure || $service instanceof NCallback)) {
+		if (is_object($service) && !($service instanceof \Closure || $service instanceof Callback)) {
 			if (!$singleton || $options) {
-				throw new InvalidArgumentException("Service named '$name' is an instantiated object and must therefore be singleton without options.");
+				throw new \InvalidArgumentException("Service named '$name' is an instantiated object and must therefore be singleton without options.");
 			}
 			$this->registry[$lower] = $service;
 
 		} else {
 			if (!$service) {
-				throw new InvalidArgumentException("Service named '$name' is empty.");
+				throw new \InvalidArgumentException("Service named '$name' is empty.");
 			}
 			$this->factories[$lower] = array($service, $singleton, $options);
 		}
@@ -71,7 +74,7 @@ class NContext extends NFreezableObject implements IContext
 	{
 		$this->updating();
 		if (!is_string($name) || $name === '') {
-			throw new InvalidArgumentException("Service name must be a non-empty string, " . gettype($name) . " given.");
+			throw new \InvalidArgumentException("Service name must be a non-empty string, " . gettype($name) . " given.");
 		}
 
 		$lower = strtolower($name);
@@ -89,14 +92,14 @@ class NContext extends NFreezableObject implements IContext
 	public function getService($name, array $options = NULL)
 	{
 		if (!is_string($name) || $name === '') {
-			throw new InvalidArgumentException("Service name must be a non-empty string, " . gettype($name) . " given.");
+			throw new \InvalidArgumentException("Service name must be a non-empty string, " . gettype($name) . " given.");
 		}
 
 		$lower = strtolower($name);
 
 		if (isset($this->registry[$lower])) { // instantiated singleton
 			if ($options) {
-				throw new InvalidArgumentException("Service named '$name' is singleton and therefore can not have options.");
+				throw new \InvalidArgumentException("Service named '$name' is singleton and therefore can not have options.");
 			}
 			return $this->registry[$lower];
 
@@ -104,16 +107,15 @@ class NContext extends NFreezableObject implements IContext
 			list($factory, $singleton, $defOptions) = $this->factories[$lower];
 
 			if ($singleton && $options) {
-				throw new InvalidArgumentException("Service named '$name' is singleton and therefore can not have options.");
+				throw new \InvalidArgumentException("Service named '$name' is singleton and therefore can not have options.");
 
 			} elseif ($defOptions) {
 				$options = $options ? $options + $defOptions : $defOptions;
 			}
 
 			if (is_string($factory) && strpos($factory, ':') === FALSE) { // class name
-				if ($a = strrpos($factory, '\\')) $factory = substr($factory, $a + 1); // fix namespace
 				if (!class_exists($factory)) {
-					throw new NAmbiguousServiceException("Cannot instantiate service '$name', class '$factory' not found.");
+					throw new AmbiguousServiceException("Cannot instantiate service '$name', class '$factory' not found.");
 				}
 				$service = new $factory;
 				if ($options && method_exists($service, 'setOptions')) {
@@ -123,11 +125,11 @@ class NContext extends NFreezableObject implements IContext
 			} else { // factory callback
 				$factory = callback($factory);
 				if (!$factory->isCallable()) {
-					throw new InvalidStateException("Cannot instantiate service '$name', handler '$factory' is not callable.");
+					throw new \InvalidStateException("Cannot instantiate service '$name', handler '$factory' is not callable.");
 				}
-				$service = $factory->invoke($options);
+				$service = $factory($options);
 				if (!is_object($service)) {
-					throw new NAmbiguousServiceException("Cannot instantiate service '$name', value returned by '$factory' is not object.");
+					throw new AmbiguousServiceException("Cannot instantiate service '$name', value returned by '$factory' is not object.");
 				}
 			}
 
@@ -138,7 +140,7 @@ class NContext extends NFreezableObject implements IContext
 			return $service;
 
 		} else {
-			throw new InvalidStateException("Service '$name' not found.");
+			throw new \InvalidStateException("Service '$name' not found.");
 		}
 	}
 
@@ -153,7 +155,7 @@ class NContext extends NFreezableObject implements IContext
 	public function hasService($name, $created = FALSE)
 	{
 		if (!is_string($name) || $name === '') {
-			throw new InvalidArgumentException("Service name must be a non-empty string, " . gettype($name) . " given.");
+			throw new \InvalidArgumentException("Service name must be a non-empty string, " . gettype($name) . " given.");
 		}
 
 		$lower = strtolower($name);
@@ -169,6 +171,6 @@ class NContext extends NFreezableObject implements IContext
  *
  * @author     David Grudl
  */
-class NAmbiguousServiceException extends Exception
+class AmbiguousServiceException extends \Exception
 {
 }

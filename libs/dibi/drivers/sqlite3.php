@@ -1,13 +1,13 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
- * @package    drivers
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
+ * @package    dibi\drivers
  */
 
 
@@ -26,8 +26,8 @@ require_once dirname(__FILE__) . '/sqlite.reflector.php';
  *   - resource (SQLite3) => existing connection resource
  *   - lazy, profiler, result, substitutes, ... => see DibiConnection options
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    drivers
+ * @author     David Grudl
+ * @package    dibi\drivers
  */
 class DibiSqlite3Driver extends DibiObject implements IDibiDriver, IDibiResultDriver
 {
@@ -115,12 +115,13 @@ class DibiSqlite3Driver extends DibiObject implements IDibiDriver, IDibiResultDr
 			$sql = iconv($this->charset, $this->dbcharset . '//IGNORE', $sql);
 		}
 
-		$this->resultSet = @$this->connection->query($sql); // intentionally @
+		$res = @$this->connection->query($sql); // intentionally @
 		if ($this->connection->lastErrorCode()) {
 			throw new DibiDriverException($this->connection->lastErrorMsg(), $this->connection->lastErrorCode(), $sql);
-		}
 
-		return $this->resultSet instanceof SQLite3Result ? clone $this : NULL;
+		} elseif ($res instanceof SQLite3Result) {
+			return $this->createResultDriver($res);
+		}
 	}
 
 
@@ -204,6 +205,20 @@ class DibiSqlite3Driver extends DibiObject implements IDibiDriver, IDibiResultDr
 	public function getReflector()
 	{
 		return new DibiSqliteReflector($this);
+	}
+
+
+
+	/**
+	 * Result set driver factory.
+	 * @param  SQLite3Result
+	 * @return IDibiResultDriver
+	 */
+	public function createResultDriver(SQLite3Result $resource)
+	{
+		$res = clone $this;
+		$res->resultSet = $resource;
+		return $res;
 	}
 
 
@@ -298,6 +313,17 @@ class DibiSqlite3Driver extends DibiObject implements IDibiDriver, IDibiResultDr
 
 
 	/**
+	 * Automatically frees the resources allocated for this result set.
+	 * @return void
+	 */
+	public function __destruct()
+	{
+		$this->resultSet && @$this->free();
+	}
+
+
+
+	/**
 	 * Returns the number of rows in a result set.
 	 * @return int
 	 * @throws NotSupportedException
@@ -352,6 +378,7 @@ class DibiSqlite3Driver extends DibiObject implements IDibiDriver, IDibiResultDr
 	 */
 	public function free()
 	{
+		$this->resultSet->finalize();
 		$this->resultSet = NULL;
 	}
 

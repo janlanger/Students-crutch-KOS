@@ -7,17 +7,21 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette,
+	Nette\Web\Html;
 
 
 
 /**
- * Converts a NForm into the HTML output.
+ * Converts a Form into the HTML output.
  *
  * @author     David Grudl
  */
-class NConventionalRenderer extends NObject implements IFormRenderer
+class ConventionalRenderer extends Nette\Object implements IFormRenderer
 {
 	/**
 	 *  /--- form.container
@@ -112,7 +116,7 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 		),
 	);
 
-	/** @var NForm */
+	/** @var Form */
 	protected $form;
 
 	/** @var int */
@@ -122,11 +126,11 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 
 	/**
 	 * Provides complete form rendering.
-	 * @param  NForm
+	 * @param  Form
 	 * @param  string 'begin', 'errors', 'body', 'end' or empty to render all
 	 * @return string
 	 */
-	public function render(NForm $form, $mode = NULL)
+	public function render(Form $form, $mode = NULL)
 	{
 		if ($this->form !== $form) {
 			$this->form = $form;
@@ -204,7 +208,7 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 					$parts = explode('=', $param, 2);
 					$name = urldecode($parts[0]);
 					if (!isset($this->form[$name])) {
-						$s .= NHtml::el('input', array('type' => 'hidden', 'name' => $name, 'value' => urldecode($parts[1])));
+						$s .= Html::el('input', array('type' => 'hidden', 'name' => $name, 'value' => urldecode($parts[1])));
 					}
 				}
 				$s = "\n\t" . $this->getWrapper('hidden container')->setHtml($s);
@@ -227,7 +231,7 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 	{
 		$s = '';
 		foreach ($this->form->getControls() as $control) {
-			if ($control instanceof NHiddenField && !$control->getOption('rendered')) {
+			if ($control instanceof HiddenField && !$control->getOption('rendered')) {
 				$s .= (string) $control->getControl();
 			}
 		}
@@ -254,7 +258,7 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 
 			foreach ($errors as $error) {
 				$item = clone $li;
-				if ($error instanceof NHtml) {
+				if ($error instanceof Html) {
 					$item->add($error);
 				} else {
 					$item->setText($error);
@@ -282,12 +286,12 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 			if (!$group->getControls() || !$group->getOption('visual')) continue;
 
 			$container = $group->getOption('container', $defaultContainer);
-			$container = $container instanceof NHtml ? clone $container : NHtml::el($container);
+			$container = $container instanceof Html ? clone $container : Html::el($container);
 
 			$s .= "\n" . $container->startTag();
 
 			$text = $group->getOption('label');
-			if ($text instanceof NHtml) {
+			if ($text instanceof Html) {
 				$s .= $text;
 
 			} elseif (is_string($text)) {
@@ -298,7 +302,7 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 			}
 
 			$text = $group->getOption('description');
-			if ($text instanceof NHtml) {
+			if ($text instanceof Html) {
 				$s .= $text;
 
 			} elseif (is_string($text)) {
@@ -328,23 +332,23 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 
 	/**
 	 * Renders group of controls.
-	 * @param  NFormContainer|NFormGroup
+	 * @param  FormContainer|FormGroup
 	 * @return string
 	 */
 	public function renderControls($parent)
 	{
-		if (!($parent instanceof NFormContainer || $parent instanceof NFormGroup)) {
-			throw new InvalidArgumentException("Argument must be FormContainer or FormGroup instance.");
+		if (!($parent instanceof FormContainer || $parent instanceof FormGroup)) {
+			throw new \InvalidArgumentException("Argument must be FormContainer or FormGroup instance.");
 		}
 
 		$container = $this->getWrapper('controls container');
 
 		$buttons = NULL;
 		foreach ($parent->getControls() as $control) {
-			if ($control->getOption('rendered') || $control instanceof NHiddenField || $control->getForm(FALSE) !== $this->form) {
+			if ($control->getOption('rendered') || $control instanceof HiddenField || $control->getForm(FALSE) !== $this->form) {
 				// skip
 
-			} elseif ($control instanceof NButton) {
+			} elseif ($control instanceof Button) {
 				$buttons[] = $control;
 
 			} else {
@@ -399,7 +403,7 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 		$s = array();
 		foreach ($controls as $control) {
 			if (!($control instanceof IFormControl)) {
-				throw new InvalidArgumentException("Argument must be array of IFormControl instances.");
+				throw new \InvalidArgumentException("Argument must be array of IFormControl instances.");
 			}
 			$s[] = (string) $control->getControl();
 		}
@@ -420,13 +424,13 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 	{
 		$head = $this->getWrapper('label container');
 
-		if ($control instanceof NCheckbox || $control instanceof NButton) {
+		if ($control instanceof Checkbox || $control instanceof Button) {
 			return $head->setHtml(($head->getName() === 'td' || $head->getName() === 'th') ? '&nbsp;' : '');
 
 		} else {
 			$label = $control->getLabel();
 			$suffix = $this->getValue('label suffix') . ($control->getOption('required') ? $this->getValue('label requiredsuffix') : '');
-			if ($label instanceof NHtml) {
+			if ($label instanceof Html) {
 				$label->setHtml($label->getHtml() . $suffix);
 				$suffix = '';
 			}
@@ -447,7 +451,7 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 		if ($this->counter % 2) $body->class($this->getValue('control .odd'), TRUE);
 
 		$description = $control->getOption('description');
-		if ($description instanceof NHtml) {
+		if ($description instanceof Html) {
 			$description = ' ' . $control->getOption('description');
 
 		} elseif (is_string($description)) {
@@ -465,7 +469,7 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 			$description .= $this->renderErrors($control);
 		}
 
-		if ($control instanceof NCheckbox || $control instanceof NButton) {
+		if ($control instanceof Checkbox || $control instanceof Button) {
 			return $body->setHtml((string) $control->getControl() . (string) $control->getLabel() . $description);
 
 		} else {
@@ -477,12 +481,12 @@ class NConventionalRenderer extends NObject implements IFormRenderer
 
 	/**
 	 * @param  string
-	 * @return NHtml
+	 * @return Nette\Web\Html
 	 */
 	protected function getWrapper($name)
 	{
 		$data = $this->getValue($name);
-		return $data instanceof NHtml ? clone $data : NHtml::el($data);
+		return $data instanceof Html ? clone $data : Html::el($data);
 	}
 
 

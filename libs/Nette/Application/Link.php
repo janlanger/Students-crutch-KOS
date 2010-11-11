@@ -7,20 +7,23 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
 /**
- * Lazy encapsulation of NPresenterComponent::link().
- * Do not instantiate directly, use NPresenterComponent::lazyLink()
+ * Lazy encapsulation of PresenterComponent::link().
+ * Do not instantiate directly, use PresenterComponent::lazyLink()
  *
  * @author     David Grudl
  */
-class NLink extends NObject
+class Link extends Nette\Object
 {
-	/** @var NPresenterComponent */
+	/** @var PresenterComponent */
 	private $component;
 
 	/** @var string */
@@ -31,12 +34,12 @@ class NLink extends NObject
 
 
 	/**
-	 * NLink specification.
-	 * @param  NPresenterComponent
+	 * Link specification.
+	 * @param  PresenterComponent
 	 * @param  string
 	 * @param  array
 	 */
-	public function __construct(NPresenterComponent $component, $destination, array $params)
+	public function __construct(PresenterComponent $component, $destination, array $params)
 	{
 		$this->component = $component;
 		$this->destination = $destination;
@@ -60,7 +63,7 @@ class NLink extends NObject
 	 * Changes link parameter.
 	 * @param  string
 	 * @param  mixed
-	 * @return NLink  provides a fluent interface
+	 * @return Link  provides a fluent interface
 	 */
 	public function setParam($key, $value)
 	{
@@ -102,8 +105,8 @@ class NLink extends NObject
 		try {
 			return $this->component->link($this->destination, $this->params);
 
-		} catch (Exception $e) {
-			NDebug::toStringException($e);
+		} catch (\Exception $e) {
+			Nette\Debug::toStringException($e);
 		}
 	}
 

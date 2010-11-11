@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Mail
  */
+
+namespace Nette\Mail;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NSmtpMailer extends NObject implements IMailer
+class SmtpMailer extends Nette\Object implements IMailer
 {
 	/** @var resource */
 	private $connection;
@@ -64,10 +67,10 @@ class NSmtpMailer extends NObject implements IMailer
 
 	/**
 	 * Sends e-mail.
-	 * @param	NMail
+	 * @param	Mail
 	 * @return	void
 	 */
-	public function send(NMail $mail)
+	public function send(Mail $mail)
 	{
 		$data = $mail->generateMessage();
 
@@ -107,7 +110,7 @@ class NSmtpMailer extends NObject implements IMailer
 			$this->port, $errno, $error, $this->timeout
 		);
 		if (!$this->connection) {
-			throw new NSmtpException($error, $errno);
+			throw new SmtpException($error, $errno);
 		}
 		stream_set_timeout($this->connection, $this->timeout, 0);
 		$this->read(); // greeting
@@ -121,7 +124,7 @@ class NSmtpMailer extends NObject implements IMailer
 		if ($this->secure === 'tls') {
 			$this->write('STARTTLS', 220);
 			if (!stream_socket_enable_crypto($this->connection, TRUE, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
-				throw new NSmtpException('Unable to connect via TLS.');
+				throw new SmtpException('Unable to connect via TLS.');
 			}
 		}
 
@@ -155,9 +158,9 @@ class NSmtpMailer extends NObject implements IMailer
 	 */
 	private function write($line, $expectedCode = NULL, $message = NULL)
 	{
-		fwrite($this->connection, $line . NMail::EOL);
+		fwrite($this->connection, $line . Mail::EOL);
 		if ($expectedCode && !in_array((int) $this->read(), (array) $expectedCode)) {
-			throw new NSmtpException('SMTP server did not accept ' . ($message ? $message : $line));
+			throw new SmtpException('SMTP server did not accept ' . ($message ? $message : $line));
 		}
 	}
 
@@ -188,6 +191,6 @@ class NSmtpMailer extends NObject implements IMailer
  *
  * @author     David Grudl
  */
-class NSmtpException extends Exception
+class SmtpException extends \Exception
 {
 }

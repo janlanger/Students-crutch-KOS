@@ -1,19 +1,12 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * dibi - smart database abstraction layer.
  *
  * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
  *
- * This source file is subject to the "dibi license" that is bundled
- * with this package in the file license.txt, and/or GPL license.
- *
- * For more information please see http://dibiphp.com
- *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
  * @package    dibi
  */
 
@@ -32,10 +25,10 @@ if (version_compare(PHP_VERSION, '5.2.0', '<')) {
 /**
  * Compatibility with Nette
  */
-if (interface_exists('Nette\\IDebugPanel', FALSE)) {
+if (interface_exists('Nette\\IDebugPanel')) {
 	class_alias('Nette\\IDebugPanel', 'IDebugPanel');
 
-} elseif (!interface_exists('IDebugPanel', FALSE)) {
+} elseif (!interface_exists('IDebugPanel')) {
 	interface IDebugPanel {}
 }
 
@@ -48,13 +41,10 @@ if (!defined('NETTE')) {
 	class IOException extends RuntimeException {}
 	class FileNotFoundException extends IOException {}
 	/**#@-*/
-
-	require_once dirname(__FILE__) . '/Nette/DateTime53.php';
 }
 
 
-/** @package exceptions */
-class PcreException extends Exception {
+class DibiPcreException extends Exception {
 
 	public function __construct($message = '%msg.')
 	{
@@ -72,21 +62,9 @@ class PcreException extends Exception {
 
 
 
-/**
- * @deprecated
- */
-class DibiVariable extends DateTime53
-{
-	function __construct($val)
-	{
-		parent::__construct($val);
-	}
-}
-
-
-
 // dibi libraries
 require_once dirname(__FILE__) . '/libs/interfaces.php';
+require_once dirname(__FILE__) . '/libs/DibiDateTime.php';
 require_once dirname(__FILE__) . '/libs/DibiObject.php';
 require_once dirname(__FILE__) . '/libs/DibiLazyStorage.php';
 require_once dirname(__FILE__) . '/libs/DibiException.php';
@@ -103,13 +81,27 @@ require_once dirname(__FILE__) . '/libs/DibiProfiler.php';
 
 
 /**
+ * @deprecated
+ */
+class DibiVariable extends DibiDateTime
+{
+	function __construct($val)
+	{
+		parent::__construct($val);
+	}
+}
+
+
+
+
+
+/**
  * Interface for database drivers.
  *
  * This class is static container class for creating DB objects and
  * store connections info.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  */
 class dibi
 {
@@ -144,7 +136,7 @@ class dibi
 	 * dibi version
 	 */
 	const VERSION = '1.3-dev';
-	const REVISION = '056a680 released on 2010-09-07';
+	const REVISION = 'af6352d released on 2010-11-10';
 	/**#@-*/
 
 	const ASC = 'ASC', DESC = 'DESC';
@@ -599,7 +591,7 @@ class dibi
 	 */
 	public static function datetime($time = NULL)
 	{
-		return new DateTime53(is_numeric($time) ? date('Y-m-d H:i:s', $time) : $time);
+		return new DibiDateTime(is_numeric($time) ? date('Y-m-d H:i:s', $time) : $time);
 	}
 
 
@@ -609,7 +601,7 @@ class dibi
 	 */
 	public static function date($date = NULL)
 	{
-		return new DateTime53(is_numeric($date) ? date('Y-m-d', $date) : $date);
+		return new DibiDateTime(is_numeric($date) ? date('Y-m-d', $date) : $date);
 	}
 
 
@@ -703,14 +695,14 @@ class dibi
 			$sql = wordwrap($sql, 100);
 			$sql = preg_replace("#([ \t]*\r?\n){2,}#", "\n", $sql);
 
-			//if (PHP_SAPI === 'cli') {
+			if (PHP_SAPI === 'cli') {
 				echo trim($sql) . "\n\n";
-			//} else {
+			} else {
 				// syntax highlight
-			//	$sql = htmlSpecialChars($sql);
-			//	$sql = preg_replace_callback("#(/\\*.+?\\*/)|(\\*\\*.+?\\*\\*)|(?<=[\\s,(])($keywords1)(?=[\\s,)])|(?<=[\\s,(=])($keywords2)(?=[\\s,)=])#is", array('dibi', 'highlightCallback'), $sql);
-			//	echo '<pre class="dump">', trim($sql), "</pre>\n";
-			//}
+				$sql = htmlSpecialChars($sql);
+				$sql = preg_replace_callback("#(/\\*.+?\\*/)|(\\*\\*.+?\\*\\*)|(?<=[\\s,(])($keywords1)(?=[\\s,)])|(?<=[\\s,(=])($keywords2)(?=[\\s,)=])#is", array('dibi', 'highlightCallback'), $sql);
+				echo '<pre class="dump">', trim($sql), "</pre>\n";
+			}
 		}
 
 		if ($return) {

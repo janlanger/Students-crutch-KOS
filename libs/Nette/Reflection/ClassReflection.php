@@ -7,8 +7,12 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Reflection
  */
+
+namespace Nette\Reflection;
+
+use Nette,
+	Nette\ObjectMixin;
 
 
 
@@ -17,7 +21,7 @@
  *
  * @author     David Grudl
  */
-class NClassReflection extends ReflectionClass
+class ClassReflection extends \ReflectionClass
 {
 
 	/** @var array (method => array(type => callback)) */
@@ -27,11 +31,11 @@ class NClassReflection extends ReflectionClass
 
 	/**
 	 * @param  string|object
-	 * @return NClassReflection
+	 * @return Nette\Reflection\ClassReflection
 	 */
 	public static function from($class)
 	{
-		return new self($class);
+		return new static($class);
 	}
 
 
@@ -61,7 +65,7 @@ class NClassReflection extends ReflectionClass
 	 * Adds a method to class.
 	 * @param  string  method name
 	 * @param  mixed   callback or closure
-	 * @return NClassReflection  provides a fluent interface
+	 * @return ClassReflection  provides a fluent interface
 	 */
 	public function setExtensionMethod($name, $callback)
 	{
@@ -80,18 +84,6 @@ class NClassReflection extends ReflectionClass
 	 */
 	public function getExtensionMethod($name)
 	{
-		if (self::$extMethods === NULL || $name === NULL) { // for backwards compatibility
-			$list = get_defined_functions(); // names are lowercase!
-			foreach ($list['user'] as $fce) {
-				$pair = explode('_prototype_', $fce);
-				if (count($pair) === 2) {
-					self::$extMethods[$pair[1]][$pair[0]] = callback($fce);
-					self::$extMethods[$pair[1]][''] = NULL;
-				}
-			}
-			if ($name === NULL) return NULL;
-		}
-
 		$class = strtolower($this->getName());
 		$l = & self::$extMethods[strtolower($name)];
 
@@ -125,21 +117,21 @@ class NClassReflection extends ReflectionClass
 
 
 	/**
-	 * @return NMethodReflection
+	 * @return Nette\Reflection\MethodReflection
 	 */
 	public function getConstructor()
 	{
-		return ($ref = parent::getConstructor()) ? NMethodReflection::import($ref) : NULL;
+		return ($ref = parent::getConstructor()) ? MethodReflection::import($ref) : NULL;
 	}
 
 
 
 	/**
-	 * @return NExtensionReflection
+	 * @return Nette\Reflection\ExtensionReflection
 	 */
 	public function getExtension()
 	{
-		return ($name = $this->getExtensionName()) ? new NExtensionReflection($name) : NULL;
+		return ($name = $this->getExtensionName()) ? new ExtensionReflection($name) : NULL;
 	}
 
 
@@ -148,7 +140,7 @@ class NClassReflection extends ReflectionClass
 	{
 		$res = array();
 		foreach (parent::getInterfaceNames() as $val) {
-			$res[$val] = new self($val);
+			$res[$val] = new static($val);
 		}
 		return $res;
 	}
@@ -156,11 +148,11 @@ class NClassReflection extends ReflectionClass
 
 
 	/**
-	 * @return NMethodReflection
+	 * @return Nette\Reflection\MethodReflection
 	 */
 	public function getMethod($name)
 	{
-		return new NMethodReflection($this->getName(), $name);
+		return new MethodReflection($this->getName(), $name);
 	}
 
 
@@ -168,7 +160,7 @@ class NClassReflection extends ReflectionClass
 	public function getMethods($filter = -1)
 	{
 		foreach ($res = parent::getMethods($filter) as $key => $val) {
-			$res[$key] = new NMethodReflection($this->getName(), $val->getName());
+			$res[$key] = new MethodReflection($this->getName(), $val->getName());
 		}
 		return $res;
 	}
@@ -176,11 +168,11 @@ class NClassReflection extends ReflectionClass
 
 
 	/**
-	 * @return NClassReflection
+	 * @return Nette\Reflection\ClassReflection
 	 */
 	public function getParentClass()
 	{
-		return ($ref = parent::getParentClass()) ? new self($ref->getName()) : NULL;
+		return ($ref = parent::getParentClass()) ? new static($ref->getName()) : NULL;
 	}
 
 
@@ -188,7 +180,7 @@ class NClassReflection extends ReflectionClass
 	public function getProperties($filter = -1)
 	{
 		foreach ($res = parent::getProperties($filter) as $key => $val) {
-			$res[$key] = new NPropertyReflection($this->getName(), $val->getName());
+			$res[$key] = new PropertyReflection($this->getName(), $val->getName());
 		}
 		return $res;
 	}
@@ -196,16 +188,16 @@ class NClassReflection extends ReflectionClass
 
 
 	/**
-	 * @return NPropertyReflection
+	 * @return Nette\Reflection\PropertyReflection
 	 */
 	public function getProperty($name)
 	{
-		return new NPropertyReflection($this->getName(), $name);
+		return new PropertyReflection($this->getName(), $name);
 	}
 
 
 
-	/********************* Annotations support ****************d*g**/
+	/********************* Nette\Annotations support ****************d*g**/
 
 
 
@@ -216,7 +208,7 @@ class NClassReflection extends ReflectionClass
 	 */
 	public function hasAnnotation($name)
 	{
-		$res = NAnnotationsParser::getAll($this);
+		$res = AnnotationsParser::getAll($this);
 		return !empty($res[$name]);
 	}
 
@@ -229,7 +221,7 @@ class NClassReflection extends ReflectionClass
 	 */
 	public function getAnnotation($name)
 	{
-		$res = NAnnotationsParser::getAll($this);
+		$res = AnnotationsParser::getAll($this);
 		return isset($res[$name]) ? end($res[$name]) : NULL;
 	}
 
@@ -241,56 +233,56 @@ class NClassReflection extends ReflectionClass
 	 */
 	public function getAnnotations()
 	{
-		return NAnnotationsParser::getAll($this);
+		return AnnotationsParser::getAll($this);
 	}
 
 
 
-	/********************* NObject behaviour ****************d*g**/
+	/********************* Nette\Object behaviour ****************d*g**/
 
 
 
 	/**
-	 * @return NClassReflection
+	 * @return Nette\Reflection\ClassReflection
 	 */
-	public function getReflection()
+	public static function getReflection()
 	{
-		return new NClassReflection($this);
+		return new Nette\Reflection\ClassReflection(get_called_class());
 	}
 
 
 
 	public function __call($name, $args)
 	{
-		return NObjectMixin::call($this, $name, $args);
+		return ObjectMixin::call($this, $name, $args);
 	}
 
 
 
 	public function &__get($name)
 	{
-		return NObjectMixin::get($this, $name);
+		return ObjectMixin::get($this, $name);
 	}
 
 
 
 	public function __set($name, $value)
 	{
-		return NObjectMixin::set($this, $name, $value);
+		return ObjectMixin::set($this, $name, $value);
 	}
 
 
 
 	public function __isset($name)
 	{
-		return NObjectMixin::has($this, $name);
+		return ObjectMixin::has($this, $name);
 	}
 
 
 
 	public function __unset($name)
 	{
-		throw new MemberAccessException("Cannot unset the property {$this->reflection->name}::\$$name.");
+		throw new \MemberAccessException("Cannot unset the property {$this->reflection->name}::\$$name.");
 	}
 
 }

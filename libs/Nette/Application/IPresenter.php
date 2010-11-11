@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
@@ -21,9 +24,9 @@ interface IPresenter
 {
 
 	/**
-	 * @param  NPresenterRequest
+	 * @param  PresenterRequest
 	 * @return IPresenterResponse
 	 */
-	function run(NPresenterRequest $request);
+	function run(PresenterRequest $request);
 
 }

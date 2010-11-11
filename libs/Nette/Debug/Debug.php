@@ -7,8 +7,12 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette,
+	Nette\Environment;
 
 
 
@@ -21,7 +25,7 @@
  *
  * @author     David Grudl
  */
-final class NDebug
+final class Debug
 {
 	/** @var bool in production mode is suppressed any debugging output */
 	public static $productionMode;
@@ -41,20 +45,20 @@ final class NDebug
 	/** @var string  requested URI or command line */
 	public static $source;
 
-	/********************* NDebug::dump() ****************d*g**/
+	/********************* Debug::dump() ****************d*g**/
 
-	/** @var int  how many nested levels of array/object properties display {@link NDebug::dump()} */
+	/** @var int  how many nested levels of array/object properties display {@link Debug::dump()} */
 	public static $maxDepth = 3;
 
-	/** @var int  how long strings display {@link NDebug::dump()} */
+	/** @var int  how long strings display {@link Debug::dump()} */
 	public static $maxLen = 150;
 
-	/** @var int  display location? {@link NDebug::dump()} */
+	/** @var int  display location? {@link Debug::dump()} */
 	public static $showLocation = FALSE;
 
 	/********************* errors and exceptions reporing ****************d*g**/
 
-	/**#@+ server modes {@link NDebug::enable()} */
+	/**#@+ server modes {@link Debug::enable()} */
 	const DEVELOPMENT = FALSE;
 	const PRODUCTION = TRUE;
 	const DETECT = NULL;
@@ -84,26 +88,26 @@ final class NDebug
 	/** @var string URL pattern mask to open editor */
 	public static $editor = 'editor://open/?file=%file&line=%line';
 
-	/** @var bool {@link NDebug::enable()} */
+	/** @var bool {@link Debug::enable()} */
 	private static $enabled = FALSE;
 
 	/********************* debug bar ****************d*g**/
 
-	/** @var bool determines whether show NDebug Bar */
+	/** @var bool determines whether show Debug Bar */
 	public static $showBar = TRUE;
 
 	/** @var array */
 	private static $panels = array();
 
-	/** @var array payload filled by {@link NDebug::barDump()} */
+	/** @var array payload filled by {@link Debug::barDump()} */
 	private static $dumps;
 
-	/** @var array payload filled by {@link NDebug::_errorHandler()} */
+	/** @var array payload filled by {@link Debug::_errorHandler()} */
 	private static $errors;
 
 	/********************* Firebug extension ****************d*g**/
 
-	/**#@+ {@link NDebug::log()} and {@link NDebug::fireLog()} */
+	/**#@+ {@link Debug::log()} and {@link Debug::fireLog()} */
 	const DEBUG = 'debug';
 	const INFO = 'info';
 	const WARNING = 'warning';
@@ -118,7 +122,7 @@ final class NDebug
 	 */
 	final public function __construct()
 	{
-		throw new LogicException("Cannot instantiate static class " . get_class($this));
+		throw new \LogicException("Cannot instantiate static class " . get_class($this));
 	}
 
 
@@ -145,10 +149,10 @@ final class NDebug
 		}
 
 		$tab = array(__CLASS__, 'renderTab'); $panel = array(__CLASS__, 'renderPanel');
-		self::addPanel(new NDebugPanel('time', $tab, $panel));
-		self::addPanel(new NDebugPanel('memory', $tab, $panel));
-		self::addPanel(new NDebugPanel('errors', $tab, $panel));
-		self::addPanel(new NDebugPanel('dumps', $tab, $panel));
+		self::addPanel(new DebugPanel('time', $tab, $panel));
+		self::addPanel(new DebugPanel('memory', $tab, $panel));
+		self::addPanel(new DebugPanel('errors', $tab, $panel));
+		self::addPanel(new DebugPanel('dumps', $tab, $panel));
 	}
 
 
@@ -195,7 +199,7 @@ final class NDebug
 
 
 	/**
-	 * Dumps information about a variable in Nette NDebug Bar.
+	 * Dumps information about a variable in Nette Debug Bar.
 	 * @param  mixed  variable to dump
 	 * @param  string optional title
 	 * @return mixed  variable itself
@@ -374,8 +378,8 @@ final class NDebug
 		}
 
 		if (self::$productionMode === self::DETECT) {
-			if (class_exists('NEnvironment')) {
-				self::$productionMode = NEnvironment::isProduction();
+			if (class_exists('Nette\Environment')) {
+				self::$productionMode = Environment::isProduction();
 
 			} elseif (isset($_SERVER['SERVER_ADDR']) || isset($_SERVER['LOCAL_ADDR'])) { // IP address based detection
 				$addr = isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : $_SERVER['LOCAL_ADDR'];
@@ -409,12 +413,12 @@ final class NDebug
 			ini_set('log_errors', FALSE);
 
 		} elseif (ini_get('display_errors') != !self::$productionMode && ini_get('display_errors') !== (self::$productionMode ? 'stderr' : 'stdout')) { // intentionally ==
-			throw new NotSupportedException('Function ini_set() must be enabled.');
+			throw new \NotSupportedException('Function ini_set() must be enabled.');
 		}
 
 		if ($email) {
 			if (!is_string($email)) {
-				throw new InvalidArgumentException('E-mail address must be a string.');
+				throw new \InvalidArgumentException('E-mail address must be a string.');
 			}
 			self::$email = $email;
 		}
@@ -438,7 +442,7 @@ final class NDebug
 
 
 	/**
-	 * Is NDebug enabled?
+	 * Is Debug enabled?
 	 * @return bool
 	 */
 	public static function isEnabled()
@@ -460,16 +464,16 @@ final class NDebug
 			return;
 
 		} elseif (!self::$logDirectory) {
-			throw new InvalidStateException('Logging directory is not specified in NDebug::$logDirectory.');
+			throw new \InvalidStateException('Logging directory is not specified in Nette\Debug::$logDirectory.');
 
 		} elseif (!is_dir(self::$logDirectory)) {
-			throw new DirectoryNotFoundException("Directory '" . self::$logDirectory . "' is not found or is not directory.");
+			throw new \DirectoryNotFoundException("Directory '" . self::$logDirectory . "' is not found or is not directory.");
 		}
 
-		if ($message instanceof Exception) {
+		if ($message instanceof \Exception) {
 			$exception = $message;
 			$message = "PHP Fatal error: "
-				. ($message instanceof FatalErrorException ? $exception->getMessage() : "Uncaught exception " . get_class($exception) . " with message '" . $exception->getMessage() . "'")
+				. ($message instanceof \FatalErrorException ? $exception->getMessage() : "Uncaught exception " . get_class($exception) . " with message '" . $exception->getMessage() . "'")
 				. " in " . $exception->getFile() . ":" . $exception->getLine();
 		}
 
@@ -482,15 +486,15 @@ final class NDebug
 		}
 
 		if (isset($exception)) {
-			$hash = md5($exception . (method_exists($exception, 'getPrevious') ? $exception->getPrevious() : (isset($exception->previous) ? $exception->previous : '')));
-			foreach (new DirectoryIterator(self::$logDirectory) as $entry) {
+			$hash = md5($exception );
+			foreach (new \DirectoryIterator(self::$logDirectory) as $entry) {
 				if (strpos($entry, $hash)) {
 					$skip = TRUE; break;
 				}
 			}
 			if (empty($skip) && $logHandle = @fopen(self::$logDirectory . "/exception " . @date('Y-m-d H-i-s') . " $hash.html", 'w')) {
 				ob_start(); // double buffer prevents sending HTTP headers in some PHP
-				ob_start(create_function('$buffer', 'extract(NClosureFix::$vars['.NClosureFix::uses(array('logHandle'=>$logHandle)).'], EXTR_REFS);  fwrite($logHandle, $buffer); '), 1);
+				ob_start(function($buffer) use ($logHandle) { fwrite($logHandle, $buffer); }, 1);
 				self::paintBlueScreen($exception);
 				ob_end_flush();
 				ob_end_clean();
@@ -517,7 +521,7 @@ final class NDebug
 		);
 		$error = error_get_last();
 		if (isset($types[$error['type']])) {
-			self::_exceptionHandler(new FatalErrorException($error['message'], 0, $error['type'], $error['file'], $error['line'], NULL));
+			self::_exceptionHandler(new \FatalErrorException($error['message'], 0, $error['type'], $error['file'], $error['line'], NULL));
 			return;
 		}
 
@@ -532,11 +536,11 @@ final class NDebug
 
 	/**
 	 * Handler to catch uncaught exception.
-	 * @param  Exception
+	 * @param  \Exception
 	 * @return void
 	 * @internal
 	 */
-	public static function _exceptionHandler(Exception $exception)
+	public static function _exceptionHandler(\Exception $exception)
 	{
 		if (!headers_sent()) { // for PHP < 5.2.4
 			header('HTTP/1.1 500 Internal Server Error');
@@ -544,8 +548,8 @@ final class NDebug
 
 		try {
 			self::log($exception, self::ERROR);
-		} catch (Exception $e) {
-			echo 'NDebug fatal error: ', get_class($e), ': ', ($e->getCode() ? '#' . $e->getCode() . ' ' : '') . $e->getMessage(), "\n";
+		} catch (\Exception $e) {
+			echo 'Nette\Debug fatal error: ', get_class($e), ': ', ($e->getCode() ? '#' . $e->getCode() . ' ' : '') . $e->getMessage(), "\n";
 			exit;
 		}
 
@@ -588,7 +592,7 @@ final class NDebug
 	 * @param  int    line number the error was raised at
 	 * @param  array  an array of variables that existed in the scope the error was triggered in
 	 * @return bool   FALSE to call normal error handler, NULL otherwise
-	 * @throws FatalErrorException
+	 * @throws \FatalErrorException
 	 * @internal
 	 */
 	public static function _errorHandler($severity, $message, $file, $line, $context)
@@ -598,13 +602,13 @@ final class NDebug
 		}
 
 		if ($severity === E_RECOVERABLE_ERROR || $severity === E_USER_ERROR) {
-			throw new FatalErrorException($message, 0, $severity, $file, $line, $context);
+			throw new \FatalErrorException($message, 0, $severity, $file, $line, $context);
 
 		} elseif (($severity & error_reporting()) !== $severity) {
 			return FALSE; // calls normal error handler to fill-in error_get_last()
 
 		} elseif (self::$strictMode && !self::$productionMode) {
-			self::_exceptionHandler(new FatalErrorException($message, 0, $severity, $file, $line, $context));
+			self::_exceptionHandler(new \FatalErrorException($message, 0, $severity, $file, $line, $context));
 			exit;
 		}
 
@@ -631,7 +635,7 @@ final class NDebug
 				self::$errors[] = "$message in " . (self::$editor ? '<a href="' . htmlspecialchars(strtr(self::$editor, array('%file' => rawurlencode($file), '%line' => $line))) . "\">$file:$line</a>" : "$file:$line");
 			}
 			if (self::$firebugDetected && !headers_sent()) {
-				self::fireLog(new ErrorException($message, 0, $severity, $file, $line), self::WARNING);
+				self::fireLog(new \ErrorException($message, 0, $severity, $file, $line), self::WARNING);
 			}
 			return self::$consoleMode || (!self::$showBar && !self::$ajaxDetected) ? FALSE : NULL;
 		}
@@ -642,7 +646,7 @@ final class NDebug
 
 
 	/** @deprecated */
-	public static function processException(Exception $exception)
+	public static function processException(\Exception $exception)
 	{
 		trigger_error(__METHOD__ . '() is deprecated; use ' . __CLASS__ . '::log($exception, Debug::ERROR) instead.', E_USER_WARNING);
 		self::log($exception, self::ERROR);
@@ -652,10 +656,10 @@ final class NDebug
 
 	/**
 	 * Handles exception throwed in __toString().
-	 * @param  Exception
+	 * @param  \Exception
 	 * @return void
 	 */
-	public static function toStringException(Exception $exception)
+	public static function toStringException(\Exception $exception)
 	{
 		if (self::$enabled) {
 			self::_exceptionHandler($exception);
@@ -669,17 +673,17 @@ final class NDebug
 
 	/**
 	 * Paint blue screen.
-	 * @param  Exception
+	 * @param  \Exception
 	 * @return void
 	 * @internal
 	 */
-	public static function paintBlueScreen(Exception $exception)
+	public static function paintBlueScreen(\Exception $exception)
 	{
-		if (class_exists('NEnvironment', FALSE)) {
-			$application = NEnvironment::getContext()->hasService('Nette\\Application\\Application', TRUE) ? NEnvironment::getContext()->getService('Nette\\Application\\Application') : NULL;
+		if (class_exists('Nette\Environment', FALSE)) {
+			$application = Environment::getContext()->hasService('Nette\\Application\\Application', TRUE) ? Environment::getContext()->getService('Nette\\Application\\Application') : NULL;
 		}
 
-		require dirname(__FILE__) . '/templates/bluescreen.phtml';
+		require __DIR__ . '/templates/bluescreen.phtml';
 	}
 
 
@@ -699,7 +703,7 @@ final class NDebug
 				'panel' => $tab ? (string) $panel->getPanel() : NULL,
 			);
 		}
-		require dirname(__FILE__) . '/templates/bar.phtml';
+		require __DIR__ . '/templates/bar.phtml';
 	}
 
 
@@ -790,18 +794,18 @@ final class NDebug
 	{
 		switch ($id) {
 		case 'time':
-			require dirname(__FILE__) . '/templates/bar.time.tab.phtml';
+			require __DIR__ . '/templates/bar.time.tab.phtml';
 			return;
 		case 'memory':
-			require dirname(__FILE__) . '/templates/bar.memory.tab.phtml';
+			require __DIR__ . '/templates/bar.memory.tab.phtml';
 			return;
 		case 'dumps':
-			if (!NDebug::$dumps) return;
-			require dirname(__FILE__) . '/templates/bar.dumps.tab.phtml';
+			if (!Debug::$dumps) return;
+			require __DIR__ . '/templates/bar.dumps.tab.phtml';
 			return;
 		case 'errors':
-			if (!NDebug::$errors) return;
-			require dirname(__FILE__) . '/templates/bar.errors.tab.phtml';
+			if (!Debug::$errors) return;
+			require __DIR__ . '/templates/bar.errors.tab.phtml';
 		}
 	}
 
@@ -817,10 +821,10 @@ final class NDebug
 	{
 		switch ($id) {
 		case 'dumps':
-			require dirname(__FILE__) . '/templates/bar.dumps.panel.phtml';
+			require __DIR__ . '/templates/bar.dumps.panel.phtml';
 			return;
 		case 'errors':
-			require dirname(__FILE__) . '/templates/bar.errors.panel.phtml';
+			require __DIR__ . '/templates/bar.errors.panel.phtml';
 		}
 	}
 
@@ -857,7 +861,7 @@ final class NDebug
 			$item['template'] = array_shift($args);
 		}
 
-		if (isset($args[0]) && $args[0] instanceof Exception) {
+		if (isset($args[0]) && $args[0] instanceof \Exception) {
 			$e = array_shift($args);
 			$trace = $e->getTrace();
 			if (isset($trace[0]['class']) && $trace[0]['class'] === __CLASS__ && ($trace[0]['function'] === '_shutdownHandler' || $trace[0]['function'] === '_errorHandler')) {
@@ -878,7 +882,7 @@ final class NDebug
 			};
 
 			$file = str_replace(dirname(dirname(dirname($e->getFile()))), "\xE2\x80\xA6", $e->getFile());
-			$item['template'] = ($e instanceof ErrorException ? '' : get_class($e) . ': ') . $e->getMessage() . ($e->getCode() ? ' #' . $e->getCode() : '') . ' in ' . $file . ':' . $e->getLine();
+			$item['template'] = ($e instanceof \ErrorException ? '' : get_class($e) . ': ') . $e->getMessage() . ($e->getCode() ? ' #' . $e->getCode() : '') . ' in ' . $file . ':' . $e->getLine();
 			array_unshift($trace, array('file' => $e->getFile(), 'line' => $e->getLine()));
 
 		} else {
@@ -981,4 +985,4 @@ final class NDebug
 
 
 
-NDebug::_init();
+Debug::_init();

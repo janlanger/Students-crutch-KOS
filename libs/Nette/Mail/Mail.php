@@ -7,13 +7,17 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Mail
  */
+
+namespace Nette\Mail;
+
+use Nette,
+	Nette\String;
 
 
 
 /**
- * NMail provides functionality to compose and send both text and MIME-compliant multipart e-mail messages.
+ * Mail provides functionality to compose and send both text and MIME-compliant multipart e-mail messages.
  *
  * @author     David Grudl
  *
@@ -23,7 +27,7 @@
  * @property   int $priority
  * @property   string $htmlBody
  */
-class NMail extends NMailMimePart
+class Mail extends MailMimePart
 {
 	/**#@+ Priority */
 	const HIGH = 1;
@@ -32,7 +36,7 @@ class NMail extends NMailMimePart
 	/**#@-*/
 
 	/** @var IMailer */
-	public static $defaultMailer = 'NSendmailMailer';
+	public static $defaultMailer = 'Nette\Mail\SendmailMailer';
 
 	/** @var array */
 	public static $defaultHeaders = array(
@@ -71,7 +75,7 @@ class NMail extends NMailMimePart
 	 * Sets the sender of the message.
 	 * @param  string  e-mail or format "John Doe" <doe@example.com>
 	 * @param  string
-	 * @return NMail  provides a fluent interface
+	 * @return Mail  provides a fluent interface
 	 */
 	public function setFrom($email, $name = NULL)
 	{
@@ -96,7 +100,7 @@ class NMail extends NMailMimePart
 	 * Adds the reply-to address.
 	 * @param  string  e-mail or format "John Doe" <doe@example.com>
 	 * @param  string
-	 * @return NMail  provides a fluent interface
+	 * @return Mail  provides a fluent interface
 	 */
 	public function addReplyTo($email, $name = NULL)
 	{
@@ -109,7 +113,7 @@ class NMail extends NMailMimePart
 	/**
 	 * Sets the subject of the message.
 	 * @param  string
-	 * @return NMail  provides a fluent interface
+	 * @return Mail  provides a fluent interface
 	 */
 	public function setSubject($subject)
 	{
@@ -134,7 +138,7 @@ class NMail extends NMailMimePart
 	 * Adds email recipient.
 	 * @param  string  e-mail or format "John Doe" <doe@example.com>
 	 * @param  string
-	 * @return NMail  provides a fluent interface
+	 * @return Mail  provides a fluent interface
 	 */
 	public function addTo($email, $name = NULL) // addRecipient()
 	{
@@ -148,7 +152,7 @@ class NMail extends NMailMimePart
 	 * Adds carbon copy email recipient.
 	 * @param  string  e-mail or format "John Doe" <doe@example.com>
 	 * @param  string
-	 * @return NMail  provides a fluent interface
+	 * @return Mail  provides a fluent interface
 	 */
 	public function addCc($email, $name = NULL)
 	{
@@ -162,7 +166,7 @@ class NMail extends NMailMimePart
 	 * Adds blind carbon copy email recipient.
 	 * @param  string  e-mail or format "John Doe" <doe@example.com>
 	 * @param  string
-	 * @return NMail  provides a fluent interface
+	 * @return Mail  provides a fluent interface
 	 */
 	public function addBcc($email, $name = NULL)
 	{
@@ -192,7 +196,7 @@ class NMail extends NMailMimePart
 	/**
 	 * Sets the Return-Path header of the message.
 	 * @param  string  e-mail
-	 * @return NMail  provides a fluent interface
+	 * @return Mail  provides a fluent interface
 	 */
 	public function setReturnPath($email)
 	{
@@ -216,7 +220,7 @@ class NMail extends NMailMimePart
 	/**
 	 * Sets email priority.
 	 * @param  int
-	 * @return NMail  provides a fluent interface
+	 * @return Mail  provides a fluent interface
 	 */
 	public function setPriority($priority)
 	{
@@ -239,9 +243,9 @@ class NMail extends NMailMimePart
 
 	/**
 	 * Sets HTML body.
-	 * @param  string|ITemplate
+	 * @param  string|Nette\Templates\ITemplate
 	 * @param  mixed base-path or FALSE to disable parsing
-	 * @return NMail  provides a fluent interface
+	 * @return Mail  provides a fluent interface
 	 */
 	public function setHtmlBody($html, $basePath = NULL)
 	{
@@ -268,15 +272,15 @@ class NMail extends NMailMimePart
 	 * @param  string
 	 * @param  string
 	 * @param  string
-	 * @return NMailMimePart
+	 * @return MailMimePart
 	 */
 	public function addEmbeddedFile($file, $content = NULL, $contentType = NULL)
 	{
-		$part = new NMailMimePart;
+		$part = new MailMimePart;
 		$part->setBody($content === NULL ? $this->readFile($file, $contentType) : (string) $content);
 		$part->setContentType($contentType ? $contentType : 'application/octet-stream');
 		$part->setEncoding(self::ENCODING_BASE64);
-		$part->setHeader('Content-Disposition', 'inline; filename="' . NString::fixEncoding(basename($file)) . '"');
+		$part->setHeader('Content-Disposition', 'inline; filename="' . String::fixEncoding(basename($file)) . '"');
 		$part->setHeader('Content-ID', '<' . md5(uniqid('', TRUE)) . '>');
 		return $this->inlines[$file] = $part;
 	}
@@ -288,15 +292,15 @@ class NMail extends NMailMimePart
 	 * @param  string
 	 * @param  string
 	 * @param  string
-	 * @return NMailMimePart
+	 * @return MailMimePart
 	 */
 	public function addAttachment($file, $content = NULL, $contentType = NULL)
 	{
-		$part = new NMailMimePart;
+		$part = new MailMimePart;
 		$part->setBody($content === NULL ? $this->readFile($file, $contentType) : (string) $content);
 		$part->setContentType($contentType ? $contentType : 'application/octet-stream');
 		$part->setEncoding(self::ENCODING_BASE64);
-		$part->setHeader('Content-Disposition', 'attachment; filename="' . NString::fixEncoding(basename($file)) . '"');
+		$part->setHeader('Content-Disposition', 'attachment; filename="' . String::fixEncoding(basename($file)) . '"');
 		return $this->attachments[] = $part;
 	}
 
@@ -311,7 +315,7 @@ class NMail extends NMailMimePart
 	private function readFile($file, & $contentType)
 	{
 		if (!is_file($file)) {
-			throw new FileNotFoundException("File '$file' not found.");
+			throw new \FileNotFoundException("File '$file' not found.");
 		}
 		if (!$contentType && $info = getimagesize($file)) {
 			$contentType = $info['mime'];
@@ -339,7 +343,7 @@ class NMail extends NMailMimePart
 	/**
 	 * Sets the mailer.
 	 * @param  IMailer
-	 * @return NMail  provides a fluent interface
+	 * @return Mail  provides a fluent interface
 	 */
 	public function setMailer(IMailer $mailer)
 	{
@@ -356,7 +360,6 @@ class NMail extends NMailMimePart
 	public function getMailer()
 	{
 		if ($this->mailer === NULL) {
-			if (is_string(self::$defaultMailer) && $a = strrpos(self::$defaultMailer, '\\')) self::$defaultMailer = substr(self::$defaultMailer, $a + 1); // fix namespace
 			$this->mailer = is_object(self::$defaultMailer) ? self::$defaultMailer : new self::$defaultMailer;
 		}
 		return $this->mailer;
@@ -419,9 +422,9 @@ class NMail extends NMailMimePart
 	 */
 	protected function buildHtml()
 	{
-		if ($this->html instanceof ITemplate) {
+		if ($this->html instanceof Nette\Templates\ITemplate) {
 			$this->html->mail = $this;
-			if ($this->basePath === NULL && $this->html instanceof IFileTemplate) {
+			if ($this->basePath === NULL && $this->html instanceof Nette\Templates\IFileTemplate) {
 				$this->basePath = dirname($this->html->getFile());
 			}
 			$this->html = $this->html->__toString(TRUE);
@@ -429,7 +432,7 @@ class NMail extends NMailMimePart
 
 		if ($this->basePath !== FALSE) {
 			$cids = array();
-			$matches = NString::matchAll($this->html, '#(src\s*=\s*|background\s*=\s*|url\()(["\'])(?![a-z]+:|[/\\#])(.+?)\\2#i', PREG_OFFSET_CAPTURE);
+			$matches = String::matchAll($this->html, '#(src\s*=\s*|background\s*=\s*|url\()(["\'])(?![a-z]+:|[/\\#])(.+?)\\2#i', PREG_OFFSET_CAPTURE);
 			foreach (array_reverse($matches) as $m)	{
 				$file = rtrim($this->basePath, '/\\') . '/' . $m[3][0];
 				$cid = isset($cids[$file]) ? $cids[$file] : $cids[$file] = substr($this->addEmbeddedFile($file)->getHeader("Content-ID"), 1, -1);
@@ -437,7 +440,7 @@ class NMail extends NMailMimePart
 			}
 		}
 
-		if (!$this->getSubject() && $matches = NString::match($this->html, '#<title>(.+?)</title>#is')) {
+		if (!$this->getSubject() && $matches = String::match($this->html, '#<title>(.+?)</title>#is')) {
 			$this->setSubject(html_entity_decode($matches[1], ENT_QUOTES, 'UTF-8'));
 		}
 	}
@@ -451,12 +454,12 @@ class NMail extends NMailMimePart
 	protected function buildText()
 	{
 		$text = $this->getBody();
-		if ($text instanceof ITemplate) {
+		if ($text instanceof Nette\Templates\ITemplate) {
 			$text->mail = $this;
 			$this->setBody($text->__toString(TRUE));
 
 		} elseif ($text == NULL && $this->html != NULL) { // intentionally ==
-			$text = NString::replace($this->html, array(
+			$text = String::replace($this->html, array(
 				'#<(style|script|head).*</\\1>#Uis' => '',
 				'#<t[dh][ >]#i' => " $0",
 				'#[ \t\r\n]+#' => ' ',

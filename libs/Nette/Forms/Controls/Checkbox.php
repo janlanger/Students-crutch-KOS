@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NCheckbox extends NFormControl
+class Checkbox extends FormControl
 {
 
 	/**
@@ -35,7 +38,7 @@ class NCheckbox extends NFormControl
 	/**
 	 * Sets control's value.
 	 * @param  bool
-	 * @return NCheckbox  provides a fluent interface
+	 * @return Checkbox  provides a fluent interface
 	 */
 	public function setValue($value)
 	{
@@ -47,7 +50,7 @@ class NCheckbox extends NFormControl
 
 	/**
 	 * Generates control's HTML element.
-	 * @return NHtml
+	 * @return Nette\Web\Html
 	 */
 	public function getControl()
 	{

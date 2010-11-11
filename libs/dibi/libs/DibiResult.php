@@ -1,12 +1,12 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
  * @package    dibi
  */
 
@@ -28,8 +28,7 @@
  * unset($result);
  * </code>
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  *
  * @property-read mixed $resource
  * @property-read IDibiResultDriver $driver
@@ -75,17 +74,6 @@ class DibiResult extends DibiObject implements IDataSource
 		if (!empty($config['formatDateTime'])) {
 			$this->dateFormat = is_string($config['formatDateTime']) ? $config['formatDateTime'] : '';
 		}
-	}
-
-
-
-	/**
-	 * Automatically frees the resources allocated for this result set.
-	 * @return void
-	 */
-	public function __destruct()
-	{
-		@$this->free(); // intentionally @
 	}
 
 
@@ -541,7 +529,7 @@ class DibiResult extends DibiObject implements IDataSource
 	 * Define multiple columns types.
 	 * @param  array
 	 * @return DibiResult  provides a fluent interface
-	 * @ignore internal
+	 * @internal
 	 */
 	final public function setTypes(array $types)
 	{
@@ -593,7 +581,7 @@ class DibiResult extends DibiObject implements IDataSource
 				return NULL;
 
 			} elseif ($this->dateFormat === '') { // return DateTime object (default)
-				return new DateTime53(is_numeric($value) ? date('Y-m-d H:i:s', $value) : $value);
+				return new DibiDateTime(is_numeric($value) ? date('Y-m-d H:i:s', $value) : $value);
 
 			} elseif ($this->dateFormat === 'U') { // return timestamp
 				return is_numeric($value) ? (int) $value : strtotime($value);
@@ -602,7 +590,7 @@ class DibiResult extends DibiObject implements IDataSource
 				return date($this->dateFormat, $value);
 
 			} else {
-				$value = new DateTime53($value);
+				$value = new DibiDateTime($value);
 				return $value->format($this->dateFormat);
 			}
 

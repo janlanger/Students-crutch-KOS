@@ -7,8 +7,13 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Templates
  */
+
+namespace Nette\Templates;
+
+use Nette,
+	Nette\Environment,
+	Nette\Caching\Cache;
 
 
 
@@ -17,7 +22,7 @@
  *
  * @author     David Grudl
  */
-class NCachingHelper extends NObject
+class CachingHelper extends Nette\Object
 {
 	/** @var array */
 	private $frame;
@@ -28,11 +33,11 @@ class NCachingHelper extends NObject
 
 
 	/**
-	 * Starts the output cache. Returns NCachingHelper object if buffering was started.
+	 * Starts the output cache. Returns CachingHelper object if buffering was started.
 	 * @param  string
-	 * @param  NCachingHelper
+	 * @param  CachingHelper
 	 * @param  array
-	 * @return NCachingHelper
+	 * @return CachingHelper
 	 */
 	public static function create($key, & $parents, $args = NULL)
 	{
@@ -40,7 +45,7 @@ class NCachingHelper extends NObject
 			$key .= md5(serialize($args));
 		}
 		if ($parents) {
-			end($parents)->frame[NCache::ITEMS][] = $key;
+			end($parents)->frame[Cache::ITEMS][] = $key;
 		}
 
 		$cache = self::getCache();
@@ -52,8 +57,8 @@ class NCachingHelper extends NObject
 			$obj = new self;
 			$obj->key = $key;
 			$obj->frame = array(
-				NCache::TAGS => isset($args['tags']) ? $args['tags'] : NULL,
-				NCache::EXPIRE => isset($args['expire']) ? $args['expire'] : '+ 7 days',
+				Cache::TAGS => isset($args['tags']) ? $args['tags'] : NULL,
+				Cache::EXPIRE => isset($args['expire']) ? $args['expire'] : '+ 7 days',
 			);
 			ob_start();
 			return $parents[] = $obj;
@@ -81,7 +86,7 @@ class NCachingHelper extends NObject
 	 */
 	public function addFile($file)
 	{
-		$this->frame[NCache::FILES][] = $file;
+		$this->frame[Cache::FILES][] = $file;
 	}
 
 
@@ -91,11 +96,11 @@ class NCachingHelper extends NObject
 
 
 	/**
-	 * @return NCache
+	 * @return Nette\Caching\Cache
 	 */
 	protected static function getCache()
 	{
-		return NEnvironment::getCache('Nette.Template.Cache');
+		return Environment::getCache('Nette.Template.Cache');
 	}
 
 }

@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Caching
  */
+
+namespace Nette\Caching;
+
+use Nette;
 
 
 
@@ -44,7 +47,7 @@
  *
  * @author     Jakub Kulhan
  */
-class NFileJournal extends NObject implements ICacheJournal
+class FileJournal extends Nette\Object implements ICacheJournal
 {
 	const
 		MAGIC = 0x666a3030,// "fj00"
@@ -157,7 +160,7 @@ class NFileJournal extends NObject implements ICacheJournal
 		$tries = 3;
 		do {
 			if (!$tries--) {
-				throw new InvalidStateException("Cannot open journal file '$this->file'.");
+				throw new \InvalidStateException("Cannot open journal file '$this->file'.");
 			}
 
 			if (!($this->handle = @fopen($this->file, 'rb'))) { // intentionally @
@@ -169,7 +172,7 @@ class NFileJournal extends NObject implements ICacheJournal
 
 				if ($magic !== self::MAGIC) {
 					fclose($this->handle);
-					throw new InvalidStateException("Malformed journal file '$this->file'.");
+					throw new \InvalidStateException("Malformed journal file '$this->file'.");
 				}
 
 				for ($i = 0; $i < $sectionCount; ++$i) {
@@ -193,7 +196,7 @@ class NFileJournal extends NObject implements ICacheJournal
 
 
 		if (!($this->logHandle = @fopen($logfile = $this->file . self::EXTLOG, 'a+b'))) { // intentionally @
-			throw new InvalidStateException("Cannot open logfile '$logfile' for journal.");
+			throw new \InvalidStateException("Cannot open logfile '$logfile' for journal.");
 		}
 
 		$doMergeFirst = FALSE;
@@ -202,7 +205,7 @@ class NFileJournal extends NObject implements ICacheJournal
 		if (flock($this->logHandle, LOCK_SH | LOCK_NB)) {
 			if (file_exists($logfile = $this->file . self::EXTLOGNEW)) {
 				if (($logmtime = @filemtime($this->file . self::EXTLOG)) === FALSE) {
-					throw new InvalidStateException("Cannot determine modification time of logfile '$this->file" . self::EXTLOG . "'.");
+					throw new \InvalidStateException("Cannot determine modification time of logfile '$this->file" . self::EXTLOG . "'.");
 				}
 
 				if ($logmtime < $this->mtime) {
@@ -243,7 +246,7 @@ class NFileJournal extends NObject implements ICacheJournal
 		}
 
 		if ($reopen && $openNewLog) {
-			throw new LogicException('Something bad with algorithm.');
+			throw new \LogicException('Something bad with algorithm.');
 		}
 
 		if ($doMergeFirst) {
@@ -253,18 +256,18 @@ class NFileJournal extends NObject implements ICacheJournal
 		if ($reopen) {
 			fclose($this->logHandle);
 			if (!($this->logHandle = @fopen($logfile = $this->file . self::EXTLOG, 'a+b'))) {
-				throw new InvalidStateException("Cannot open logfile '$logfile'.");
+				throw new \InvalidStateException("Cannot open logfile '$logfile'.");
 			}
 
 			if (!flock($this->logHandle, LOCK_SH)) {
-				throw new InvalidStateException('Cannot acquite shared lock on log.');
+				throw new \InvalidStateException('Cannot acquite shared lock on log.');
 			}
 		}
 
 		if ($openNewLog) {
 			fclose($this->logHandle);
 			if (!($this->logHandle = @fopen($logfile = $this->file . self::EXTLOGNEW, 'a+b'))) { // intentionally @
-				throw new InvalidStateException("Cannot open logfile '$logfile'.");
+				throw new \InvalidStateException("Cannot open logfile '$logfile'.");
 			}
 
 			$this->isLogNew = TRUE;
@@ -276,18 +279,18 @@ class NFileJournal extends NObject implements ICacheJournal
 		// empty-log Windows fix
 		if ($this->logMergeP === 0) {
 			if (!flock($this->logHandle, LOCK_EX)) {
-				throw new InvalidStateException('Cannot acquite exclusive lock on log.');
+				throw new \InvalidStateException('Cannot acquite exclusive lock on log.');
 			}
 
 			$data = serialize(array());
 			$data = pack('N', strlen($data)) . $data;
 			$written = fwrite($this->logHandle, $data);
 			if ($written === FALSE || $written !== strlen($data)) {
-				throw new InvalidStateException('Cannot write empty packet to log.');
+				throw new \InvalidStateException('Cannot write empty packet to log.');
 			}
 
 			if (!flock($this->logHandle, LOCK_SH)) {
-				throw new InvalidStateException('Cannot acquite shared lock on log.');
+				throw new \InvalidStateException('Cannot acquite shared lock on log.');
 			}
 		}
 	}
@@ -321,7 +324,7 @@ class NFileJournal extends NObject implements ICacheJournal
 			}
 		}
 
-		if (!empty($dependencies[NCache::TAGS])) {
+		if (!empty($dependencies[Cache::TAGS])) {
 			if (!isset($log[self::TAGS])) {
 				$log[self::TAGS] = array();
 			}
@@ -330,12 +333,12 @@ class NFileJournal extends NObject implements ICacheJournal
 				$log[self::TAGS][self::ADD] = array();
 			}
 
-			foreach ((array) $dependencies[NCache::TAGS] as $tag) {
+			foreach ((array) $dependencies[Cache::TAGS] as $tag) {
 				$log[self::TAGS][self::ADD][$tag] = (array) $key;
 			}
 		}
 
-		if (!empty($dependencies[NCache::PRIORITY])) {
+		if (!empty($dependencies[Cache::PRIORITY])) {
 			if (!isset($log[self::PRIORITY])) {
 				$log[self::PRIORITY] = array();
 			}
@@ -344,7 +347,7 @@ class NFileJournal extends NObject implements ICacheJournal
 				$log[self::PRIORITY][self::ADD] = array();
 			}
 
-			$log[self::PRIORITY][self::ADD][sprintf('%010u', (int) $dependencies[NCache::PRIORITY])] = (array) $key;
+			$log[self::PRIORITY][self::ADD][sprintf('%010u', (int) $dependencies[Cache::PRIORITY])] = (array) $key;
 		}
 
 		if (empty($log)) {
@@ -387,7 +390,7 @@ class NFileJournal extends NObject implements ICacheJournal
 
 		$written = fwrite($this->logHandle, $data);
 		if ($written === FALSE || $written !== strlen($data)) {
-			throw new InvalidStateException('Cannot write to log.');
+			throw new \InvalidStateException('Cannot write to log.');
 		}
 
 
@@ -660,7 +663,7 @@ class NFileJournal extends NObject implements ICacheJournal
 				}
 			} else {
 				if (!is_array($data)) {
-					throw new LogicException('Something bad with algorithm, it has to be array.');
+					throw new \LogicException('Something bad with algorithm, it has to be array.');
 				}
 
 				list($readOffset, $readLength) = $data;
@@ -717,14 +720,14 @@ class NFileJournal extends NObject implements ICacheJournal
 		}
 
 		if (!($this->logHandle = @fopen($logfile, 'a+b'))) { // intentionally @
-			throw new InvalidStateException("Cannot reopen logfile '$logfile'.");
+			throw new \InvalidStateException("Cannot reopen logfile '$logfile'.");
 		}
 
 		$this->logMerge = array();
 		$this->logMergeP = 0;
 
 		if (!($this->handle = @fopen($this->file, 'rb'))) {
-			throw new InvalidStateException("Cannot reopen file '$this->file'.");
+			throw new \InvalidStateException("Cannot reopen file '$this->file'.");
 		}
 
 		clearstatcache();
@@ -912,7 +915,7 @@ class NFileJournal extends NObject implements ICacheJournal
 	 */
 	public function clean(array $conditions)
 	{
-		if (!empty($conditions[NCache::ALL])) {
+		if (!empty($conditions[Cache::ALL])) {
 			$this->log(array(self::CLEAN => TRUE));
 			return NULL;
 
@@ -920,10 +923,10 @@ class NFileJournal extends NObject implements ICacheJournal
 			$log = array();
 			$entries = array();
 
-			if (!empty($conditions[NCache::TAGS])) {
+			if (!empty($conditions[Cache::TAGS])) {
 				$tagEntries = array();
 
-				foreach ((array) $conditions[NCache::TAGS] as $tag) {
+				foreach ((array) $conditions[Cache::TAGS] as $tag) {
 					$tagEntries = array_merge($tagEntries, $tagEntry = $this->get(self::TAGS, $tag));
 
 					if (isset($tagEntry[$tag])) {
@@ -942,8 +945,8 @@ class NFileJournal extends NObject implements ICacheJournal
 				}
 			}
 
-			if (isset($conditions[NCache::PRIORITY])) {
-				$priorityEntries = $this->getLte(self::PRIORITY, sprintf('%010u', (int) $conditions[NCache::PRIORITY]));
+			if (isset($conditions[Cache::PRIORITY])) {
+				$priorityEntries = $this->getLte(self::PRIORITY, sprintf('%010u', (int) $conditions[Cache::PRIORITY]));
 				foreach ($priorityEntries as $priorityEntry) {
 					foreach ($priorityEntry as $entry) {
 						$entries[] = $entry;

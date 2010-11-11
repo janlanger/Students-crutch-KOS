@@ -7,17 +7,20 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
 /**
- * NTools library.
+ * Tools library.
  *
  * @author     David Grudl
  */
-final class NTools
+final class Tools
 {
 	/** minute in seconds */
 	const MINUTE = 60;
@@ -37,7 +40,7 @@ final class NTools
 	/** average year in seconds */
 	const YEAR = 31557600;
 
-	/** @var resource {@link NTools::enterCriticalSection()} */
+	/** @var resource {@link Tools::enterCriticalSection()} */
 	private static $criticalSections;
 
 
@@ -47,7 +50,7 @@ final class NTools
 	 */
 	final public function __construct()
 	{
-		throw new LogicException("Cannot instantiate static class " . get_class($this));
+		throw new \LogicException("Cannot instantiate static class " . get_class($this));
 	}
 
 
@@ -59,17 +62,17 @@ final class NTools
 	 */
 	public static function createDateTime($time)
 	{
-		if ($time instanceof DateTime) {
+		if ($time instanceof \DateTime) {
 			return clone $time;
 
 		} elseif (is_numeric($time)) {
 			if ($time <= self::YEAR) {
 				$time += time();
 			}
-			return new DateTime53(date('Y-m-d H:i:s', $time));
+			return new \DateTime(date('Y-m-d H:i:s', $time));
 
 		} else { // textual or NULL
-			return new DateTime53($time);
+			return new \DateTime($time);
 		}
 	}
 
@@ -126,7 +129,7 @@ final class NTools
 		case '<>':
 			return $l != $r;
 		}
-		throw new InvalidArgumentException("Unknown operator $operator.");
+		throw new \InvalidArgumentException("Unknown operator $operator.");
 	}
 
 
@@ -139,7 +142,7 @@ final class NTools
 	public static function detectMimeType($file)
 	{
 		if (!is_file($file)) {
-			throw new FileNotFoundException("File '$file' not found.");
+			throw new \FileNotFoundException("File '$file' not found.");
 		}
 
 		$info = @getimagesize($file); // @ - files smaller than 12 bytes causes read error
@@ -169,11 +172,11 @@ final class NTools
 	public static function enterCriticalSection()
 	{
 		if (self::$criticalSections) {
-			throw new InvalidStateException('Critical section has already been entered.');
+			throw new \InvalidStateException('Critical section has already been entered.');
 		}
-		$handle = ($tmp= fopen(NETTE_DIR . '/lockfile', 'r')) ? $tmp : fopen(NETTE_DIR . '/lockfile', 'w');
+		$handle = fopen(NETTE_DIR . '/lockfile', 'r') ?: fopen(NETTE_DIR . '/lockfile', 'w');
 		if (!$handle) {
-			throw new InvalidStateException("Unable initialize critical section (missing file '" . NETTE_DIR . "/lockfile').");
+			throw new \InvalidStateException("Unable initialize critical section (missing file '" . NETTE_DIR . "/lockfile').");
 		}
 		flock(self::$criticalSections = $handle, LOCK_EX);
 	}
@@ -187,7 +190,7 @@ final class NTools
 	public static function leaveCriticalSection()
 	{
 		if (!self::$criticalSections) {
-			throw new InvalidStateException('Critical section has not been initialized.');
+			throw new \InvalidStateException('Critical section has not been initialized.');
 		}
 		fclose(self::$criticalSections);
 		self::$criticalSections = NULL;

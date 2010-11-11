@@ -7,13 +7,16 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
 /**
- * NComponent is the base class for all components.
+ * Component is the base class for all components.
  *
  * Components are objects implementing IComponent. They has parent component and own name.
  *
@@ -22,7 +25,7 @@
  * @property-read string $name
  * @property IComponentContainer $parent
  */
-abstract class NComponent extends NObject implements IComponent
+abstract class Component extends Object implements IComponent
 {
 	/** @var IComponentContainer */
 	private $parent;
@@ -57,7 +60,6 @@ abstract class NComponent extends NObject implements IComponent
 	 */
 	public function lookup($type, $need = TRUE)
 	{
-		if ($a = strrpos($type, '\\')) $type = substr($type, $a + 1); // fix namespace
 		if (!isset($this->monitors[$type])) { // not monitored or not processed yet
 			$obj = $this->parent;
 			$path = self::NAME_SEPARATOR . $this->name;
@@ -79,7 +81,7 @@ abstract class NComponent extends NObject implements IComponent
 		}
 
 		if ($need && $this->monitors[$type][0] === NULL) {
-			throw new InvalidStateException("Component '$this->name' is not attached to '$type'.");
+			throw new \InvalidStateException("Component '$this->name' is not attached to '$type'.");
 		}
 
 		return $this->monitors[$type][0];
@@ -96,7 +98,6 @@ abstract class NComponent extends NObject implements IComponent
 	 */
 	public function lookupPath($type, $need = TRUE)
 	{
-		if ($a = strrpos($type, '\\')) $type = substr($type, $a + 1); // fix namespace
 		$this->lookup($type, $need);
 		return $this->monitors[$type][2];
 	}
@@ -110,7 +111,6 @@ abstract class NComponent extends NObject implements IComponent
 	 */
 	public function monitor($type)
 	{
-		if ($a = strrpos($type, '\\')) $type = substr($type, $a + 1); // fix namespace
 		if (empty($this->monitors[$type][3])) {
 			if ($obj = $this->lookup($type, FALSE)) {
 				$this->attached($obj);
@@ -128,7 +128,6 @@ abstract class NComponent extends NObject implements IComponent
 	 */
 	public function unmonitor($type)
 	{
-		if ($a = strrpos($type, '\\')) $type = substr($type, $a + 1); // fix namespace
 		unset($this->monitors[$type]);
 	}
 
@@ -188,8 +187,8 @@ abstract class NComponent extends NObject implements IComponent
 	 * not be called by applications
 	 * @param  IComponentContainer  New parent or null if this component is being removed from a parent
 	 * @param  string
-	 * @return NComponent  provides a fluent interface
-	 * @throws InvalidStateException
+	 * @return Component  provides a fluent interface
+	 * @throws \InvalidStateException
 	 */
 	public function setParent(IComponentContainer $parent = NULL, $name = NULL)
 	{
@@ -203,7 +202,7 @@ abstract class NComponent extends NObject implements IComponent
 
 		// A component cannot be given a parent if it already has a parent.
 		if ($this->parent !== NULL && $parent !== NULL) {
-			throw new InvalidStateException("Component '$this->name' already has a parent.");
+			throw new \InvalidStateException("Component '$this->name' already has a parent.");
 		}
 
 		// remove from parent?
@@ -226,10 +225,10 @@ abstract class NComponent extends NObject implements IComponent
 
 	/**
 	 * Is called by a component when it is about to be set new parent. Descendant can
-	 * override this method to disallow a parent change by throwing an InvalidStateException
+	 * override this method to disallow a parent change by throwing an \InvalidStateException
 	 * @param  IComponentContainer
 	 * @return void
-	 * @throws InvalidStateException
+	 * @throws \InvalidStateException
 	 */
 	protected function validateParent(IComponentContainer $parent)
 	{
@@ -248,7 +247,7 @@ abstract class NComponent extends NObject implements IComponent
 	{
 		if ($this instanceof IComponentContainer) {
 			foreach ($this->getComponents() as $component) {
-				if ($component instanceof NComponent) {
+				if ($component instanceof Component) {
 					$component->refreshMonitors($depth + 1, $missing, $listeners);
 				}
 			}
@@ -304,14 +303,14 @@ abstract class NComponent extends NObject implements IComponent
 
 
 	/**
-	 * NObject cloning.
+	 * Object cloning.
 	 */
 	public function __clone()
 	{
 		if ($this->parent === NULL) {
 			return;
 
-		} elseif ($this->parent instanceof NComponentContainer) {
+		} elseif ($this->parent instanceof ComponentContainer) {
 			$this->parent = $this->parent->_isCloning();
 			if ($this->parent === NULL) { // not cloning
 				$this->refreshMonitors(0);
@@ -330,7 +329,7 @@ abstract class NComponent extends NObject implements IComponent
 	 */
 	final public function __wakeup()
 	{
-		throw new NotImplementedException;
+		throw new \NotImplementedException;
 	}
 
 }

@@ -7,8 +7,12 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Forms
  */
+
+namespace Nette\Forms;
+
+use Nette,
+	Nette\String;
 
 
 
@@ -19,7 +23,7 @@
  *
  * @property   string $emptyValue
  */
-abstract class NTextBase extends NFormControl
+abstract class TextBase extends FormControl
 {
 	/** @var string */
 	protected $emptyValue = '';
@@ -32,7 +36,7 @@ abstract class NTextBase extends NFormControl
 	/**
 	 * Sets control's value.
 	 * @param  string
-	 * @return NTextBase  provides a fluent interface
+	 * @return TextBase  provides a fluent interface
 	 */
 	public function setValue($value)
 	{
@@ -50,7 +54,7 @@ abstract class NTextBase extends NFormControl
 	{
 		$value = $this->value;
 		foreach ($this->filters as $filter) {
-			$value = (string) $filter->invoke($value);
+			$value = (string) $filter($value);
 		}
 		return $value === $this->translate($this->emptyValue) ? '' : $value;
 	}
@@ -60,7 +64,7 @@ abstract class NTextBase extends NFormControl
 	/**
 	 * Sets the special value which is treated as empty string.
 	 * @param  string
-	 * @return NTextBase  provides a fluent interface
+	 * @return TextBase  provides a fluent interface
 	 */
 	public function setEmptyValue($value)
 	{
@@ -84,7 +88,7 @@ abstract class NTextBase extends NFormControl
 	/**
 	 * Appends input string filter callback.
 	 * @param  callback
-	 * @return NTextBase  provides a fluent interface
+	 * @return TextBase  provides a fluent interface
 	 */
 	public function addFilter($filter)
 	{
@@ -101,7 +105,7 @@ abstract class NTextBase extends NFormControl
 
 
 
-	public function notifyRule(NRule $rule)
+	public function notifyRule(Rule $rule)
 	{
 		if (is_string($rule->operation) && !$rule->isNegative) {
 			if (strcasecmp($rule->operation, ':float') === 0) {
@@ -122,42 +126,42 @@ abstract class NTextBase extends NFormControl
 
 	/**
 	 * Min-length validator: has control's value minimal length?
-	 * @param  NTextBase
+	 * @param  TextBase
 	 * @param  int  length
 	 * @return bool
 	 */
-	public static function validateMinLength(NTextBase $control, $length)
+	public static function validateMinLength(TextBase $control, $length)
 	{
-		return NString::length($control->getValue()) >= $length;
+		return String::length($control->getValue()) >= $length;
 	}
 
 
 
 	/**
 	 * Max-length validator: is control's value length in limit?
-	 * @param  NTextBase
+	 * @param  TextBase
 	 * @param  int  length
 	 * @return bool
 	 */
-	public static function validateMaxLength(NTextBase $control, $length)
+	public static function validateMaxLength(TextBase $control, $length)
 	{
-		return NString::length($control->getValue()) <= $length;
+		return String::length($control->getValue()) <= $length;
 	}
 
 
 
 	/**
 	 * Length validator: is control's value length in range?
-	 * @param  NTextBase
+	 * @param  TextBase
 	 * @param  array  min and max length pair
 	 * @return bool
 	 */
-	public static function validateLength(NTextBase $control, $range)
+	public static function validateLength(TextBase $control, $range)
 	{
 		if (!is_array($range)) {
 			$range = array($range, $range);
 		}
-		$len = NString::length($control->getValue());
+		$len = String::length($control->getValue());
 		return ($range[0] === NULL || $len >= $range[0]) && ($range[1] === NULL || $len <= $range[1]);
 	}
 
@@ -165,77 +169,77 @@ abstract class NTextBase extends NFormControl
 
 	/**
 	 * Email validator: is control's value valid email address?
-	 * @param  NTextBase
+	 * @param  TextBase
 	 * @return bool
 	 */
-	public static function validateEmail(NTextBase $control)
+	public static function validateEmail(TextBase $control)
 	{
 		$atom = "[-a-z0-9!#$%&'*+/=?^_`{|}~]"; // RFC 5322 unquoted characters in local-part
 		$localPart = "(?:\"(?:[ !\\x23-\\x5B\\x5D-\\x7E]*|\\\\[ -~])+\"|$atom+(?:\\.$atom+)*)"; // quoted or unquoted
 		$chars = "a-z0-9\x80-\xFF"; // superset of IDN
 		$domain = "[$chars](?:[-$chars]{0,61}[$chars])"; // RFC 1034 one domain component
-		return (bool) NString::match($control->getValue(), "(^$localPart@(?:$domain?\\.)+[-$chars]{2,19}\\z)i");
+		return (bool) String::match($control->getValue(), "(^$localPart@(?:$domain?\\.)+[-$chars]{2,19}\\z)i");
 	}
 
 
 
 	/**
 	 * URL validator: is control's value valid URL?
-	 * @param  NTextBase
+	 * @param  TextBase
 	 * @return bool
 	 */
-	public static function validateUrl(NTextBase $control)
+	public static function validateUrl(TextBase $control)
 	{
 		$chars = "a-z0-9\x80-\xFF";
-		return (bool) NString::match($control->getValue(), "#^(?:https?://|)(?:[$chars](?:[-$chars]{0,61}[$chars])?\\.)+[-$chars]{2,19}(/\S*)?$#i");
+		return (bool) String::match($control->getValue(), "#^(?:https?://|)(?:[$chars](?:[-$chars]{0,61}[$chars])?\\.)+[-$chars]{2,19}(/\S*)?$#i");
 	}
 
 
 
 	/**
 	 * Regular expression validator: matches control's value regular expression?
-	 * @param  NTextBase
+	 * @param  TextBase
 	 * @param  string
 	 * @return bool
 	 */
-	public static function validateRegexp(NTextBase $control, $regexp)
+	public static function validateRegexp(TextBase $control, $regexp)
 	{
-		return (bool) NString::match($control->getValue(), $regexp);
+		return (bool) String::match($control->getValue(), $regexp);
 	}
 
 
 
 	/**
 	 * Integer validator: is a control's value decimal number?
-	 * @param  NTextBase
+	 * @param  TextBase
 	 * @return bool
 	 */
-	public static function validateInteger(NTextBase $control)
+	public static function validateInteger(TextBase $control)
 	{
-		return (bool) NString::match($control->getValue(), '/^-?[0-9]+$/');
+		return (bool) String::match($control->getValue(), '/^-?[0-9]+$/');
 	}
 
 
 
 	/**
 	 * Float validator: is a control's value float number?
-	 * @param  NTextBase
+	 * @param  TextBase
 	 * @return bool
 	 */
-	public static function validateFloat(NTextBase $control)
+	public static function validateFloat(TextBase $control)
 	{
-		return (bool) NString::match($control->getValue(), '/^-?[0-9]*[.,]?[0-9]+$/');
+		return (bool) String::match($control->getValue(), '/^-?[0-9]*[.,]?[0-9]+$/');
 	}
 
 
 
 	/**
 	 * Rangle validator: is a control's value number in specified range?
-	 * @param  NTextBase
+	 * @param  TextBase
 	 * @param  array  min and max value pair
 	 * @return bool
 	 */
-	public static function validateRange(NTextBase $control, $range)
+	public static function validateRange(TextBase $control, $range)
 	{
 		return ($range[0] === NULL || $control->getValue() >= $range[0]) && ($range[1] === NULL || $control->getValue() <= $range[1]);
 	}

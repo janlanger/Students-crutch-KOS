@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NTokenizer extends NObject implements IteratorAggregate
+class Tokenizer extends Object implements \IteratorAggregate
 {
 	/** regular expression for single & double quoted PHP string */
 	const RE_STRING = '\'(?:\\\\.|[^\'\\\\])*\'|"(?:\\\\.|[^"\\\\])*"';
@@ -58,7 +61,7 @@ class NTokenizer extends NObject implements IteratorAggregate
 	{
 		$this->input = $input;
 		if ($this->names) {
-			$this->tokens = NString::matchAll($input, $this->re);
+			$this->tokens = String::matchAll($input, $this->re);
 			$len = 0;
 			foreach ($this->tokens as & $match) {
 				$name = NULL;
@@ -77,9 +80,9 @@ class NTokenizer extends NObject implements IteratorAggregate
 			}
 
 		} else {
-			$this->tokens = NString::split($input, $this->re, PREG_SPLIT_NO_EMPTY);
-			if ($this->tokens && !NString::match(end($this->tokens), $this->re)) {
-				$tmp = NString::split($this->input, $this->re, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE);
+			$this->tokens = String::split($input, $this->re, PREG_SPLIT_NO_EMPTY);
+			if ($this->tokens && !String::match(end($this->tokens), $this->re)) {
+				$tmp = String::split($this->input, $this->re, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE);
 				list(, $errorOffset) = end($tmp);
 			}
 		}
@@ -88,7 +91,7 @@ class NTokenizer extends NObject implements IteratorAggregate
 			$line = $errorOffset ? substr_count($this->input, "\n", 0, $errorOffset) + 1 : 1;
 			$col = $errorOffset - strrpos(substr($this->input, 0, $errorOffset), "\n") + 1;
 			$token = str_replace("\n", '\n', substr($input, $errorOffset, 10));
-			throw new NTokenizerException("Unexpected '$token' on line $line, column $col.");
+			throw new TokenizerException("Unexpected '$token' on line $line, column $col.");
 		}
 		return $this;
 	}
@@ -97,7 +100,7 @@ class NTokenizer extends NObject implements IteratorAggregate
 
 	function getIterator()
 	{
-		return new ArrayIterator($this->tokens);
+		return new \ArrayIterator($this->tokens);
 	}
 
 
@@ -116,7 +119,7 @@ class NTokenizer extends NObject implements IteratorAggregate
 
 	public function getOffset($i)
 	{
-		$tokens = NString::split($this->input, $this->re, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE);
+		$tokens = String::split($this->input, $this->re, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_OFFSET_CAPTURE);
 		list(, $offset) = $tokens[$i];
 		return array(
 			$offset,
@@ -132,6 +135,6 @@ class NTokenizer extends NObject implements IteratorAggregate
 /**
  * The exception that indicates tokenizer error.
  */
-class NTokenizerException extends Exception
+class TokenizerException extends \Exception
 {
 }

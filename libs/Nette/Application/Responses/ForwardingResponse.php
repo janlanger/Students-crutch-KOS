@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
@@ -17,17 +20,17 @@
  *
  * @author     David Grudl
  */
-class NForwardingResponse extends NObject implements IPresenterResponse
+class ForwardingResponse extends Nette\Object implements IPresenterResponse
 {
-	/** @var NPresenterRequest */
+	/** @var PresenterRequest */
 	private $request;
 
 
 
 	/**
-	 * @param  NPresenterRequest  new request
+	 * @param  PresenterRequest  new request
 	 */
-	public function __construct(NPresenterRequest $request)
+	public function __construct(PresenterRequest $request)
 	{
 		$this->request = $request;
 	}
@@ -35,7 +38,7 @@ class NForwardingResponse extends NObject implements IPresenterResponse
 
 
 	/**
-	 * @return NPresenterRequest
+	 * @return PresenterRequest
 	 */
 	final public function getRequest()
 	{

@@ -7,37 +7,40 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
 /**
- * Routing debugger for NDebug Bar.
+ * Routing debugger for Debug Bar.
  *
  * @author     David Grudl
  */
-class NRoutingDebugger extends NDebugPanel
+class RoutingDebugger extends Nette\DebugPanel
 {
-	/** @var IRouter */
+	/** @var Nette\Application\IRouter */
 	private $router;
 
-	/** @var IHttpRequest */
+	/** @var Nette\Web\IHttpRequest */
 	private $httpRequest;
 
 	/** @var ArrayObject */
 	private $routers;
 
-	/** @var NPresenterRequest */
+	/** @var Nette\Application\PresenterRequest */
 	private $request;
 
 
 
-	public function __construct(IRouter $router, IHttpRequest $httpRequest)
+	public function __construct(IRouter $router, Nette\Web\IHttpRequest $httpRequest)
 	{
 		$this->router = $router;
 		$this->httpRequest = $httpRequest;
-		$this->routers = new ArrayObject;
+		$this->routers = new \ArrayObject;
 		parent::__construct('RoutingDebugger', array($this, 'renderTab'), array($this, 'renderPanel'));
 	}
 
@@ -50,7 +53,7 @@ class NRoutingDebugger extends NDebugPanel
 	public function renderTab()
 	{
 		$this->analyse($this->router);
-		require dirname(__FILE__) . '/templates/RoutingDebugger.tab.phtml';
+		require __DIR__ . '/templates/RoutingDebugger.tab.phtml';
 	}
 
 
@@ -61,19 +64,19 @@ class NRoutingDebugger extends NDebugPanel
 	 */
 	public function renderPanel()
 	{
-		require dirname(__FILE__) . '/templates/RoutingDebugger.panel.phtml';
+		require __DIR__ . '/templates/RoutingDebugger.panel.phtml';
 	}
 
 
 
 	/**
 	 * Analyses simple route.
-	 * @param  IRouter
+	 * @param  Nette\Application\IRouter
 	 * @return void
 	 */
 	private function analyse($router)
 	{
-		if ($router instanceof NMultiRouter) {
+		if ($router instanceof MultiRouter) {
 			foreach ($router as $subRouter) {
 				$this->analyse($subRouter);
 			}
@@ -90,8 +93,8 @@ class NRoutingDebugger extends NDebugPanel
 		$this->routers[] = array(
 			'matched' => $matched,
 			'class' => get_class($router),
-			'defaults' => $router instanceof NRoute || $router instanceof NSimpleRouter ? $router->getDefaults() : array(),
-			'mask' => $router instanceof NRoute ? $router->getMask() : NULL,
+			'defaults' => $router instanceof Route || $router instanceof SimpleRouter ? $router->getDefaults() : array(),
+			'mask' => $router instanceof Route ? $router->getMask() : NULL,
 			'request' => $request,
 		);
 	}

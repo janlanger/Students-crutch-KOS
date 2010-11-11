@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
@@ -23,7 +26,7 @@ interface IPresenterLoader
 	/**
 	 * @param  string  presenter name
 	 * @return string  class name
-	 * @throws NInvalidPresenterException
+	 * @throws InvalidPresenterException
 	 */
 	function getPresenterClass(& $name);
 

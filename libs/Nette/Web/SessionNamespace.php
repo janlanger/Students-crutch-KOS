@@ -7,17 +7,20 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Web
  */
+
+namespace Nette\Web;
+
+use Nette;
 
 
 
 /**
- * NSession namespace for NSession.
+ * Session namespace for Session.
  *
  * @author     David Grudl
  */
-final class NSessionNamespace extends NObject implements IteratorAggregate, ArrayAccess
+final class SessionNamespace extends Nette\Object implements \IteratorAggregate, \ArrayAccess
 {
 	/** @var array  session data storage */
 	private $data;
@@ -31,7 +34,7 @@ final class NSessionNamespace extends NObject implements IteratorAggregate, Arra
 
 
 	/**
-	 * Do not call directly. Use NSession::getNamespace().
+	 * Do not call directly. Use Session::getNamespace().
 	 */
 	public function __construct(& $data, & $meta)
 	{
@@ -43,14 +46,14 @@ final class NSessionNamespace extends NObject implements IteratorAggregate, Arra
 
 	/**
 	 * Returns an iterator over all namespace variables.
-	 * @return ArrayIterator
+	 * @return \ArrayIterator
 	 */
 	public function getIterator()
 	{
 		if (isset($this->data)) {
-			return new ArrayIterator($this->data);
+			return new \ArrayIterator($this->data);
 		} else {
-			return new ArrayIterator;
+			return new \ArrayIterator;
 		}
 	}
 
@@ -66,7 +69,7 @@ final class NSessionNamespace extends NObject implements IteratorAggregate, Arra
 	{
 		$this->data[$name] = $value;
 		if (is_object($value)) {
-			$this->meta[$name]['V'] = NClassReflection::from($value)->getAnnotation('serializationVersion');
+			$this->meta[$name]['V'] = Nette\Reflection\ClassReflection::from($value)->getAnnotation('serializationVersion');
 		}
 	}
 
@@ -165,7 +168,7 @@ final class NSessionNamespace extends NObject implements IteratorAggregate, Arra
 	 * Sets the expiration of the namespace or specific variables.
 	 * @param  string|int|DateTime  time, value 0 means "until the browser is closed"
 	 * @param  mixed   optional list of variables / single variable to expire
-	 * @return NSessionNamespace  provides a fluent interface
+	 * @return SessionNamespace  provides a fluent interface
 	 */
 	public function setExpiration($time, $variables = NULL)
 	{
@@ -173,7 +176,7 @@ final class NSessionNamespace extends NObject implements IteratorAggregate, Arra
 			$time = NULL;
 			$whenBrowserIsClosed = TRUE;
 		} else {
-			$time = NTools::createDateTime($time)->format('U');
+			$time = Nette\Tools::createDateTime($time)->format('U');
 			$whenBrowserIsClosed = FALSE;
 		}
 

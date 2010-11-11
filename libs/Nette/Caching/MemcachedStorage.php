@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Caching
  */
+
+namespace Nette\Caching;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NMemcachedStorage extends NObject implements ICacheStorage
+class MemcachedStorage extends Nette\Object implements ICacheStorage
 {
 	/**#@+ @internal cache structure */
 	const META_CALLBACKS = 'callbacks';
@@ -31,7 +34,7 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 	/** @var string */
 	private $prefix;
 
-	/** @var NContext */
+	/** @var Nette\Context */
 	private $context;
 
 
@@ -47,19 +50,19 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 
 
 
-	public function __construct($host = 'localhost', $port = 11211, $prefix = '', NContext $context = NULL)
+	public function __construct($host = 'localhost', $port = 11211, $prefix = '', Nette\Context $context = NULL)
 	{
 		if (!self::isAvailable()) {
-			throw new NotSupportedException("PHP extension 'memcache' is not loaded.");
+			throw new \NotSupportedException("PHP extension 'memcache' is not loaded.");
 		}
 
 		$this->prefix = $prefix;
 		$this->context = $context;
-		$this->memcache = new Memcache;
-		NDebug::tryError();
+		$this->memcache = new \Memcache;
+		Nette\Debug::tryError();
 		$this->memcache->connect($host, $port);
-		if (NDebug::catchError($msg)) {
-			throw new InvalidStateException($msg);
+		if (Nette\Debug::catchError($msg)) {
+			throw new \InvalidStateException($msg);
 		}
 	}
 
@@ -84,7 +87,7 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 		// )
 
 		// verify dependencies
-		if (!empty($meta[self::META_CALLBACKS]) && !NCache::checkCallbacks($meta[self::META_CALLBACKS])) {
+		if (!empty($meta[self::META_CALLBACKS]) && !Cache::checkCallbacks($meta[self::META_CALLBACKS])) {
 			$this->memcache->delete($key, 0);
 			return NULL;
 		}
@@ -107,8 +110,8 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 	 */
 	public function write($key, $data, array $dp)
 	{
-		if (isset($dp[NCache::ITEMS])) {
-			throw new NotSupportedException('Dependent items are not supported by MemcachedStorage.');
+		if (isset($dp[Cache::ITEMS])) {
+			throw new \NotSupportedException('Dependent items are not supported by MemcachedStorage.');
 		}
 
 		$meta = array(
@@ -116,20 +119,20 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 		);
 
 		$expire = 0;
-		if (isset($dp[NCache::EXPIRE])) {
-			$expire = (int) $dp[NCache::EXPIRE];
-			if (!empty($dp[NCache::SLIDING])) {
+		if (isset($dp[Cache::EXPIRE])) {
+			$expire = (int) $dp[Cache::EXPIRE];
+			if (!empty($dp[Cache::SLIDING])) {
 				$meta[self::META_DELTA] = $expire; // sliding time
 			}
 		}
 
-		if (isset($dp[NCache::CALLBACKS])) {
-			$meta[self::META_CALLBACKS] = $dp[NCache::CALLBACKS];
+		if (isset($dp[Cache::CALLBACKS])) {
+			$meta[self::META_CALLBACKS] = $dp[Cache::CALLBACKS];
 		}
 
-		if (isset($dp[NCache::TAGS]) || isset($dp[NCache::PRIORITY])) {
+		if (isset($dp[Cache::TAGS]) || isset($dp[Cache::PRIORITY])) {
 			if (!$this->context) {
-				throw new InvalidStateException('CacheJournal has not been provided.');
+				throw new \InvalidStateException('CacheJournal has not been provided.');
 			}
 			$this->getJournal()->write($this->prefix . $key, $dp);
 		}
@@ -158,7 +161,7 @@ class NMemcachedStorage extends NObject implements ICacheStorage
 	 */
 	public function clean(array $conds)
 	{
-		if (!empty($conds[NCache::ALL])) {
+		if (!empty($conds[Cache::ALL])) {
 			$this->memcache->flush();
 
 		} elseif ($this->context) {

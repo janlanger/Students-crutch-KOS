@@ -7,13 +7,16 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
 /**
- * NObject is the ultimate ancestor of all instantiable classes.
+ * Nette\Object is the ultimate ancestor of all instantiable classes.
  *
  * It defines some handful methods and enhances object core of PHP:
  *   - access to undeclared members throws exceptions
@@ -43,7 +46,7 @@
  * Adding method to class (i.e. to all instances) works similar to JavaScript
  * prototype property. The syntax for adding a new method is:
  * <code>
- * MyClass::extensionMethod('newMethod', create_function('MyClass $obj, $arg, ...', ' ... '));
+ * MyClass::extensionMethod('newMethod', function(MyClass $obj, $arg, ...) { ... });
  * $obj = new MyClass;
  * $obj->newMethod($x);
  * </code>
@@ -51,18 +54,18 @@
  * @author     David Grudl
  *
  * @property-read string $class
- * @property-read NClassReflection $reflection
+ * @property-read Nette\Reflection\ClassReflection $reflection
  */
-abstract class NObject
+abstract class Object
 {
 
 	/**
 	 * Access to reflection.
-	 * @return NClassReflection
+	 * @return Nette\Reflection\ClassReflection
 	 */
-	public function getReflection()
+	public static function getReflection()
 	{
-		return new NClassReflection($this);
+		return new Nette\Reflection\ClassReflection(get_called_class());
 	}
 
 
@@ -72,11 +75,11 @@ abstract class NObject
 	 * @param  string  method name
 	 * @param  array   arguments
 	 * @return mixed
-	 * @throws MemberAccessException
+	 * @throws \MemberAccessException
 	 */
 	public function __call($name, $args)
 	{
-		return NObjectMixin::call($this, $name, $args);
+		return ObjectMixin::call($this, $name, $args);
 	}
 
 
@@ -86,12 +89,12 @@ abstract class NObject
 	 * @param  string  method name (in lower case!)
 	 * @param  array   arguments
 	 * @return mixed
-	 * @throws MemberAccessException
+	 * @throws \MemberAccessException
 	 */
 	public static function __callStatic($name, $args)
 	{
 		$class = get_called_class();
-		throw new MemberAccessException("Call to undefined static method $class::$name().");
+		throw new \MemberAccessException("Call to undefined static method $class::$name().");
 	}
 
 
@@ -109,7 +112,7 @@ abstract class NObject
 		} else {
 			list($class, $name) = explode('::', $name);
 		}
-		$class = new NClassReflection($class);
+		$class = new Nette\Reflection\ClassReflection($class);
 		if ($callback === NULL) {
 			return $class->getExtensionMethod($name);
 		} else {
@@ -123,11 +126,11 @@ abstract class NObject
 	 * Returns property value. Do not call directly.
 	 * @param  string  property name
 	 * @return mixed   property value
-	 * @throws MemberAccessException if the property is not defined.
+	 * @throws \MemberAccessException if the property is not defined.
 	 */
 	public function &__get($name)
 	{
-		return NObjectMixin::get($this, $name);
+		return ObjectMixin::get($this, $name);
 	}
 
 
@@ -137,11 +140,11 @@ abstract class NObject
 	 * @param  string  property name
 	 * @param  mixed   property value
 	 * @return void
-	 * @throws MemberAccessException if the property is not defined or is read-only
+	 * @throws \MemberAccessException if the property is not defined or is read-only
 	 */
 	public function __set($name, $value)
 	{
-		return NObjectMixin::set($this, $name, $value);
+		return ObjectMixin::set($this, $name, $value);
 	}
 
 
@@ -153,7 +156,7 @@ abstract class NObject
 	 */
 	public function __isset($name)
 	{
-		return NObjectMixin::has($this, $name);
+		return ObjectMixin::has($this, $name);
 	}
 
 
@@ -162,11 +165,11 @@ abstract class NObject
 	 * Access to undeclared property.
 	 * @param  string  property name
 	 * @return void
-	 * @throws MemberAccessException
+	 * @throws \MemberAccessException
 	 */
 	public function __unset($name)
 	{
-		throw new MemberAccessException("Cannot unset the property {$this->reflection->name}::\$$name.");
+		throw new \MemberAccessException("Cannot unset the property {$this->reflection->name}::\$$name.");
 	}
 
 }

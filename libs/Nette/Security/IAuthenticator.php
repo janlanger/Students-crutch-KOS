@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Security
  */
+
+namespace Nette\Security;
+
+use Nette;
 
 
 
@@ -33,10 +36,10 @@ interface IAuthenticator
 
 	/**
 	 * Performs an authentication against e.g. database.
-	 * and returns IIdentity on success or throws NAuthenticationException
+	 * and returns IIdentity on success or throws AuthenticationException
 	 * @param  array
 	 * @return IIdentity
-	 * @throws NAuthenticationException
+	 * @throws AuthenticationException
 	 */
 	function authenticate(array $credentials);
 

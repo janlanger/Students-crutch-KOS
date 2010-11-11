@@ -7,13 +7,16 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
 /**
- * NPresenter request. Immutable object.
+ * Presenter request. Immutable object.
  *
  * @author     David Grudl
  *
@@ -22,7 +25,7 @@
  * @property   array $post
  * @property   array $files
  */
-final class NPresenterRequest extends NFreezableObject
+final class PresenterRequest extends Nette\FreezableObject
 {
 	/** method */
 	const FORWARD = 'FORWARD';
@@ -75,7 +78,7 @@ final class NPresenterRequest extends NFreezableObject
 	/**
 	 * Sets the presenter name.
 	 * @param  string
-	 * @return NPresenterRequest  provides a fluent interface
+	 * @return PresenterRequest  provides a fluent interface
 	 */
 	public function setPresenterName($name)
 	{
@@ -100,7 +103,7 @@ final class NPresenterRequest extends NFreezableObject
 	/**
 	 * Sets variables provided to the presenter.
 	 * @param  array
-	 * @return NPresenterRequest  provides a fluent interface
+	 * @return PresenterRequest  provides a fluent interface
 	 */
 	public function setParams(array $params)
 	{
@@ -125,7 +128,7 @@ final class NPresenterRequest extends NFreezableObject
 	/**
 	 * Sets variables provided to the presenter via POST.
 	 * @param  array
-	 * @return NPresenterRequest  provides a fluent interface
+	 * @return PresenterRequest  provides a fluent interface
 	 */
 	public function setPost(array $params)
 	{
@@ -150,7 +153,7 @@ final class NPresenterRequest extends NFreezableObject
 	/**
 	 * Sets all uploaded files.
 	 * @param  array
-	 * @return NPresenterRequest  provides a fluent interface
+	 * @return PresenterRequest  provides a fluent interface
 	 */
 	public function setFiles(array $files)
 	{
@@ -175,7 +178,7 @@ final class NPresenterRequest extends NFreezableObject
 	/**
 	 * Sets the method.
 	 * @param  string
-	 * @return NPresenterRequest  provides a fluent interface
+	 * @return PresenterRequest  provides a fluent interface
 	 */
 	public function setMethod($method)
 	{
@@ -223,7 +226,7 @@ final class NPresenterRequest extends NFreezableObject
 	 * Sets the flag.
 	 * @param  string
 	 * @param  bool
-	 * @return NPresenterRequest  provides a fluent interface
+	 * @return PresenterRequest  provides a fluent interface
 	 */
 	public function setFlag($flag, $value = TRUE)
 	{

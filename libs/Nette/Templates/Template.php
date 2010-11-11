@@ -7,22 +7,25 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Templates
  */
+
+namespace Nette\Templates;
+
+use Nette;
 
 
 
 /**
- * NTemplate.
+ * Template.
  *
  * @author     David Grudl
  */
-abstract class NTemplate extends NObject implements ITemplate
+abstract class Template extends Nette\Object implements ITemplate
 {
 	/** @var bool */
 	public $warnOnUndefined = TRUE;
 
-	/** @var array of function(NTemplate $sender); Occurs before a template is compiled - implement to customize the filters */
+	/** @var array of function(Template $sender); Occurs before a template is compiled - implement to customize the filters */
 	public $onPrepareFilters = array();
 
 	/** @var array */
@@ -48,7 +51,7 @@ abstract class NTemplate extends NObject implements ITemplate
 	{
 		$callback = callback($callback);
 		if (in_array($callback, $this->filters)) {
-			throw new InvalidStateException("Filter '$callback' was registered twice.");
+			throw new \InvalidStateException("Filter '$callback' was registered twice.");
 		}
 		$this->filters[] = $callback;
 	}
@@ -89,7 +92,7 @@ abstract class NTemplate extends NObject implements ITemplate
 	public function save($file)
 	{
 		if (file_put_contents($file, $this->__toString(TRUE)) === FALSE) {
-			throw new IOException("Unable to save file '$file'.");
+			throw new \IOException("Unable to save file '$file'.");
 		}
 	}
 
@@ -107,12 +110,12 @@ abstract class NTemplate extends NObject implements ITemplate
 			$this->render();
 			return ob_get_clean();
 
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 			ob_end_clean();
 			if (func_num_args() && func_get_arg(0)) {
 				throw $e;
 			} else {
-				NDebug::toStringException($e);
+				Nette\Debug::toStringException($e);
 			}
 		}
 	}
@@ -134,11 +137,11 @@ abstract class NTemplate extends NObject implements ITemplate
 		try {
 			foreach ($this->filters as $filter) {
 				$content = self::extractPhp($content, $blocks);
-				$content = $filter->invoke($content);
+				$content = $filter($content);
 				$content = strtr($content, $blocks); // put PHP code back
 			}
-		} catch (Exception $e) {
-			throw new InvalidStateException("Filter $filter: " . $e->getMessage() . ($label ? " (in $label)" : ''), 0, $e);
+		} catch (\Exception $e) {
+			throw new \InvalidStateException("Filter $filter: " . $e->getMessage() . ($label ? " (in $label)" : ''), 0, $e);
 		}
 
 		if ($label) {
@@ -201,7 +204,7 @@ abstract class NTemplate extends NObject implements ITemplate
 		$lname = strtolower($name);
 		if (!isset($this->helpers[$lname])) {
 			foreach ($this->helperLoaders as $loader) {
-				$helper = $loader->invoke($lname);
+				$helper = $loader($lname);
 				if ($helper) {
 					$this->registerHelper($lname, $helper);
 					return $this->helpers[$lname]->invokeArgs($args);
@@ -217,10 +220,10 @@ abstract class NTemplate extends NObject implements ITemplate
 
 	/**
 	 * Sets translate adapter.
-	 * @param  ITranslator
-	 * @return NTemplate  provides a fluent interface
+	 * @param  Nette\ITranslator
+	 * @return Template  provides a fluent interface
 	 */
-	public function setTranslator(ITranslator $translator = NULL)
+	public function setTranslator(Nette\ITranslator $translator = NULL)
 	{
 		$this->registerHelper('translate', $translator === NULL ? NULL : array($translator, 'translate'));
 		return $this;
@@ -241,7 +244,7 @@ abstract class NTemplate extends NObject implements ITemplate
 	public function add($name, $value)
 	{
 		if (array_key_exists($name, $this->params)) {
-			throw new InvalidStateException("The variable '$name' already exists.");
+			throw new \InvalidStateException("The variable '$name' already exists.");
 		}
 
 		$this->params[$name] = $value;
@@ -252,7 +255,7 @@ abstract class NTemplate extends NObject implements ITemplate
 	/**
 	 * Sets all parameters.
 	 * @param  array
-	 * @return NTemplate  provides a fluent interface
+	 * @return Template  provides a fluent interface
 	 */
 	public function setParams(array $params)
 	{
@@ -375,7 +378,7 @@ abstract class NTemplate extends NObject implements ITemplate
 	{
 		$res = $php = '';
 		$lastChar = ';';
-		$tokens = new ArrayIterator(token_get_all($source));
+		$tokens = new \ArrayIterator(token_get_all($source));
 		foreach ($tokens as $key => $token) {
 			if (is_array($token)) {
 				if ($token[0] === T_INLINE_HTML) {

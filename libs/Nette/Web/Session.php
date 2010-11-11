@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Web
  */
+
+namespace Nette\Web;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NSession extends NObject
+class Session extends Nette\Object
 {
 	/** Default file lifetime is 3 hours */
 	const DEFAULT_FILE_LIFETIME = 10800;
@@ -32,16 +35,16 @@ class NSession extends NObject
 	private $options = array(
 		// security
 		'referer_check' => '',    // must be disabled because PHP implementation is invalid
-		'use_cookies' => 1,       // must be enabled to prevent NSession Hijacking and Fixation
-		'use_only_cookies' => 1,  // must be enabled to prevent NSession Fixation
-		'use_trans_sid' => 0,     // must be disabled to prevent NSession Hijacking and Fixation
+		'use_cookies' => 1,       // must be enabled to prevent Session Hijacking and Fixation
+		'use_only_cookies' => 1,  // must be enabled to prevent Session Fixation
+		'use_trans_sid' => 0,     // must be disabled to prevent Session Hijacking and Fixation
 
 		// cookies
 		'cookie_lifetime' => 0,   // until the browser is closed
 		'cookie_path' => '/',     // cookie is available within the entire domain
 		'cookie_domain' => '',    // cookie is available on current subdomain only
 		'cookie_secure' => FALSE, // cookie is available on HTTP & HTTPS
-		'cookie_httponly' => TRUE,// must be enabled to prevent NSession Hijacking
+		'cookie_httponly' => TRUE,// must be enabled to prevent Session Hijacking
 
 		// other
 		'gc_maxlifetime' => self::DEFAULT_FILE_LIFETIME,// 3 hours
@@ -55,7 +58,7 @@ class NSession extends NObject
 
 	/**
 	 * Starts and initializes session data.
-	 * @throws InvalidStateException
+	 * @throws \InvalidStateException
 	 * @return void
 	 */
 	public function start()
@@ -64,22 +67,22 @@ class NSession extends NObject
 			return;
 
 		} elseif (self::$started === NULL && defined('SID')) {
-			throw new InvalidStateException('A session had already been started by session.auto-start or session_start().');
+			throw new \InvalidStateException('A session had already been started by session.auto-start or session_start().');
 		}
 
 
 		// start session
 		try {
 			$this->configure($this->options);
-		} catch (NotSupportedException $e) {
+		} catch (\NotSupportedException $e) {
 			// ignore?
 		}
 
-		NDebug::tryError();
+		Nette\Debug::tryError();
 		session_start();
-		if (NDebug::catchError($msg)) {
+		if (Nette\Debug::catchError($msg)) {
 			@session_write_close(); // this is needed
-			throw new InvalidStateException($msg);
+			throw new \InvalidStateException($msg);
 		}
 
 		self::$started = TRUE;
@@ -124,7 +127,7 @@ class NSession extends NObject
 					foreach ($metadata as $variable => $value) {
 						if ((!empty($value['B']) && $browserClosed) || (!empty($value['T']) && $now > $value['T']) // whenBrowserIsClosed || Time
 							|| ($variable !== '' && is_object($nf['DATA'][$namespace][$variable]) && (isset($value['V']) ? $value['V'] : NULL) // Version
-								!== NClassReflection::from($nf['DATA'][$namespace][$variable])->getAnnotation('serializationVersion'))) {
+								!== Nette\Reflection\ClassReflection::from($nf['DATA'][$namespace][$variable])->getAnnotation('serializationVersion'))) {
 
 							if ($variable === '') { // expire whole namespace
 								unset($nf['META'][$namespace], $nf['DATA'][$namespace]);
@@ -175,7 +178,7 @@ class NSession extends NObject
 	public function destroy()
 	{
 		if (!self::$started) {
-			throw new InvalidStateException('Session is not started.');
+			throw new \InvalidStateException('Session is not started.');
 		}
 
 		session_destroy();
@@ -202,14 +205,14 @@ class NSession extends NObject
 
 	/**
 	 * Regenerates the session ID.
-	 * @throws InvalidStateException
+	 * @throws \InvalidStateException
 	 * @return void
 	 */
 	public function regenerateId()
 	{
 		if (self::$started) {
 			if (headers_sent($file, $line)) {
-				throw new InvalidStateException("Cannot regenerate session ID after HTTP headers have been sent" . ($file ? " (output started at $file:$line)." : "."));
+				throw new \InvalidStateException("Cannot regenerate session ID after HTTP headers have been sent" . ($file ? " (output started at $file:$line)." : "."));
 			}
 			session_regenerate_id(TRUE);
 
@@ -234,12 +237,12 @@ class NSession extends NObject
 	/**
 	 * Sets the session name to a specified one.
 	 * @param  string
-	 * @return NSession  provides a fluent interface
+	 * @return Session  provides a fluent interface
 	 */
 	public function setName($name)
 	{
 		if (!is_string($name) || !preg_match('#[^0-9.][^.]*$#A', $name)) {
-			throw new InvalidArgumentException('Session name must be a string and cannot contain dot.');
+			throw new \InvalidArgumentException('Session name must be a string and cannot contain dot.');
 		}
 
 		session_name($name);
@@ -269,13 +272,13 @@ class NSession extends NObject
 	 * Returns specified session namespace.
 	 * @param  string
 	 * @param  string
-	 * @return NSessionNamespace
-	 * @throws InvalidArgumentException
+	 * @return SessionNamespace
+	 * @throws \InvalidArgumentException
 	 */
-	public function getNamespace($namespace, $class = 'NSessionNamespace')
+	public function getNamespace($namespace, $class = 'Nette\Web\SessionNamespace')
 	{
 		if (!is_string($namespace) || $namespace === '') {
-			throw new InvalidArgumentException('Session namespace must be a non-empty string.');
+			throw new \InvalidArgumentException('Session namespace must be a non-empty string.');
 		}
 
 		if (!self::$started) {
@@ -305,7 +308,7 @@ class NSession extends NObject
 
 	/**
 	 * Iteration over all namespaces.
-	 * @return ArrayIterator
+	 * @return \ArrayIterator
 	 */
 	public function getIterator()
 	{
@@ -314,10 +317,10 @@ class NSession extends NObject
 		}
 
 		if (isset($_SESSION['__NF']['DATA'])) {
-			return new ArrayIterator(array_keys($_SESSION['__NF']['DATA']));
+			return new \ArrayIterator(array_keys($_SESSION['__NF']['DATA']));
 
 		} else {
-			return new ArrayIterator;
+			return new \ArrayIterator;
 		}
 	}
 
@@ -364,9 +367,9 @@ class NSession extends NObject
 	/**
 	 * Sets session options.
 	 * @param  array
-	 * @return NSession  provides a fluent interface
-	 * @throws NotSupportedException
-	 * @throws InvalidStateException
+	 * @return Session  provides a fluent interface
+	 * @throws \NotSupportedException
+	 * @throws \InvalidStateException
 	 */
 	public function setOptions(array $options)
 	{
@@ -409,7 +412,7 @@ class NSession extends NObject
 
 			} elseif (isset($special[$key])) {
 				if (self::$started) {
-					throw new InvalidStateException("Unable to set '$key' when session has been started.");
+					throw new \InvalidStateException("Unable to set '$key' when session has been started.");
 				}
 				$key = "session_$key";
 				$key($value);
@@ -422,12 +425,12 @@ class NSession extends NObject
 
 			} elseif (!function_exists('ini_set')) {
 				if (ini_get($key) != $value) { // intentionally ==
-					throw new NotSupportedException('Required function ini_set() is disabled.');
+					throw new \NotSupportedException('Required function ini_set() is disabled.');
 				}
 
 			} else {
 				if (self::$started) {
-					throw new InvalidStateException("Unable to set '$key' when session has been started.");
+					throw new \InvalidStateException("Unable to set '$key' when session has been started.");
 				}
 				ini_set("session.$key", $value);
 			}
@@ -446,7 +449,7 @@ class NSession extends NObject
 	/**
 	 * Sets the amount of time allowed between requests before the session will be terminated.
 	 * @param  string|int|DateTime  time, value 0 means "until the browser is closed"
-	 * @return NSession  provides a fluent interface
+	 * @return Session  provides a fluent interface
 	 */
 	public function setExpiration($time)
 	{
@@ -457,7 +460,7 @@ class NSession extends NObject
 			));
 
 		} else {
-			$time = NTools::createDateTime($time)->format('U');
+			$time = Nette\Tools::createDateTime($time)->format('U');
 			return $this->setOptions(array(
 				'gc_maxlifetime' => $time,
 				'cookie_lifetime' => $time,
@@ -472,7 +475,7 @@ class NSession extends NObject
 	 * @param  string  path
 	 * @param  string  domain
 	 * @param  bool    secure
-	 * @return NSession  provides a fluent interface
+	 * @return Session  provides a fluent interface
 	 */
 	public function setCookieParams($path, $domain = NULL, $secure = NULL)
 	{
@@ -498,7 +501,7 @@ class NSession extends NObject
 
 	/**
 	 * Sets path of the directory used to save session data.
-	 * @return NSession  provides a fluent interface
+	 * @return Session  provides a fluent interface
 	 */
 	public function setSavePath($path)
 	{
@@ -517,7 +520,7 @@ class NSession extends NObject
 	{
 		$cookie = $this->getCookieParams();
 		$this->getHttpResponse()->setCookie(session_name(), session_id(), $cookie['lifetime'], $cookie['path'], $cookie['domain'], $cookie['secure'], $cookie['httponly']);
-		$this->getHttpResponse()->setCookie('nette-browser', $_SESSION['__NF']['B'], NHttpResponse::BROWSER, $cookie['path'], $cookie['domain'], $cookie['secure'], $cookie['httponly']);
+		$this->getHttpResponse()->setCookie('nette-browser', $_SESSION['__NF']['B'], HttpResponse::BROWSER, $cookie['path'], $cookie['domain'], $cookie['secure'], $cookie['httponly']);
 	}
 
 
@@ -527,21 +530,21 @@ class NSession extends NObject
 
 
 	/**
-	 * @return IHttpRequest
+	 * @return Nette\Web\IHttpRequest
 	 */
 	protected function getHttpRequest()
 	{
-		return NEnvironment::getHttpRequest();
+		return Nette\Environment::getHttpRequest();
 	}
 
 
 
 	/**
-	 * @return IHttpResponse
+	 * @return Nette\Web\IHttpResponse
 	 */
 	protected function getHttpResponse()
 	{
-		return NEnvironment::getHttpResponse();
+		return Nette\Environment::getHttpResponse();
 	}
 
 }

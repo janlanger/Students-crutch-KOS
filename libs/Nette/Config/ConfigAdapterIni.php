@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Config
  */
+
+namespace Nette\Config;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-final class NConfigAdapterIni implements IConfigAdapter
+final class ConfigAdapterIni implements IConfigAdapter
 {
 
 	/** @var string  key nesting separator (key1> key2> key3) */
@@ -36,7 +39,7 @@ final class NConfigAdapterIni implements IConfigAdapter
 	 */
 	final public function __construct()
 	{
-		throw new LogicException("Cannot instantiate static class " . get_class($this));
+		throw new \LogicException("Cannot instantiate static class " . get_class($this));
 	}
 
 
@@ -46,18 +49,18 @@ final class NConfigAdapterIni implements IConfigAdapter
 	 * @param  string  file name
 	 * @param  string  section to load
 	 * @return array
-	 * @throws InvalidStateException
+	 * @throws \InvalidStateException
 	 */
 	public static function load($file, $section = NULL)
 	{
 		if (!is_file($file) || !is_readable($file)) {
-			throw new FileNotFoundException("File '$file' is missing or is not readable.");
+			throw new \FileNotFoundException("File '$file' is missing or is not readable.");
 		}
 
-		NDebug::tryError();
+		Nette\Debug::tryError();
 		$ini = parse_ini_file($file, TRUE);
-		if (NDebug::catchError($msg)) {
-			throw new Exception($msg);
+		if (Nette\Debug::catchError($msg)) {
+			throw new \Exception($msg);
 		}
 
 		$separator = trim(self::$sectionSeparator);
@@ -77,7 +80,7 @@ final class NConfigAdapterIni implements IConfigAdapter
 							if (!isset($cursor[$part]) || is_array($cursor[$part])) {
 								$cursor = & $cursor[$part];
 							} else {
-								throw new InvalidStateException("Invalid key '$key' in section [$secName] in '$file'.");
+								throw new \InvalidStateException("Invalid key '$key' in section [$secName] in '$file'.");
 							}
 						}
 						$cursor = $val;
@@ -94,15 +97,15 @@ final class NConfigAdapterIni implements IConfigAdapter
 						if (isset($cursor[$part]) && is_array($cursor[$part])) {
 							$cursor = & $cursor[$part];
 						} else {
-							throw new InvalidStateException("Missing parent section [$parent] in '$file'.");
+							throw new \InvalidStateException("Missing parent section [$parent] in '$file'.");
 						}
 					}
-					$secData = NArrayTools::mergeTree($secData, $cursor);
+					$secData = Nette\ArrayTools::mergeTree($secData, $cursor);
 				}
 
 				$secName = trim($parts[0]);
 				if ($secName === '') {
-					throw new InvalidStateException("Invalid empty section name in '$file'.");
+					throw new \InvalidStateException("Invalid empty section name in '$file'.");
 				}
 			}
 
@@ -112,7 +115,7 @@ final class NConfigAdapterIni implements IConfigAdapter
 					if (!isset($cursor[$part]) || is_array($cursor[$part])) {
 						$cursor = & $cursor[$part];
 					} else {
-						throw new InvalidStateException("Invalid section [$secName] in '$file'.");
+						throw new \InvalidStateException("Invalid section [$secName] in '$file'.");
 					}
 				}
 			} else {
@@ -120,7 +123,7 @@ final class NConfigAdapterIni implements IConfigAdapter
 			}
 
 			if (is_array($secData) && is_array($cursor)) {
-				$secData = NArrayTools::mergeTree($secData, $cursor);
+				$secData = Nette\ArrayTools::mergeTree($secData, $cursor);
 			}
 
 			$cursor = $secData;
@@ -130,7 +133,7 @@ final class NConfigAdapterIni implements IConfigAdapter
 			return $data;
 
 		} elseif (!isset($data[$section]) || !is_array($data[$section])) {
-			throw new InvalidStateException("There is not section [$section] in '$file'.");
+			throw new \InvalidStateException("There is not section [$section] in '$file'.");
 
 		} else {
 			return $data[$section];
@@ -141,7 +144,7 @@ final class NConfigAdapterIni implements IConfigAdapter
 
 	/**
 	 * Write INI file.
-	 * @param  NConfig to save
+	 * @param  Config to save
 	 * @param  string  file
 	 * @param  string  section name
 	 * @return void
@@ -154,8 +157,8 @@ final class NConfigAdapterIni implements IConfigAdapter
 
 		if ($section === NULL) {
 			foreach ($config as $secName => $secData) {
-				if (!(is_array($secData) || $secData instanceof Traversable)) {
-					throw new InvalidStateException("Invalid section '$section'.");
+				if (!(is_array($secData) || $secData instanceof \Traversable)) {
+					throw new \InvalidStateException("Invalid section '$section'.");
 				}
 
 				$output[] = "[$secName]";
@@ -170,7 +173,7 @@ final class NConfigAdapterIni implements IConfigAdapter
 		}
 
 		if (!file_put_contents($file, implode(PHP_EOL, $output))) {
-			throw new IOException("Cannot write file '$file'.");
+			throw new \IOException("Cannot write file '$file'.");
 		}
 	}
 
@@ -178,7 +181,7 @@ final class NConfigAdapterIni implements IConfigAdapter
 
 	/**
 	 * Recursive builds INI list.
-	 * @param  array|Traversable
+	 * @param  array|\Traversable
 	 * @param  array
 	 * @param  string
 	 * @return void
@@ -186,7 +189,7 @@ final class NConfigAdapterIni implements IConfigAdapter
 	private static function build($input, & $output, $prefix)
 	{
 		foreach ($input as $key => $val) {
-			if (is_array($val) || $val instanceof Traversable) {
+			if (is_array($val) || $val instanceof \Traversable) {
 				self::build($val, $output, $prefix . $key . self::$keySeparator);
 
 			} elseif (is_bool($val)) {
@@ -199,7 +202,7 @@ final class NConfigAdapterIni implements IConfigAdapter
 				$output[] = "$prefix$key = \"$val\"";
 
 			} else {
-				throw new InvalidArgumentException("The '$prefix$key' item must be scalar or array, " . gettype($val) ." given.");
+				throw new \InvalidArgumentException("The '$prefix$key' item must be scalar or array, " . gettype($val) ." given.");
 			}
 		}
 	}

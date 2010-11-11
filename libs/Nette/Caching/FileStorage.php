@@ -7,17 +7,20 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Caching
  */
+
+namespace Nette\Caching;
+
+use Nette;
 
 
 
 /**
- * NCache file storage.
+ * Cache file storage.
  *
  * @author     David Grudl
  */
-class NFileStorage extends NObject implements ICacheStorage
+class FileStorage extends Nette\Object implements ICacheStorage
 {
 	/**
 	 * Atomic thread safe logic:
@@ -59,19 +62,19 @@ class NFileStorage extends NObject implements ICacheStorage
 	/** @var bool */
 	private $useDirs;
 
-	/** @var NContext */
+	/** @var Nette\Context */
 	private $context;
 
 
 
-	public function __construct($dir, NContext $context = NULL)
+	public function __construct($dir, Nette\Context $context = NULL)
 	{
 		if (self::$useDirectories === NULL) {
 			// checks whether directory is writable
 			$uniq = uniqid('_', TRUE);
 			umask(0000);
 			if (!@mkdir("$dir/$uniq", 0777)) { // @ - is escalated to exception
-				throw new InvalidStateException("Unable to write to directory '$dir'. Make this directory writable.");
+				throw new \InvalidStateException("Unable to write to directory '$dir'. Make this directory writable.");
 			}
 
 			// tests subdirectory mode
@@ -129,7 +132,7 @@ class NFileStorage extends NObject implements ICacheStorage
 				break;
 			}
 
-			if (!empty($meta[self::META_CALLBACKS]) && !NCache::checkCallbacks($meta[self::META_CALLBACKS])) {
+			if (!empty($meta[self::META_CALLBACKS]) && !Cache::checkCallbacks($meta[self::META_CALLBACKS])) {
 				break;
 			}
 
@@ -163,16 +166,16 @@ class NFileStorage extends NObject implements ICacheStorage
 			self::META_TIME => microtime(),
 		);
 
-		if (isset($dp[NCache::EXPIRE])) {
-			if (empty($dp[NCache::SLIDING])) {
-				$meta[self::META_EXPIRE] = $dp[NCache::EXPIRE] + time(); // absolute time
+		if (isset($dp[Cache::EXPIRE])) {
+			if (empty($dp[Cache::SLIDING])) {
+				$meta[self::META_EXPIRE] = $dp[Cache::EXPIRE] + time(); // absolute time
 			} else {
-				$meta[self::META_DELTA] = (int) $dp[NCache::EXPIRE]; // sliding time
+				$meta[self::META_DELTA] = (int) $dp[Cache::EXPIRE]; // sliding time
 			}
 		}
 
-		if (isset($dp[NCache::ITEMS])) {
-			foreach ((array) $dp[NCache::ITEMS] as $item) {
+		if (isset($dp[Cache::ITEMS])) {
+			foreach ((array) $dp[Cache::ITEMS] as $item) {
 				$depFile = $this->getCacheFile($item);
 				$m = $this->readMeta($depFile, LOCK_SH);
 				$meta[self::META_ITEMS][$depFile] = $m[self::META_TIME];
@@ -180,8 +183,8 @@ class NFileStorage extends NObject implements ICacheStorage
 			}
 		}
 
-		if (isset($dp[NCache::CALLBACKS])) {
-			$meta[self::META_CALLBACKS] = $dp[NCache::CALLBACKS];
+		if (isset($dp[Cache::CALLBACKS])) {
+			$meta[self::META_CALLBACKS] = $dp[Cache::CALLBACKS];
 		}
 
 		$cacheFile = $this->getCacheFile($key);
@@ -199,9 +202,9 @@ class NFileStorage extends NObject implements ICacheStorage
 			}
 		}
 
-		if (isset($dp[NCache::TAGS]) || isset($dp[NCache::PRIORITY])) {
+		if (isset($dp[Cache::TAGS]) || isset($dp[Cache::PRIORITY])) {
 			if (!$this->context) {
-				throw new InvalidStateException('CacheJournal has not been provided.');
+				throw new \InvalidStateException('CacheJournal has not been provided.');
 			}
 			$this->getJournal()->write($cacheFile, $dp);
 		}
@@ -261,13 +264,13 @@ class NFileStorage extends NObject implements ICacheStorage
 	 */
 	public function clean(array $conds)
 	{
-		$all = !empty($conds[NCache::ALL]);
+		$all = !empty($conds[Cache::ALL]);
 		$collector = empty($conds);
 
 		// cleaning using file iterator
 		if ($all || $collector) {
 			$now = time();
-			foreach (NFinder::find('*')->from($this->dir)->childFirst() as $entry) {
+			foreach (Nette\Finder::find('*')->from($this->dir)->childFirst() as $entry) {
 				$path = (string) $entry;
 				if ($entry->isDir()) { // collector: remove empty dirs
 					@rmdir($path); // @ - removing dirs is not necessary
@@ -364,7 +367,7 @@ class NFileStorage extends NObject implements ICacheStorage
 	protected function getCacheFile($key)
 	{
 		if ($this->useDirs) {
-			$key = explode(NCache::NAMESPACE_SEPARATOR, $key, 2);
+			$key = explode(Cache::NAMESPACE_SEPARATOR, $key, 2);
 			return $this->dir . '/' . (isset($key[1]) ? urlencode($key[0]) . '/_' . urlencode($key[1]) : '_' . urlencode($key[0]));
 		} else {
 			return $this->dir . '/_' . urlencode($key);

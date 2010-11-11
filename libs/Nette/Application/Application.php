@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette\Application
  */
+
+namespace Nette\Application;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-class NApplication extends NObject
+class Application extends Nette\Object
 {
 	/** @var int */
 	public static $maxLoop = 20;
@@ -28,31 +31,31 @@ class NApplication extends NObject
 	/** @var string */
 	public $errorPresenter;
 
-	/** @var array of function(NApplication $sender); Occurs before the application loads presenter */
+	/** @var array of function(Application $sender); Occurs before the application loads presenter */
 	public $onStartup;
 
-	/** @var array of function(NApplication $sender, Exception $e = NULL); Occurs before the application shuts down */
+	/** @var array of function(Application $sender, \Exception $e = NULL); Occurs before the application shuts down */
 	public $onShutdown;
 
-	/** @var array of function(NApplication $sender, NPresenterRequest $request); Occurs when a new request is ready for dispatch */
+	/** @var array of function(Application $sender, PresenterRequest $request); Occurs when a new request is ready for dispatch */
 	public $onRequest;
 
-	/** @var array of function(NApplication $sender, IPresenterResponse $response); Occurs when a new response is received */
+	/** @var array of function(Application $sender, IPresenterResponse $response); Occurs when a new response is received */
 	public $onResponse;
 
-	/** @var array of function(NApplication $sender, Exception $e); Occurs when an unhandled exception occurs in the application */
+	/** @var array of function(Application $sender, \Exception $e); Occurs when an unhandled exception occurs in the application */
 	public $onError;
 
 	/** @var array of string */
 	public $allowedMethods = array('GET', 'POST', 'HEAD', 'PUT', 'DELETE');
 
-	/** @var array of NPresenterRequest */
+	/** @var array of PresenterRequest */
 	private $requests = array();
 
-	/** @var NPresenter */
+	/** @var Presenter */
 	private $presenter;
 
-	/** @var NContext */
+	/** @var Nette\Context */
 	private $context;
 
 
@@ -78,7 +81,7 @@ class NApplication extends NObject
 		if ($this->allowedMethods) {
 			$method = $httpRequest->getMethod();
 			if (!in_array($method, $this->allowedMethods, TRUE)) {
-				$httpResponse->setCode(IHttpResponse::S501_NOT_IMPLEMENTED);
+				$httpResponse->setCode(Nette\Web\IHttpResponse::S501_NOT_IMPLEMENTED);
 				$httpResponse->setHeader('Allow', implode(',', $this->allowedMethods));
 				echo '<h1>Method ' . htmlSpecialChars($method) . ' is not implemented</h1>';
 				return;
@@ -91,7 +94,7 @@ class NApplication extends NObject
 		do {
 			try {
 				if (count($this->requests) > self::$maxLoop) {
-					throw new NApplicationException('Too many loops detected in application life cycle.');
+					throw new ApplicationException('Too many loops detected in application life cycle.');
 				}
 
 				if (!$request) {
@@ -101,16 +104,16 @@ class NApplication extends NObject
 					$router = $this->getRouter();
 
 					// enable routing debuggger
-					NDebug::addPanel(new NRoutingDebugger($router, $httpRequest));
+					Nette\Debug::addPanel(new RoutingDebugger($router, $httpRequest));
 
 					$request = $router->match($httpRequest);
-					if (!($request instanceof NPresenterRequest)) {
+					if (!($request instanceof PresenterRequest)) {
 						$request = NULL;
-						throw new NBadRequestException('No route for HTTP request.');
+						throw new BadRequestException('No route for HTTP request.');
 					}
 
 					if (strcasecmp($request->getPresenterName(), $this->errorPresenter) === 0) {
-						throw new NBadRequestException('Invalid request. Presenter is not achievable.');
+						throw new BadRequestException('Invalid request. Presenter is not achievable.');
 					}
 				}
 
@@ -122,8 +125,8 @@ class NApplication extends NObject
 				try {
 					$class = $this->getPresenterLoader()->getPresenterClass($presenter);
 					$request->setPresenterName($presenter);
-				} catch (NInvalidPresenterException $e) {
-					throw new NBadRequestException($e->getMessage(), 404, $e);
+				} catch (InvalidPresenterException $e) {
+					throw new BadRequestException($e->getMessage(), 404, $e);
 				}
 				$request->freeze();
 
@@ -133,7 +136,7 @@ class NApplication extends NObject
 				$this->onResponse($this, $response);
 
 				// Send response
-				if ($response instanceof NForwardingResponse) {
+				if ($response instanceof ForwardingResponse) {
 					$request = $response->getRequest();
 					continue;
 
@@ -142,7 +145,7 @@ class NApplication extends NObject
 				}
 				break;
 
-			} catch (Exception $e) {
+			} catch (\Exception $e) {
 				// fault barrier
 				$this->onError($this, $e);
 
@@ -152,11 +155,11 @@ class NApplication extends NObject
 				}
 
 				if ($repeatedError) {
-					$e = new NApplicationException('An error occured while executing error-presenter', 0, $e);
+					$e = new ApplicationException('An error occured while executing error-presenter', 0, $e);
 				}
 
 				if (!$httpResponse->isSent()) {
-					$httpResponse->setCode($e instanceof NBadRequestException ? $e->getCode() : 500);
+					$httpResponse->setCode($e instanceof BadRequestException ? $e->getCode() : 500);
 				}
 
 				if (!$repeatedError && $this->errorPresenter) {
@@ -164,24 +167,24 @@ class NApplication extends NObject
 					if ($this->presenter) {
 						try {
 							$this->presenter->forward(":$this->errorPresenter:", array('exception' => $e));
-						} catch (NAbortException $foo) {
+						} catch (AbortException $foo) {
 							$request = $this->presenter->getLastCreatedRequest();
 						}
 					} else {
-						$request = new NPresenterRequest(
+						$request = new PresenterRequest(
 							$this->errorPresenter,
-							NPresenterRequest::FORWARD,
+							PresenterRequest::FORWARD,
 							array('exception' => $e)
 						);
 					}
 					// continue
 
 				} else { // default error handler
-					if ($e instanceof NBadRequestException) {
+					if ($e instanceof BadRequestException) {
 						$code = $e->getCode();
 					} else {
 						$code = 500;
-						NDebug::log($e, NDebug::ERROR);
+						Nette\Debug::log($e, Nette\Debug::ERROR);
 					}
 					echo "<!DOCTYPE html><meta name=robots content=noindex><meta name=generator content='Nette Framework'>\n\n";
 					echo "<style>body{color:#333;background:white;width:500px;margin:100px auto}h1{font:bold 47px/1.5 sans-serif;margin:.6em 0}p{font:21px/1.5 Georgia,serif;margin:1.5em 0}small{font-size:70%;color:gray}</style>\n\n";
@@ -208,7 +211,7 @@ class NApplication extends NObject
 
 	/**
 	 * Returns all processed requests.
-	 * @return array of NPresenterRequest
+	 * @return array of PresenterRequest
 	 */
 	final public function getRequests()
 	{
@@ -219,7 +222,7 @@ class NApplication extends NObject
 
 	/**
 	 * Returns current presenter.
-	 * @return NPresenter
+	 * @return Presenter
 	 */
 	final public function getPresenter()
 	{
@@ -234,9 +237,9 @@ class NApplication extends NObject
 
 	/**
 	 * Gets the context.
-	 * @return NApplication  provides a fluent interface
+	 * @return Application  provides a fluent interface
 	 */
-	public function setContext(IContext $context)
+	public function setContext(Nette\IContext $context)
 	{
 		$this->context = $context;
 		return $this;
@@ -246,7 +249,7 @@ class NApplication extends NObject
 
 	/**
 	 * Gets the context.
-	 * @return IContext
+	 * @return Nette\IContext
 	 */
 	final public function getContext()
 	{
@@ -282,7 +285,7 @@ class NApplication extends NObject
 	/**
 	 * Changes router.
 	 * @param  IRouter
-	 * @return NApplication  provides a fluent interface
+	 * @return Application  provides a fluent interface
 	 */
 	public function setRouter(IRouter $router)
 	{
@@ -304,7 +307,7 @@ class NApplication extends NObject
 
 
 	/**
-	 * @return IHttpRequest
+	 * @return Nette\Web\IHttpRequest
 	 */
 	protected function getHttpRequest()
 	{
@@ -314,7 +317,7 @@ class NApplication extends NObject
 
 
 	/**
-	 * @return IHttpResponse
+	 * @return Nette\Web\IHttpResponse
 	 */
 	protected function getHttpResponse()
 	{
@@ -324,7 +327,7 @@ class NApplication extends NObject
 
 
 	/**
-	 * @return NSession
+	 * @return Nette\Web\Session
 	 */
 	protected function getSession($namespace = NULL)
 	{
@@ -368,8 +371,8 @@ class NApplication extends NObject
 		if (isset($session[$key])) {
 			$request = clone $session[$key];
 			unset($session[$key]);
-			$request->setFlag(NPresenterRequest::RESTORED, TRUE);
-			$this->presenter->sendResponse(new NForwardingResponse($request));
+			$request->setFlag(PresenterRequest::RESTORED, TRUE);
+			$this->presenter->sendResponse(new ForwardingResponse($request));
 		}
 	}
 

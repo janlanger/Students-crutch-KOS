@@ -1,12 +1,12 @@
 <?php
 
 /**
- * dibi - tiny'n'smart database abstraction layer
- * ----------------------------------------------
+ * This file is part of the "dibi" - smart database abstraction layer.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @license    http://dibiphp.com/license  dibi license
- * @link       http://dibiphp.com
+ * Copyright (c) 2005, 2010 David Grudl (http://davidgrudl.com)
+ *
+ * This source file is subject to the "dibi license", and/or
+ * GPL license. For more information please see http://dibiphp.com
  * @package    dibi
  */
 
@@ -21,6 +21,8 @@ interface IDataSource extends Countable, IteratorAggregate
 	//function IteratorAggregate::getIterator();
 	//function Countable::count();
 }
+
+
 
 
 
@@ -73,11 +75,12 @@ interface IDibiProfiler
 
 
 
+
+
 /**
  * dibi driver interface.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  */
 interface IDibiDriver
 {
@@ -183,11 +186,12 @@ interface IDibiDriver
 
 
 
+
+
 /**
  * dibi result set driver interface.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  */
 interface IDibiResultDriver
 {
@@ -210,7 +214,7 @@ interface IDibiResultDriver
 	 * Fetches the row at current position and moves the internal cursor to the next position.
 	 * @param  bool     TRUE for associative array, FALSE for numeric
 	 * @return array    array on success, nonarray if no next record
-	 * @ignore internal
+	 * @internal
 	 */
 	function fetch($type);
 
@@ -246,11 +250,12 @@ interface IDibiResultDriver
 
 
 
+
+
 /**
  * dibi driver reflection.
  *
- * @copyright  Copyright (c) 2005, 2010 David Grudl
- * @package    dibi
+ * @author     David Grudl
  */
 interface IDibiReflector
 {

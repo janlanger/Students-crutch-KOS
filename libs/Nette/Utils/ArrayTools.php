@@ -7,8 +7,11 @@
  *
  * This source file is subject to the "Nette license", and/or
  * GPL license. For more information please see http://nette.org
- * @package Nette
  */
+
+namespace Nette;
+
+use Nette;
 
 
 
@@ -17,7 +20,7 @@
  *
  * @author     David Grudl
  */
-final class NArrayTools
+final class ArrayTools
 {
 
 	/**
@@ -25,14 +28,14 @@ final class NArrayTools
 	 */
 	final public function __construct()
 	{
-		throw new LogicException("Cannot instantiate static class " . get_class($this));
+		throw new \LogicException("Cannot instantiate static class " . get_class($this));
 	}
 
 
 
 	/**
 	 * Returns array item or $default if item is not set.
-	 * Example: $val = NArrayTools::get($arr, 'i', 123);
+	 * Example: $val = ArrayTools::get($arr, 'i', 123);
 	 * @param  mixed  array
 	 * @param  mixed  key
 	 * @param  mixed  default value
@@ -64,7 +67,7 @@ final class NArrayTools
 			if (is_array($arr) || $arr === NULL) {
 				$arr = & $arr[$k];
 			} else {
-				throw new InvalidArgumentException('Traversed item is not an array.');
+				throw new \InvalidArgumentException('Traversed item is not an array.');
 			}
 		}
 		return $arr;
@@ -164,9 +167,9 @@ final class NArrayTools
 	 */
 	public static function grep(array $arr, $pattern, $flags = 0)
 	{
-		NDebug::tryError();
+		Debug::tryError();
 		$res = preg_grep($pattern, $arr, $flags);
-		NString::catchPregError($pattern);
+		String::catchPregError($pattern);
 		return $res;
 	}
 
