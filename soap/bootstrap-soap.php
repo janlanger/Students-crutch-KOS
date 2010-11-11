@@ -9,6 +9,6 @@ define('APP_DIR', WWW_DIR . '/../app');
 // absolute filesystem path to the libraries
 define('LIBS_DIR', WWW_DIR . '/../libs');
 require APP_DIR.'/bootstrap.php';
-//NDebug::enable(NDebug::PRODUCTION);
-NDebug::$showBar=FALSE;
+//\Nette\Debug::enable(\Nette\Debug::PRODUCTION);
+\Nette\Debug::$showBar=FALSE;
 ?>

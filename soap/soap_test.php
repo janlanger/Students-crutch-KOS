@@ -9,7 +9,7 @@ $client=new WSClient(array("to"=>'http://bp.local/soap/berlicka'));
 $responseMessage=$client->request($requestPayloadString);
 
         printf("Response = %s <br>", htmlspecialchars($responseMessage->str));*/
-Ndebug::timer();
+\Nette\Debug::timer();
 $soap=new SoapClient(NULL,array("location"=>'http://bp.local/soap/berlicka',"uri"=>'http://bp.local/soap/berlicka'));
 
 $soap->authenticate('berlicka','test');
@@ -21,7 +21,7 @@ $return=($soap->getStudentsInfo(355981000,'B101'));
     
 }
 dump($soap->getLastError());
-echo NDebug::timer();
+echo \Nette\Debug::timer();
 
 
 ?>

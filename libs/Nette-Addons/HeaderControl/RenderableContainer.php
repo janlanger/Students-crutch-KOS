@@ -14,7 +14,7 @@
  * @license MIT
  * @package HeaderControl
  */
-class RenderableContainer extends NControl
+class RenderableContainer extends Nette\Application\Control
 {
 
 	public function __call($name, $args)

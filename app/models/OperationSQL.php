@@ -11,7 +11,7 @@
  */
 class OperationSQL extends Model {
     public static function find($where) {
-        NDebug::$showLocation=TRUE;
+        \Nette\Debug::$showLocation=TRUE;
         $q = dibi::select("[name],[sql],[params],[return],[fetchType],[assocKey]")
                 ->from("[:main:operations_def]")
                 ->innerJoin("[:main:operations_sql]")
@@ -29,7 +29,7 @@ class OperationSQL extends Model {
 
     private function validate() {
         if(isset($this->sql)) {
-            if(!NString::startsWith(strtolower($this->sql), 'select')) {
+            if(!\Nette\String::startsWith(strtolower($this->sql), 'select')) {
                 throw new InvalidArgumentException("Only SELECT command is allowed.");
             }
             if(strpos($this->sql, dibi::$substs->main)!== FALSE || strpos($this->sql, ":main:")!== FALSE) {

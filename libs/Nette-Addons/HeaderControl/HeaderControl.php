@@ -1,6 +1,7 @@
 <?php
 
-
+use Nette\Web\Html;
+use Nette\Environment;
 
 /**
  * HeaderControl<br />
@@ -84,7 +85,7 @@ class HeaderControl extends RenderableContainer
 	/** @var string path to favicon (without $basePath) */
 	private $favicon;
 
-	public function __construct(IComponentContainer $parent = NULL, $name = NULL)
+	public function __construct(Nette\IComponentContainer $parent = NULL, $name = NULL)
 	{
 		parent::__construct($parent, $name);
 
@@ -114,7 +115,7 @@ class HeaderControl extends RenderableContainer
 				$docType == self::XHTML_1_STRICT || $docType == self::XHTML_1_TRANSITIONAL ||
 				$docType == self::XHTML_1_FRAMESET) {
 			$this->docType = $docType;
-			$this->xml = NHtml::$xhtml = ($docType == self::XHTML_1_STRICT ||
+			$this->xml = Html::$xhtml = ($docType == self::XHTML_1_STRICT ||
 							$docType == self::XHTML_1_TRANSITIONAL ||
 							$docType == self::XHTML_1_FRAMESET);
 		} else {
@@ -286,7 +287,7 @@ class HeaderControl extends RenderableContainer
 		if (file_exists(WWW_DIR . '/' . $filename)) {
 			$this->favicon = $filename;
 		} else {
-			throw new FileNotFoundException('Favicon ' . WWW_DIR . NEnvironment::getVariable('baseUri') . $filename . ' not found.');
+			throw new FileNotFoundException('Favicon ' . WWW_DIR . Environment::getVariable('baseUri') . $filename . ' not found.');
 		}
 
 		return $this; //fluent interface
@@ -376,7 +377,7 @@ class HeaderControl extends RenderableContainer
 		return $this->getMetaTag('robots');
 	}
 	
-	public function setHtmlTag(NHtml $htmlTag)
+	public function setHtmlTag(Html $htmlTag)
 	{
 		$this->htmlTag = $html;
 		
@@ -386,7 +387,7 @@ class HeaderControl extends RenderableContainer
 	public function getHtmlTag()
 	{
 		if ($this->htmlTag == NULL) {
-			$html = NHtml::el('html');
+			$html = Html::el('html');
 		
 			if ($this->xml) {
 				$html->attrs['xmlns'] = 'http://www.w3.org/1999/xhtml';
@@ -419,7 +420,7 @@ class HeaderControl extends RenderableContainer
 
 	public function renderBegin()
 	{
-		$response = NEnvironment::getHttpResponse();
+		$response = Environment::getHttpResponse();
 		if ($this->docType == self::XHTML_1_STRICT &&
 				$this->contentType == self::APPLICATION_XHTML &&
 				($this->forceContentType || $this->isClientXhtmlCompatible())) {
@@ -443,25 +444,25 @@ class HeaderControl extends RenderableContainer
 
 		echo $this->getHtmlTag()->startTag() . "\n";
 
-		echo NHtml::el('head')->startTag() . "\n";
+		echo Html::el('head')->startTag() . "\n";
 
 		if ($this->docType != self::HTML_5) {
-			$metaLanguage = NHtml::el('meta');
+			$metaLanguage = Html::el('meta');
 			$metaLanguage->attrs['http-equiv'] = 'Content-Language';
 			$metaLanguage->content($this->language);
 			echo $metaLanguage . "\n";
 		}
 
-		$metaContentType = NHtml::el('meta');
+		$metaContentType = Html::el('meta');
 		$metaContentType->attrs['http-equiv'] = 'Content-Type';
 		$metaContentType->content($contentType . '; charset=utf-8');
 		echo $metaContentType . "\n";
 
-		echo NHtml::el('title', $this->getTitleString()) . "\n";
+		echo Html::el('title', $this->getTitleString()) . "\n";
 
 		if ($this->favicon != '') {
-			echo NHtml::el('link')->rel('shortcut icon')
-					->href(NEnvironment::getVariable('baseUri') . $this->favicon) . "\n";
+			echo Html::el('link')->rel('shortcut icon')
+					->href(Environment::getVariable('baseUri') . $this->favicon) . "\n";
 		}
 
 		foreach ($this->metaTags as $name=>$content) {
@@ -471,7 +472,7 @@ class HeaderControl extends RenderableContainer
 
 	public function renderEnd()
 	{
-		echo NHtml::el('head')->endTag();
+		echo Html::el('head')->endTag();
 	}
 
 	public function renderRss($channels = NULL)
@@ -485,7 +486,7 @@ class HeaderControl extends RenderableContainer
 		}
 
 		foreach ($this->rssChannels as $channel) {
-			$el=NHtml::el('link')->rel('alternate')->type('application/rss+xml')
+			$el=Html::el('link')->rel('alternate')->type('application/rss+xml')
 					->title($channel['title']);
                         if(strpos(":", $channel['link'])===FALSE) {
                             echo $el->href("/".$channel['link']) . "\n";
@@ -507,7 +508,7 @@ class HeaderControl extends RenderableContainer
 		}
 
 		foreach ($this->cssFiles as $css) {
-			$el=NHtml::el('link')->rel('stylesheet')->type('text/css');
+			$el=Html::el('link')->rel('stylesheet')->type('text/css');
                         echo $el->href($css) . "\n";
 
 		}
@@ -524,7 +525,7 @@ class HeaderControl extends RenderableContainer
 		}
 
 		foreach ($this->javascripts as $js) {
-			$el=NHtml::el('script')->type('text/javascript');
+			$el=Html::el('script')->type('text/javascript');
                         echo $el->src($js) . "\n";
 
 		}
@@ -565,7 +566,7 @@ class HeaderControl extends RenderableContainer
 
 	private function isClientXhtmlCompatible()
 	{
-		$req = NEnvironment::getHttpRequest();
+		$req = Environment::getHttpRequest();
 		return stristr($req->getHeader('Accept'), 'application/xhtml+xml') ||
 				$req->getHeader('Accept') == '*/*';
 	}

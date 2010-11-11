@@ -9,7 +9,7 @@
  *
  * @author Honza
  */
-class ServiceManager extends NObject {
+class ServiceManager extends \Nette\Object {
 
 
     public function getOperationsFor($client) {

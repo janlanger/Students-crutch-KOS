@@ -17,7 +17,7 @@ require_once dirname(__FILE__) . "/CurlResponse.php";
  * @author Sean Huber <shuber@huberry.com>
  * @author Filip Procházka <hosiplan@kdyby.org>
  */
-class Curl extends NObject
+class Curl extends \Nette\Object
 {
 	/**#@+ Available types of requests */
 	const GET = 'GET';
@@ -266,7 +266,7 @@ class Curl extends NObject
 		// $this->cookieFile(dirname(__FILE__).DIRECTORY_SEPARATOR.'curl_cookie.txt');
 		$this->setUserAgent(isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : 'Curl/PHP '.PHP_VERSION.' (http://curl.kdyby.org/)');
 
-		$config = NEnvironment::getConfig('curl');
+		$config = \Nette\Environment::getConfig('curl');
 
 		foreach( (array)$config AS $option => $value ){
 			if( $option == 'cookieFile' ){

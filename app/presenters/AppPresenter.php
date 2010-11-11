@@ -55,22 +55,22 @@ class AppPresenter extends BasePresenter {
 
     private function formBase($name, $new) {
 
-        $form = new NAppForm($this, $name);
+        $form = new \Nette\Application\AppForm($this, $name);
         
         $form->addText('name', 'Název')
                 ->setRequired('Vyplňte prosím jméno aplikace.')
-                ->addRule(NForm::MAX_LENGTH, "null", 255);
+                ->addRule(\Nette\Forms\Form::MAX_LENGTH, "null", 255);
         $form->addText('password', 'Heslo')
-                ->addRule(NForm::MAX_LENGTH, "null", 255);
+                ->addRule(\Nette\Forms\Form::MAX_LENGTH, "null", 255);
 
         $form->addText('login', 'Login')
-                ->addRule(NForm::FILLED,"Vyplňte prosím login.")
-                ->addRule(NForm::MAX_LENGTH, "", 50);
+                ->addRule(\Nette\Forms\Form::FILLED,"Vyplňte prosím login.")
+                ->addRule(\Nette\Forms\Form::MAX_LENGTH, "", 50);
         /* $form->addText('client_path', 'Client path')
           ->addRule(Form::FILLED)
           ->addRule(Form::MAX_LENGTH, null, 50); */
         $form->addText('admin_email', 'Admin email')        
-                ->addRule(NForm::MAX_LENGTH, "null", 255);
+                ->addRule(\Nette\Forms\Form::MAX_LENGTH, "null", 255);
         if(!$new) {
             $form->addHidden('app_id');            
         }
@@ -83,7 +83,7 @@ class AppPresenter extends BasePresenter {
 
     }
 
-    public function proccessAppForm(NSubmitButton $btn) {
+    public function proccessAppForm(\Nette\Forms\SubmitButton $btn) {
         $values=$btn->getForm()->getValues();
         
         try {
@@ -92,7 +92,7 @@ class AppPresenter extends BasePresenter {
             $this->redirect('App:');
         } catch (DibiException $e) {
             $this->flashMessage('Došlo k chybě. '.$e->getMessage(),'error');
-            NDebug::log($e);
+            \Nette\Debug::log($e);
         }
 
     }

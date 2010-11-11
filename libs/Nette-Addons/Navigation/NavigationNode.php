@@ -6,7 +6,7 @@
  * @author Jan Marek
  * @license MIT
  */
-class NavigationNode extends NComponentContainer {
+class NavigationNode extends \Nette\ComponentContainer {
 
 	/** @var string */
 	public $label;

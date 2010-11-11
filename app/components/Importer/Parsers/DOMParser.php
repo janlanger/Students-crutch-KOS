@@ -37,10 +37,10 @@ class DOMParser extends NObject {
             
             $this->Dom=new DOMDocument();
             $this->Dom->preserveWhiteSpace = FALSE;
-            NDebug::tryError();
+            \Nette\Debug::tryError();
             $this->Dom->load(realpath($this->file), LIBXML_NOEMPTYTAG | LIBXML_COMPACT);
 
-            if (NDebug::catchError($msg)) {
+            if (\Nette\Debug::catchError($msg)) {
                 throw new InvalidArgumentException('Dokument není ve správném formátu. (DOM Error: ' . $msg . ')');
             }
         }

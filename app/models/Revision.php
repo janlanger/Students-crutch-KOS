@@ -28,9 +28,9 @@ class Revision extends Model {
 
     public static function getAvaiableTables($database=NULL) {
         if ($database == NULL)
-            $database = NEnvironment::getConfig('xml')->liveDatabase;
+            $database = \Nette\Environment::getConfig('xml')->liveDatabase;
 
-        $databaseManager = NEnvironment::getContext()->getService('IDatabaseManager');
+        $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager');
         return $databaseManager->getTables($database);
     }
 
@@ -50,9 +50,9 @@ class Revision extends Model {
         }
 
         if ($from == NULL)
-            $from = NEnvironment::getConfig('xml')->liveDatabase;
+            $from = \Nette\Environment::getConfig('xml')->liveDatabase;
 
-        $databaseManager = NEnvironment::getContext()->getService('IDatabaseManager');
+        $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager');
         try {
             $databaseManager->createRevision($from, $database, $tables);
             dibi::insert(":main:revision", array(
@@ -70,7 +70,7 @@ class Revision extends Model {
     }
 
     public function getTables() {
-        $databaseManager = NEnvironment::getContext()->getService('IDatabaseManager');
+        $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager');
         try {
             return $databaseManager->getTables($this->db_name);
         } catch (DatabaseManagerException $e) {
@@ -79,11 +79,11 @@ class Revision extends Model {
     }
 
     public function getDatabaseSize() {
-        return $databaseManager = NEnvironment::getContext()->getService('IDatabaseManager')->getDatabaseSize($this->db_name);
+        return $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager')->getDatabaseSize($this->db_name);
     }
 
     public function delete() {
-        $databaseManager = NEnvironment::getContext()->getService('IDatabaseManager');
+        $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager');
         try {
             $databaseManager->dropDatabase($this->db_name);
             dibi::delete(':main:revision')->where(array("rev_id" => $this->rev_id))->execute();

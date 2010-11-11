@@ -35,7 +35,7 @@ class DatagridActions {
     private $actions=array();
     private $grid;
 
-    public function __construct(NControl $grid) {
+    public function __construct(\Nette\Application\Control $grid) {
         $this->grid=$grid;
     }
 
@@ -89,7 +89,7 @@ class DatagridActions {
             else {
                 $link=$this->grid->presenter->link($link['action']);
             }
-            $tag=NHtml::el('a')->href($link)->setText($action['label']);
+            $tag=\Nette\Web\Html::el('a')->href($link)->setText($action['label']);
             $tag->class=$action['type'];
             if(isset($action['question'])) {
                 $tag->onclick('if(confirm(\''.$action['question'].'\')) location.href=\''.$link.'\'; return(false);');

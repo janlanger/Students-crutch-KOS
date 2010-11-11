@@ -46,7 +46,7 @@ class RevisionPresenter extends BasePresenter {
                 $this->flashMessage('Revize byla smazána.', 'success');
             } catch (ModelException $e) {
                 $this->flashMessage($e->getMessage(), 'error');
-                NDebug::log($e);
+                \Nette\Debug::log($e);
             }
         }
         $this->redirect('default');
@@ -65,7 +65,7 @@ class RevisionPresenter extends BasePresenter {
     }
 
     protected function createComponentCreateForm($name) {
-        $form = new NAppForm($this, $name);
+        $form = new \Nette\Application\AppForm($this, $name);
         $group = $form->addGroup('Základní nastavení');
         $form->addText('name', 'Název revize')->setRequired('Vyplňte prosím název revize');
         //$form->addText('db_name','Jméno databáze')->setRequired('Vyplňte prosím jméno databáze'); //automat
@@ -84,7 +84,7 @@ class RevisionPresenter extends BasePresenter {
         return $form;
     }
 
-    public function createRevision(NSubmitButton $bnt) {
+    public function createRevision(\Nette\Forms\SubmitButton $bnt) {
         $values = $bnt->getForm()->getValues();
 
         $tables = Revision::getAvaiableTables();
@@ -94,19 +94,19 @@ class RevisionPresenter extends BasePresenter {
                 $tbl[] = $key;
             }
         }
-        $database_name = "rozvrh_" . NString::webalize(@reset(Application::find(array("app_id" => $values['app_id'])))->name) . "_" . $values['name'] . '_' . date("Ymd");
+        $database_name = "rozvrh_" . \Nette\String::webalize(@reset(Application::find(array("app_id" => $values['app_id'])))->name) . "_" . $values['name'] . '_' . date("Ymd");
         try {
             Revision::create($values['name'], $values['app_id'], $values['isMain'], $database_name, $tbl);
             $this->flashMessage('Revize byla úspěšně vytvořena.', 'success');
             $this->redirect('default');
         } catch (ModelException $e) {
             $this->flashMessage('Revizi se nepodařilo vytvořit. Chyba: ' . $e->getMessage(), 'error');
-            NDebug::log($e);
+            \Nette\Debug::log($e);
         }
     }
 
     protected function createComponentEditForm($name) {
-        $form=new NAppForm($this, $name);
+        $form=new \Nette\Application\AppForm($this, $name);
         $form->addText('name', 'Název revize')->setRequired('Vyplňte prosím název revize');
         //$form->addText('db_name','Jméno databáze')->setRequired('Vyplňte prosím jméno databáze'); //automat
         $form->addCheckbox('isMain', 'Používat jako výchozí');
@@ -114,7 +114,7 @@ class RevisionPresenter extends BasePresenter {
         $form->addSubmit('s','Odeslat')->onClick[]=callback($this,'editRevision');
     }
 
-    public function editRevision(NSubmitButton $bnt) {
+    public function editRevision(\Nette\Forms\SubmitButton $bnt) {
         $values = $bnt->getForm()->getValues();
         $revision = Revision::find(array("rev_id"=>$values['rev_id']));
         if(count($revision)!=1) {
@@ -127,7 +127,7 @@ class RevisionPresenter extends BasePresenter {
                 $this->redirect('default');
             } catch (ModelException $e) {
                 $this->flashMessage($e->getMessage(),'error');
-                NDebug::log($e);
+                \Nette\Debug::log($e);
             }
         }
 

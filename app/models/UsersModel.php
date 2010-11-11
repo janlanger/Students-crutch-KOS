@@ -15,7 +15,7 @@
  * @author     John Doe
  * @package    MyApplication
  */
-class UsersModel extends NObject implements IAuthenticator
+class UsersModel extends \Nette\Object implements IAuthenticator
 {
 
 	/**

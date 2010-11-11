@@ -46,7 +46,7 @@ class ServiceHandler {
             }
         } catch (Exception $e) {            
             $this->latestError = $e;
-            NEnvironment::getContext()->getService('ILogger')->logMessage($this->getLastError(), Logger::WARNING, 'SOAP service');
+            \Nette\Environment::getContext()->getService('ILogger')->logMessage($this->getLastError(), Logger::WARNING, 'SOAP service');
             throw $e;
         }
     }
@@ -57,7 +57,7 @@ class ServiceHandler {
             $this->user->authenticate($client, $password);
             return TRUE;
         } catch (NAuthenticationException $e) {
-            NEnvironment::getContext()->getService('ILogger')->logMessage("Failed login attempt for " . $client . "@" . $_SERVER['REMOTE_ADDR'], Logger::WARNING, 'SOAP service');
+            \Nette\Environment::getContext()->getService('ILogger')->logMessage("Failed login attempt for " . $client . "@" . $_SERVER['REMOTE_ADDR'], Logger::WARNING, 'SOAP service');
             $this->latestError = $e;
             throw $e;
         }

@@ -34,7 +34,7 @@ class ErrorPresenter extends BasePresenter
 
 		} else {
 			$this->setView('500'); // load template 500.phtml
-			NDebug::log($exception); // and log exception
+			\Nette\Debug::log($exception); // and log exception
 		}
 	}
 

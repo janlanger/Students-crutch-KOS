@@ -6,7 +6,7 @@
  * @author Jan Marek
  * @license MIT
  */
-class Navigation extends NControl {
+class Navigation extends Nette\Application\Control {
 
 	/** @var NavigationNode */
 	private $homepage;

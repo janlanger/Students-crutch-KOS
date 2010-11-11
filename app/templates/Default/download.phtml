@@ -15,7 +15,7 @@
 <h3>Hlavičky požadavku</h3>
 <code>
     {foreach $requestHeaders as $header=>$value}
-    {!=NString::replace($value, "#([\w-]+)(.*)#","<b>$1</b>$2")}<br />
+    {!=\Nette\String::replace($value, "#([\w-]+)(.*)#","<b>$1</b>$2")}<br />
     {/foreach}
 </code>
 {/if}

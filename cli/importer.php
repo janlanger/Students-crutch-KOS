@@ -10,12 +10,12 @@ define('APP_DIR', WWW_DIR . '/../app');
 // absolute filesystem path to the libraries
 define('LIBS_DIR', WWW_DIR . '/../libs');
 include_once APP_DIR . '/bootstrap.php';
-$logger = NEnvironment::getService('ILogger');
+$logger = \Nette\Environment::getService('ILogger');
 
 
-$config = NEnvironment::getConfig('xml');
+$config = \Nette\Environment::getConfig('xml');
 try {
-    $downloader = NEnvironment::getContext()->getService('IDownloader');
+    $downloader = \Nette\Environment::getContext()->getService('IDownloader');
     /* @var $downloader CurlDownloader */
     $downloader->setLocalRepository($config['localRepository'])
             ->setLogin($config['login'])
@@ -31,14 +31,14 @@ try {
     }
 } catch (Exception $e) {
     $logger->logMessage($e->getMessage(), Logger::CRITICAL, 'XMLDownloader-CLI');
-    NDebug::log($e);
+    \Nette\Debug::log($e);
     exit;
 }
 
 if (isset($return['file'])) {
     //run import
     try {
-        NDebug::timer("importer-total");
+        \Nette\Debug::timer("importer-total");
         $importer = new XMLImporter(NULL, 'importer');
 
         /* @var $importer XMLImporter */
@@ -51,11 +51,11 @@ if (isset($return['file'])) {
         }
         $database_name = $config['liveDatabase'];
         $importer->buildDatabase($database_name, TRUE);
-        $logger->logMessage("Database import sucessfull. Total time: " . round(NDebug::timer("importer-total"),3).'s', Logger::INFO,'XMLImport-CLI');
+        $logger->logMessage("Database import sucessfull. Total time: " . round(\Nette\Debug::timer("importer-total"),3).'s', Logger::INFO,'XMLImport-CLI');
         
     } catch (Exception $e) {
         $logger->logMessage($e->getMessage(), Logger::CRITICAL,'XMLImport-CLI');
-        NDebug::log($e);
+        \Nette\Debug::log($e);
         exit;
     }
 }

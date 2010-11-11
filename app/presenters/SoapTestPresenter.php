@@ -47,7 +47,7 @@ class SoapTestPresenter extends BasePresenter {
     }
 
     public function createComponentForm($name) {
-        $form = new NAppForm($this, $name);
+        $form = new \Nette\Application\AppForm($this, $name);
 
         $revisions = array();
 
@@ -75,7 +75,7 @@ class SoapTestPresenter extends BasePresenter {
         }
     }
 
-    public function testSoap(NSubmitButton $btn) {
+    public function testSoap(\Nette\Forms\SubmitButton $btn) {
         $values = $btn->form->values;
         $operation = Operation::getSQL(array("met_id" => $values['met_id'], "rev_id" => $values['revision']));
         if(!$operation instanceof DibiRow) {
@@ -104,7 +104,7 @@ class SoapTestPresenter extends BasePresenter {
         $handler->useRevision($revision->alias);
 
 
-        $this->template->soapReturn = NDebug::dump(call_user_func_array(array($handler, $operation['name']), $params), TRUE);
+        $this->template->soapReturn = \Nette\Debug::dump(call_user_func_array(array($handler, $operation['name']), $params), TRUE);
         
         } catch (Exception $e) {
             $this->flashMessage('Chyba při vykonávání požadavku: '.$e->getMessage(),'error');

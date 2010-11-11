@@ -10,47 +10,7 @@
  *
  * @author Honza
  */
-class MySQLDatabaseManager extends NObject implements IDatabaseManager {
-    /* private $name;
-      private $columns;
-      private $primaryKeys;
-      private $indexes;
-      private $foreignKeys;
-
-      public function setName($name) {
-      $this->name = $name;
-      return $this;
-      }
-
-      public function setColumns($columns) {
-      $this->columns = $columns;
-      return $this;
-      }
-
-      public function setPrimaryKeys($primaryKeys) {
-      $this->primaryKeys = $primaryKeys;
-      return $this;
-      }
-
-      public function setIndexes($indexes) {
-      $this->indexes = $indexes;
-      return $this;
-      }
-      public function setForeignKeys($foreignKeys) {
-      $this->foreignKeys = $foreignKeys;
-      return $this;
-      }
-
-      public function createReferences() {
-      if($this->name=="" || !count($this->foreignKeys)) {
-      return;
-      }
-
-
-
-
-      } */
-
+class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
     private function createTable(XMLi_Entity $table) {
         if (empty($table->columns)) {
             return;

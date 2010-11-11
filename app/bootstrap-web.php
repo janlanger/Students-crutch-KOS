@@ -1,4 +1,6 @@
 <?php
+use Nette\Environment;
+use Nette\Application\Route;
 
 require_once APP_DIR.'/bootstrap.php';
 
@@ -6,7 +8,7 @@ require_once APP_DIR.'/bootstrap.php';
 
 // Step 3: Configure application
 // 3a) get and setup a front controller
-$application = NEnvironment::getApplication();
+$application = Environment::getApplication();
 $application->errorPresenter = 'Error';
 //$application->catchExceptions = TRUE;
 
@@ -16,12 +18,12 @@ $router = $application->getRouter();
 
 
 
-$router[] = new NRoute('index.php', array(
+$router[] = new Route('index.php', array(
 	'presenter' => 'Homepage',
 	'action' => 'default',
-), NRoute::ONE_WAY);
+), Route::ONE_WAY);
 
-$router[] = new NRoute('<presenter>/<action>/<id>', array(
+$router[] = new Route('<presenter>/<action>/<id>', array(
 	'presenter' => 'Default',
 	'action' => 'default',
 	'id' => NULL,

@@ -32,7 +32,7 @@ class DefaultPresenter extends BasePresenter {
         $grid->setColumnFormat('severity', DatagridFormatter::CALLBACK,  function ($record) {
             
             if(in_array($record, array("notice",'info','warning','error','critical'))) {
-                echo NHtml::el("img")->src("/images/icons/".$record.".png");
+                echo Nette\Web\Html::el("img")->src("/images/icons/".$record.".png");
             }
             else echo $record;
         });
@@ -46,7 +46,7 @@ class DefaultPresenter extends BasePresenter {
     }
 
     public function createComponentDownloadForm() {
-        $form = new NAppForm($this, 'downloadForm');
+        $form = new \Nette\Application\AppForm($this, 'downloadForm');
         $form->addText('url', 'URL souboru')
                         ->setType('url')
                         ->setRequired('URL musí být vyplněno.')
@@ -58,7 +58,7 @@ class DefaultPresenter extends BasePresenter {
 
         $form->addSubmit('download', 'Stáhnout')->onClick[] = callback($this, 'downloadFile');
 
-        $config = NEnvironment::getConfig('xml');
+        $config = \Nette\Environment::getConfig('xml');
 
         $form->setDefaults(array(
             'url' => $config['remoteURL']
@@ -66,7 +66,7 @@ class DefaultPresenter extends BasePresenter {
         return $form;
     }
 
-    public function downloadFile(NSubmitButton $button) {
+    public function downloadFile(\Nette\Forms\SubmitButton $button) {
 
         $values = $button->getForm()->getValues();
         try {
@@ -74,7 +74,7 @@ class DefaultPresenter extends BasePresenter {
             $downloader->setUrl($values['url'])
                     ->setLogin($values['login'])
                     ->setPassword($values['password'])
-                    ->setLocalRepository(NEnvironment::getConfig('xml')->localRepository);
+                    ->setLocalRepository(\Nette\Environment::getConfig('xml')->localRepository);
 
             if ($values['check'] == TRUE) {
                 if ($downloader->checkForNewer() == IDownloader::NOT_MODIFIED) {

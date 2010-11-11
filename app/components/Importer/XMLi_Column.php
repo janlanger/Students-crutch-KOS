@@ -9,7 +9,7 @@
  *
  * @author Honza
  */
-class XMLi_Column extends NObject {
+class XMLi_Column extends \Nette\Object {
     private $name;
     private $type=null;
     private $length=0;

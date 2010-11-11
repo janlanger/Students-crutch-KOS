@@ -24,18 +24,18 @@ class XMLImporter extends NControl {
 
     public function getParser() {
         if($this->Parser == NULL) {
-            $this->Parser= NEnvironment::getContext()->getService('IParser');
+            $this->Parser= \Nette\Environment::getContext()->getService('IParser');
         }
         return $this->Parser;
     }
 
     public function setFile($filename) {
-        $this->parser->setFile(NEnvironment::getConfig('xml')->localRepository . '/' . $filename);
+        $this->parser->setFile(\Nette\Environment::getConfig('xml')->localRepository . '/' . $filename);
     }
 
     public function getStructure() {
         self::$cacheNamespace = 'xml_structure-' . basename($this->parser->file);
-        $cache = NEnvironment::getCache(self::$cacheNamespace);
+        $cache = \Nette\Environment::getCache(self::$cacheNamespace);
         if (isset($cache['structure'])) {
             return $this->tables = $cache['structure'];
         }
@@ -51,7 +51,7 @@ class XMLImporter extends NControl {
     }
 
     public function buildDatabase($db_name, $owerwrite=FALSE) {
-        $tableCreator = NEnvironment::getContext()->getService('IDatabaseManager');
+        $tableCreator = \Nette\Environment::getContext()->getService('IDatabaseManager');
         if ($owerwrite) {
             $tableCreator->dropDatabase($db_name);
         } else {
@@ -95,11 +95,11 @@ class XMLImporter extends NControl {
         $total = 0;
         foreach (self::$status as $key => $value) {
             $total+=round($value['create_time'] * 1000, 4);
-            $ret.=NHtml::el("li")->setText('"' . $key . '" - ' . round($value['create_time'] * 1000, 4) . 'ms');
+            $ret.=\Nette\Web\Html::el("li")->setText('"' . $key . '" - ' . round($value['create_time'] * 1000, 4) . 'ms');
         }
-        $ret.=NHtml::el("li")->setText('Celkem provedeno dotazů: ' . dibi::$numOfQueries);
-        $ret.=NHtml::el("li")->setText('Celkový čas: ' . round($total / 1000, 3) . 's');
-        return NHtml::el("ul")->setHtml($ret);
+        $ret.=\Nette\Web\Html::el("li")->setText('Celkem provedeno dotazů: ' . dibi::$numOfQueries);
+        $ret.=\Nette\Web\Html::el("li")->setText('Celkový čas: ' . round($total / 1000, 3) . 's');
+        return \Nette\Web\Html::el("ul")->setHtml($ret);
     }
 
 }

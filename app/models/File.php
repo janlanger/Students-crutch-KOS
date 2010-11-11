@@ -42,7 +42,7 @@ class File extends Model {
         ->fetchAssoc('filename');
         
         $files=array();
-        $present_files=NFinder::findFiles("*.xml")->in(NEnvironment::getConfig('xml')->localRepository);
+        $present_files=NFinder::findFiles("*.xml")->in(\Nette\Environment::getConfig('xml')->localRepository);
         foreach ($present_files as $file) {
             $baseName=$file->getBaseName();
             if(isset($files[$baseName])) {

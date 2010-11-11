@@ -1,5 +1,6 @@
 <?php
-
+use Nette\Application\Presenter;
+use Nette\Environment;
 /**
  * My NApplication
  *
@@ -13,13 +14,13 @@
  * @author     John Doe
  * @package    MyApplication
  */
-abstract class BasePresenter extends NPresenter {
+abstract class BasePresenter extends Presenter {
 
 
 
 
     public function createComponentHeader() {
-        NEnvironment::getSession()->start();
+        Environment::getSession()->start();
         $header = new HeaderControl($this, 'header');
         $header->setDocType(HeaderControl::HTML_4_TRANSITIONAL);
         $header->setLanguage(HeaderControl::CZECH);
@@ -37,7 +38,7 @@ abstract class BasePresenter extends NPresenter {
     public function createComponentNavigation() {
         $nav = new Navigation();
         $nav->setupHomepage('Domů', $this->link('Default:'));
-        //$nav->add('Stažení XML', $this->link('Default:download'));
+        $nav->add('Nastavení importu', $this->link('Import:'));
         //$nav->add('Import', $this->link('Import:'));
         $nav->add('Správa aplikací', $this->link("App:"));
         $nav->add('Log', $this->link('Default:showLog'));

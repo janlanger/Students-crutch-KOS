@@ -12,7 +12,7 @@
  * @property-read array $primaryKeys
  * @author Honza
  */
-class XMLi_Entity extends NObject {
+class XMLi_Entity extends \Nette\Object {
 
     private $name = NULL;
     private $columns = array();
@@ -50,7 +50,7 @@ class XMLi_Entity extends NObject {
         }
         $_this->columns['import_time'] = new XMLi_Column('import_time', "datetime");
         $_this->rows[0]['import_time'] = date("Y-m-d H:i:s");
-        NEnvironment::getCache(XMLImporter::$cacheNamespace)->save($node->nodeName, $_this->rows, array(
+        \Nette\Environment::getCache(XMLImporter::$cacheNamespace)->save($node->nodeName, $_this->rows, array(
             'expire' => time() + 5 * 3600,
             'tags' => array('xml')
         ));
@@ -59,7 +59,7 @@ class XMLi_Entity extends NObject {
 
     private function analyzeNode(DOMNode $node) {
         $storeData = TRUE;
-        $cache = NEnvironment::getCache(XMLImporter::$cacheNamespace);
+        $cache = \Nette\Environment::getCache(XMLImporter::$cacheNamespace);
         if (isset($cache[$node->nodeName])) {
             $this->rows = $cache[$node->nodeName];
             $storeData = FALSE;
@@ -86,7 +86,7 @@ class XMLi_Entity extends NObject {
                     $this->columns[$attributeName]->detectType($attribute->value);
 
 
-                    if (NString::endsWith($attributeName, "_id") && !in_array($attributeName, $this->guessedIndexes)) {
+                    if (\Nette\String::endsWith($attributeName, "_id") && !in_array($attributeName, $this->guessedIndexes)) {
                         $this->guessedIndexes[] = $attributeName;
                     }
                 }
@@ -97,7 +97,7 @@ class XMLi_Entity extends NObject {
                         continue;
                     }
                     if ($storeData) {
-                        $this->rows[$row][$children->nodeName] = NString::trim($children->nodeValue);
+                        $this->rows[$row][$children->nodeName] = \Nette\String::trim($children->nodeValue);
                     }
                     if (!in_array($children->nodeName, $this->columns))
                         $this->columns[$children->nodeName] = new XMLi_Column($children->nodeName, 'text');
@@ -159,7 +159,7 @@ class XMLi_Entity extends NObject {
     }
 
     public function getRows() {
-        $cache = NEnvironment::getCache(XMLImporter::$cacheNamespace);
+        $cache = \Nette\Environment::getCache(XMLImporter::$cacheNamespace);
         if (isset($cache[$this->name])) {
             return $cache[$this->name];
         }

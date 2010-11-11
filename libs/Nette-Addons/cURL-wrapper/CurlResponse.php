@@ -8,7 +8,7 @@
  * @author Sean Huber <shuber@huberry.com>
  * @author Filip Procházka <hosiplan@kdyby.org>
  */
-class CurlResponse extends NObject
+class CurlResponse extends \Nette\Object
 {
 
 	/**#@+ regexp's for parsing */

@@ -1,5 +1,6 @@
 <?php
-
+use Nette\Application\AppForm;
+use Nette\Forms\Form;
 /**
  * Description of Functions
  *
@@ -25,14 +26,14 @@ class OperationPresenter extends BasePresenter {
 
     public function actionAddOperation($app_id) {
         $this['header']->addTitle('Přidání operace');
-        $this->template->setFile(NEnvironment::expand("%appDir%/templates/Operation/defineOperation.phtml"));
+        $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineOperation.phtml"));
         $this->template->edit=FALSE;
         $this['addOperationForm']['app_id']->setValue($app_id);
     }
 
     public function actionEditOperation($met_id) {
         $this['header']->addTitle('Úprava operace');
-        $this->template->setFile(NEnvironment::expand("%appDir%/templates/Operation/defineOperation.phtml"));
+        $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineOperation.phtml"));
         $this->template->edit=TRUE;
         $operation = Operation::find(array("met_id" => $met_id));
         if (count($operation) == 1) {
@@ -62,7 +63,7 @@ class OperationPresenter extends BasePresenter {
     }
 
     private function baseOperationForm($name, $new) {
-        $form = new NAppForm($this, $name);
+        $form = new AppForm($this, $name);
         if (!$new) {
             $form->addHidden('met_id');
         } else {
@@ -70,10 +71,10 @@ class OperationPresenter extends BasePresenter {
         }
         $form->addText('name', 'Název operace')
                 ->setRequired('Vyplňte název operace.')
-                ->addRule(NForm::MAX_LENGTH, "Hodnota je příliš dlouhá. Maximální počet znaků je %d.", 200);
+                ->addRule(Form::MAX_LENGTH, "Hodnota je příliš dlouhá. Maximální počet znaků je %d.", 200);
 
         $form->addText('params', 'Parametry')
-                ->addRule(NForm::MAX_LENGTH, "Hodnota je příliš dlouhá. Maximální počet znaků je %d.", 255);
+                ->addRule(Form::MAX_LENGTH, "Hodnota je příliš dlouhá. Maximální počet znaků je %d.", 255);
         //TODO!!!
 
         $form->addSelect('return', 'Návratový typ', array('----------', 'array' => 'array', "string" => "string", 'integer' => 'integer'))
@@ -83,11 +84,11 @@ class OperationPresenter extends BasePresenter {
 
         $form->addSelect('fetchType', 'Způsob získání výsledků', array('----------', 'simple' => 'Jednoduchý', 'assoc' => 'Podle asociativního klíče', 'single' => 'Jednu hodnotu'))
                 ->skipFirst()
-                ->addRule(NForm::FILLED, 'Vyberte zpúsob získání')
-                ->addConditionOn($form['return'], NForm::EQUAL, array("string",'integer'))
-                ->addRule(NForm::EQUAL, "Pokud operace nemá vracet pole, musíte vybrat způsob získání 'Jednu hodnotu'. (a samozřejmě tomu uzpůsobit SQL dotaz)", "single");
-        $form['fetchType']->addConditionOn($form['return'], NForm::EQUAL, "array")
-                ->addRule(NForm::EQUAL, 'Pokud chcete vracet pole, musíte vybrat asociativní nebo jednoduché získání výsledků', array("simple",'assoc'));
+                ->addRule(Form::FILLED, 'Vyberte zpúsob získání')
+                ->addConditionOn($form['return'], Form::EQUAL, array("string",'integer'))
+                ->addRule(Form::EQUAL, "Pokud operace nemá vracet pole, musíte vybrat způsob získání 'Jednu hodnotu'. (a samozřejmě tomu uzpůsobit SQL dotaz)", "single");
+        $form['fetchType']->addConditionOn($form['return'], Form::EQUAL, "array")
+                ->addRule(Form::EQUAL, 'Pokud chcete vracet pole, musíte vybrat asociativní nebo jednoduché získání výsledků', array("simple",'assoc'));
                 
         
         $form->addSubmit('submitButton', 'Odeslat')->onClick[] = callback($this, 'processOperationForm');
@@ -96,16 +97,16 @@ class OperationPresenter extends BasePresenter {
         return $form;
     }
 
-    public function processOperationForm(NSubmitButton $btn) {
+    public function processOperationForm(\Nette\Forms\SubmitButton $btn) {
         $values = $btn->getForm()->getValues();
-
+        
         try {
             Operation::create($values)->save();
             $this->flashMessage('Operace byla uložena.', 'success');
             $this->redirect('default');
         } catch (DibiException $e) {
             $this->flashMessage('Došlo k chybě. ' . $e->getMessage(), 'error');
-            NDebug::log($e);
+            \Nette\Debug::log($e);
         }
     }
 
@@ -115,7 +116,7 @@ class OperationPresenter extends BasePresenter {
     public function actionEditSql($sql_id) {
         $operation=OperationSQL::find(array('sql_id'=>$sql_id));
 
-        $this->template->setFile(NEnvironment::expand("%appDir%/templates/Operation/defineSql.phtml"));
+        $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineSql.phtml"));
         $this->template->edit=TRUE;
         $this->template->params=unserialize($operation->params);
 
@@ -157,7 +158,7 @@ class OperationPresenter extends BasePresenter {
 
 
     protected function baseSQLForm($name,$new) {
-        $form = new NAppForm($this, $name);
+        $form = new AppForm($this, $name);
 
         if(!$new) {
             $form->addHidden('sql_id');
@@ -172,14 +173,14 @@ class OperationPresenter extends BasePresenter {
         $form['sql']->getControlPrototype()->style("width:600px;height:150px;");
         $form->addText('assocKey', 'Asociativní klíč')
                 ->setRequired('Vyplnte prosím asociativní klíč.')
-                ->addRule(NForm::MAX_LENGTH, 'Maximální délka pole je %d', 100);
+                ->addRule(\Nette\Forms\Form::MAX_LENGTH, 'Maximální délka pole je %d', 100);
 
         $form->addSubmit('submitButton', 'Odeslat')->onClick[] = callback($this, 'processSQLForm');
 
         return $form;
     }
 
-    public function processSQLForm(NSubmitButton $btn) {
+    public function processSQLForm(\Nette\Forms\SubmitButton $btn) {
         $values = $btn->getForm()->getValues();
 
         try {
@@ -191,7 +192,7 @@ class OperationPresenter extends BasePresenter {
                 throw $e;
             }
             $this->flashMessage('Došlo k chybě. ' . $e->getMessage(), 'error');
-            NDebug::log($e);
+            \Nette\Debug::log($e);
         }
     }
 }

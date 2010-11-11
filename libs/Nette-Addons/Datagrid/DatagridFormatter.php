@@ -75,7 +75,7 @@ class DatagridFormatter {
                 return strftime($this->format, $data);
                 break;
             case self::CHECKBOX_YES_NO :
-                $el=NHtml::el('input', array("type"=>'checkbox','disabled'=>'disabled'));
+                $el=\Nette\Web\Html::el('input', array("type"=>'checkbox','disabled'=>'disabled'));
                 if($data>0) {
                     $el->checked('checked');
                 }

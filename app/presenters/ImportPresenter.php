@@ -7,60 +7,21 @@
  */
 class ImportPresenter extends BasePresenter {
 
-    /**
-     * (non-phpDoc)
-     *
-     * @see Nette\Application\Presenter#startup()
-     */
     protected function startup() {
         parent::startup();
         $this['header']->addTitle('Import');
     }
 
     public function actionDefault() {
-        /* $this->template->form= */$this->createComponentFileChooseForm();
+        
     }
 
-    public function actionAnalyze($file) {
-        try {
-            $this['importer']->setFile($file);
-            $this->template->tables = $this['importer']->getStructure();
-        } catch (Exception $e) {
-            $this->flashMessage($e->getMessage(), 'error');
-            $this->redirect('Import:'); //redirect back
-        }
-    }
+    
 
-    public function createComponentFileChooseForm() {
-        $form = new NAppForm($this, 'fileChooseForm');
-        $files = File::getImportableFiles();
+    public function createComponentIndexDefForm($name) {
 
-        $items = array();
-        foreach ($files as $file) {
-            $items[$file['filename']] = '';
-        }
-
-        $this->template->files = $files;
-        $form->addRadioList('choice', 'Vyberte soubor k importu.', $items)->setRequired('Musíte vybrat soubor k importu.');
-        $form->addSubmit('send', 'Odeslat')->onClick[] = callback($this, 'proccessFileChoose');
-    }
-
-    public function proccessFileChoose(NSubmitButton $button) {
-        $values = $button->getForm()->getValues();
-
-        $this->redirect('Import:analyze', array('file' => $values['choice']));
-    }
-
-    public function createComponentImporter($name) {
-        return new XMLImporter($this, $name);
-    }
-
-    public function createComponentColumnDefForm($name) {
-
-        $form = new NAppForm($this, $name);
-        $importer = $this['importer'];
-        /* @var $importer XMLImporter */
-        $tables = $importer->tables;
+        $form = new \Nette\Application\AppForm($this, $name);
+        $manager = $this->application->getContext()->getService('IDatabaseManager');
 
         $items = array();
         /* @var $table XMLi_Entity */
@@ -85,8 +46,8 @@ class ImportPresenter extends BasePresenter {
                 array_unshift($items2, "-------");
                 $form->addSelect($table->name . '__' . $column->name . '_foreign', '', $items2)
                         ->skipFirst()
-                        ->addConditionOn($form[$table->name . '__' . $column->name . '_index'], NForm::EQUAL, 'foreign')
-                        ->addRule(NForm::FILLED, 'Vyberte prosím vazbu cizího klíče.');
+                        ->addConditionOn($form[$table->name . '__' . $column->name . '_index'], \Nette\Forms\Form::EQUAL, 'foreign')
+                        ->addRule(\Nette\Forms\Form::FILLED, 'Vyberte prosím vazbu cizího klíče.');
 
 
                 //index guessing
@@ -108,7 +69,7 @@ class ImportPresenter extends BasePresenter {
         return $form;
     }
 
-    public function processImport(NSubmitButton $btn) {
+    public function processImport(\Nette\Forms\SubmitButton $btn) {
         $values = $btn->getForm()->getValues();
         $importer = $this['importer'];
         /* @var $importer XMLImporter */
@@ -122,11 +83,11 @@ class ImportPresenter extends BasePresenter {
             $table_names[$key] = $table_name . '__';
         }
         foreach ($values as $key => $value) {
-            if (NString::endsWith($key, 'index') && !is_null($value)) {
+            if (\Nette\String::endsWith($key, 'index') && !is_null($value)) {
 
                 $key = str_replace($table_names, $replace, $key);
-                $table = NString::replace($key, "#([a-zA-Z_]*)\..*$#","$1");
-                $column = NString::replace($key, "#[^\.]*\.(.*)_index#", "$1");
+                $table = \Nette\String::replace($key, "#([a-zA-Z_]*)\..*$#","$1");
+                $column = \Nette\String::replace($key, "#[^\.]*\.(.*)_index#", "$1");
                 
                 
                 switch ($value) {

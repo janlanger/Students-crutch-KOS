@@ -25,12 +25,12 @@ class LoginPresenter extends BasePresenter
 	 */
 	protected function createComponentLoginForm()
 	{
-		$form = new NAppForm;
+		$form = new \Nette\Application\AppForm;
 		$form->addText('username', 'Username:')
-			->addRule(NAppForm::FILLED, 'Please provide a username.');
+			->addRule(\Nette\Application\AppForm::FILLED, 'Please provide a username.');
 
 		$form->addPassword('password', 'Password:')
-			->addRule(NAppForm::FILLED, 'Please provide a password.');
+			->addRule(\Nette\Application\AppForm::FILLED, 'Please provide a password.');
 
 		$form->addCheckbox('remember', 'Remember me on this computer');
 

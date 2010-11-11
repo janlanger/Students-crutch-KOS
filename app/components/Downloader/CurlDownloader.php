@@ -55,7 +55,7 @@ class CurlDownloader extends NComponent implements IDownloader {
         $last_mod-=date("Z");   //GMT time
         $filename = 'rz-' . date("Y-m-d-H-i-s") . '.xml';
         try {
-            NDebug::timer('download');
+            \Nette\Debug::timer('download');
             $curl = new Curl($this->url);
 
             if ($this->login != NULL && $this->password != NULL) {
@@ -73,7 +73,7 @@ class CurlDownloader extends NComponent implements IDownloader {
                 return array(
                     'file' => realpath($this->localRepository . '/' . $filename),
                     'size' => filesize($this->localRepository . '/' . $filename),
-                    'time' => NDebug::timer('download'));
+                    'time' => \Nette\Debug::timer('download'));
             } else {
                 throw new IOException('Neočekávaná odpověď serveru. (' . $odpoved->getHeader('Status') . ')');
             }

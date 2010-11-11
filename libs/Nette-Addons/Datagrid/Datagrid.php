@@ -29,10 +29,10 @@
  * Provides Datagrid
  * @author Jan Langer
  */
-class Datagrid extends NControl {
+class Datagrid extends \Nette\Application\Control {
 
     private $data;
-    /** @var NPaginator */
+    /** @var \Nette\Paginator */
     private $paginator;
     /** @var array */
     private $columns;
@@ -53,9 +53,9 @@ class Datagrid extends NControl {
      * @param IComponentContainer $parent
      * @param string $name
      */
-    public function __construct(IComponentContainer $parent = NULL, $name = NULL) {
+    public function __construct(Nette\IComponentContainer $parent = NULL, $name = NULL) {
         parent::__construct($parent, $name);
-        $this->paginator=new NPaginator();
+        $this->paginator=new \Nette\Paginator();
         $this->paginator->setItemsPerPage(50);
         $this->sql=new DatagridSQL();
         $this->actions=new DatagridActions($this);
@@ -223,7 +223,7 @@ class Datagrid extends NControl {
      * @param <type> $surround
      * @return <type>
      */
-    public static function getSteps(NPaginator $pages, $steps = 4, $surround = 4) {
+    public static function getSteps(\Nette\Paginator $pages, $steps = 4, $surround = 4) {
         $lastPage = $pages->getPageCount() - 1;
         $page = min(max(0, $pages->getPage() - $pages->getBase()), max(0, $pages->getPageCount() - 1));
         if ($lastPage < 1) return array($page + $pages->base);

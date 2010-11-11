@@ -3,7 +3,7 @@
 include "./bootstrap-soap.php";
 session_start();
 
-$client=NEnvironment::getHttpRequest()->getQuery('client');
+$client=\Nette\Environment::getHttpRequest()->getQuery('client');
 if($client=="") {
     return; //exit
 }

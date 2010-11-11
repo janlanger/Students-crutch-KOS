@@ -9,7 +9,7 @@
  *
  * @author Honza
  */
-class ForeignKeyForm extends NAppForm {
+class ForeignKeyForm extends \Nette\Application\AppForm {
     //put your code here
     public function __construct(IComponentContainer $parent = NULL, $name = NULL) {
         parent::__construct($parent, $name);

@@ -6,7 +6,8 @@
  * @copyright  Copyright (c) 2010 John Doe
  * @package    MyApplication
  */
-
+use Nette\Debug;
+use Nette\Environment;
 
 
 // REMOVE THIS LINE
@@ -21,14 +22,14 @@ require LIBS_DIR . '/Nette/loader.php';
 
 
 // Step 2: Configure environment
-// 2a) enable NDebug for better exception and error visualisation
-NDebug::enable(NULL,APP_DIR.'/log/');
-NDebug::$strictMode=true;
-NDebug::$maxDepth=5;
+// 2a) enable \Nette\Debug for better exception and error visualisation
+Debug::enable(NULL,APP_DIR.'/log/');
+Debug::$strictMode=true;
+Debug::$maxDepth=5;
 
 // 2b) load configuration from config.ini file
-NEnvironment::loadConfig();
+Environment::loadConfig();
 
-dibi::connect(NEnvironment::getConfig('database'));
+dibi::connect(Environment::getConfig('database'));
 dibi::addSubst('main', "rozvrh_main.");
 
