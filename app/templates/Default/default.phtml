@@ -10,23 +10,23 @@ Zvolte něco z menu.
 <h3>Stav prostředí</h3>
 <table class="checker">
     <tr>
+        <td class="info">&nbsp;</td>
         <td>{=$_SERVER['SERVER_SOFTWARE']}</td>
-        <td>&nbsp;</td>
     </tr>
     <tr>
-        <td>PHP {=PHP_VERSION}</td>
         <td class="{if PHP_VERSION_ID>50300}ok{else}warn{/if}">&nbsp;</td>
+        <td>PHP {=PHP_VERSION}</td>
     </tr>
     <tr>
-        <td>XML/DOM supporn</td>
+        <td class="{if ((int) ini_get("memory_limit")>100)}ok{else}warn{/if}">&nbsp;</td>
+        <td>Memory limit: {=ini_get("memory_limit")}</td>
+    </tr>
+    <tr>
         <td class="{if class_exists("DOMDocument")}ok{else}err{/if}">&nbsp;</td>
+        <td>XML/DOM support</td>
     </tr>
     <tr>
-        <td>SOAP support</td>
         <td class="{if extension_loaded("soap")}ok{else}err{/if}">&nbsp;</td>
-    </tr>
-    <tr>
-        <td>WS Framefork</td>
-        <td class="{if extension_loaded("wsf")}ok{else}err{/if}">&nbsp;</td>
+        <td>SOAP extension</td>
     </tr>
 </table>
