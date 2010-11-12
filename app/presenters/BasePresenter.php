@@ -15,8 +15,9 @@ use Nette\Environment;
  * @package    MyApplication
  */
 abstract class BasePresenter extends Presenter {
-
-
+    const  FLASH_SUCCESS = 'success';
+    const  FLASH_WARNING = 'warning';
+    const  FLASH_ERROR   = 'error';
 
 
     public function createComponentHeader() {

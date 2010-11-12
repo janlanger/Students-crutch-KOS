@@ -18,5 +18,24 @@ class IndexDefinition extends Model {
 
         return $q->execute()->setRowClass(get_called_class())->fetchAssoc("key_id");
     }
+
+    public static function saveAll($tables) {
+        $data=array();
+        foreach($tables as $table) {
+            $data[]=iterator_to_array($table);
+        }
+        try {
+            dibi::begin(/*'indexImport'*/);
+
+            dibi::delete(":main:import_keys_definition")->execute();    //cannot use TRUNCATE, cause implicit commit :(
+            dibi::query("INSERT INTO [:main:import_keys_definition] %ex",$data);
+        
+            dibi::commit(/*'indexImport'*/);
+            return TRUE;
+        } catch (DibiException $e) {
+            dibi::rollback(/*'indexImport'*/);
+            throw new ModelException($e->getMessage(), $e->getCode(), $e);
+        }
+    }
 }
 ?>

@@ -1,0 +1,31 @@
+{block content}
+{control indexDefForm 'begin'}
+{control indexDefForm 'errors'}
+
+{var $form = $control['indexDefForm']}
+
+
+
+<fieldset n:foreach="$form->getGroups() as $group">
+    <legend>Tabulka {$group->getOption('label')}</legend>
+    <table>
+        <tr n:foreach="$group->getControls() as $item">
+            {continueIf Nette\String::endsWith($item->name,'_foreign')}
+            {continueIf strpos($item->name,"__")===FALSE}
+            <td>{$item->label}</td>
+            <td>{$item->control}</td>
+            <td>{$form[$item->name.'_foreign']->control}</td>
+        </tr>
+    </table>
+
+</fieldset>
+
+<br />
+
+{$form['send']->control}
+{control indexDefForm 'end'}
+
+<script type="text/javascript">
+
+
+</script>
