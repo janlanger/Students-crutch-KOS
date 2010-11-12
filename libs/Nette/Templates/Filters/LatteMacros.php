@@ -12,8 +12,7 @@
 namespace Nette\Templates;
 
 use Nette,
-	Nette\String,
-	Nette\Tokenizer;
+	Nette\String;
 
 
 
@@ -31,7 +30,7 @@ use Nette,
  * - {link destination ...} control link
  * - {plink destination ...} presenter link
  * - {if ?} ... {elseif ?} ... {else} ... {/if}
- * - {ifset ?} ... {elseifset ?} ... {/if}
+ * - {ifset ?} ... {elseifset ?} ... {/ifset}
  * - {for ?} ... {/for}
  * - {foreach ?} ... {/foreach}
  * - {include ?}
@@ -95,11 +94,16 @@ class LatteMacros extends Nette\Object
 		'extends' => '<?php %:macroExtends% ?>',
 		'layout' => '<?php %:macroExtends% ?>',
 
-		'plink' => '<?php echo %:macroEscape%(%:macroPlink%) ?>',
-		'link' => '<?php echo %:macroEscape%(%:macroLink%) ?>',
+		'plink' => '<?php echo %:escape%(%:macroPlink%) ?>',
+		'link' => '<?php echo %:escape%(%:macroLink%) ?>',
 		'ifCurrent' => '<?php %:macroIfCurrent% ?>',
+		'/ifCurrent' => '<?php endif ?>',
 		'widget' => '<?php %:macroControl% ?>',
 		'control' => '<?php %:macroControl% ?>',
+
+		'@href' => ' href="<?php echo %:escape%(%:macroLink%) ?>"',
+		'@class' => '<?php if ($_l->tmp = trim(implode(" ", array_unique(%:formatArray%)))) echo \' class="\' . %:escape%($_l->tmp) . \'"\' ?>',
+		'@attr' => '<?php if (($_l->tmp = (string) (%%)) !== \'\') echo \' @@="\' . %:escape%($_l->tmp) . \'"\' ?>',
 
 		'attr' => '<?php echo Nette\Web\Html::el(NULL)->%:macroAttr%attributes() ?>',
 		'contentType' => '<?php %:macroContentType% ?>',
@@ -113,11 +117,11 @@ class LatteMacros extends Nette\Object
 		'r' => '}',
 
 		'!_' => '<?php echo %:macroTranslate% ?>',
-		'_' => '<?php echo %:macroEscape%(%:macroTranslate%) ?>',
+		'_' => '<?php echo %:escape%(%:macroTranslate%) ?>',
 		'!=' => '<?php echo %:macroModifiers% ?>',
-		'=' => '<?php echo %:macroEscape%(%:macroModifiers%) ?>',
+		'=' => '<?php echo %:escape%(%:macroModifiers%) ?>',
 		'!$' => '<?php echo %:macroDollar% ?>',
-		'$' => '<?php echo %:macroEscape%(%:macroDollar%) ?>',
+		'$' => '<?php echo %:escape%(%:macroDollar%) ?>',
 		'?' => '<?php %:macroModifiers% ?>',
 	);
 
@@ -125,13 +129,23 @@ class LatteMacros extends Nette\Object
 	const RE_IDENTIFIER = '[_a-zA-Z\x7F-\xFF][_a-zA-Z0-9\x7F-\xFF]*';
 
 	/** @internal */
+	const T_WHITESPACE = T_WHITESPACE;
+	const T_COMMENT = T_COMMENT;
 	const T_SYMBOL = -1;
+	const T_NUMBER = -2;
+	const T_VARIABLE = -3;
 
 	/** @var array */
 	public $macros;
 
+	/** @var Nette\Tokenizer */
+	private $tokenizer;
+
 	/** @var LatteFilter */
 	private $filter;
+
+	/** @var array */
+	private $nodes = array();
 
 	/** @var array */
 	private $blocks = array();
@@ -148,9 +162,6 @@ class LatteMacros extends Nette\Object
 	/** @var int */
 	private $cacheCounter;
 
-	/** @var bool */
-	private $oldSnippetMode = TRUE;
-
 	/**#@+ @internal block type */
 	const BLOCK_NAMED = 1;
 	const BLOCK_CAPTURE = 2;
@@ -165,6 +176,18 @@ class LatteMacros extends Nette\Object
 	public function __construct()
 	{
 		$this->macros = self::$defaultMacros;
+
+		$this->tokenizer = new Nette\Tokenizer(array(
+			self::T_WHITESPACE => '\s+',
+			self::T_COMMENT => '(?s)/\*.*?\*/',
+			LatteFilter::RE_STRING,
+			'(?:true|false|null|and|or|xor|clone|new|instanceof|return|continue|break|[A-Z_][A-Z0-9_]{2,})(?!\w)', // keyword or const
+			'\([a-z]+\)', // type casting
+			self::T_VARIABLE => '\$\w+',
+			self::T_NUMBER => '[+-]?[0-9]+(?:\.[0-9]+)?(?:e[0-9]+)?',
+			self::T_SYMBOL => '\w+(?:-\w+)*',
+			'::|=>|[^"\']', // =>, any char except quotes
+		), 'u');
 	}
 
 
@@ -178,6 +201,7 @@ class LatteMacros extends Nette\Object
 	public function initialize($filter, & $s)
 	{
 		$this->filter = $filter;
+		$this->nodes = array();
 		$this->blocks = array();
 		$this->namedBlocks = array();
 		$this->extends = NULL;
@@ -186,16 +210,6 @@ class LatteMacros extends Nette\Object
 
 		$filter->context = LatteFilter::CONTEXT_TEXT;
 		$filter->escape = 'Nette\Templates\TemplateHelpers::escapeHtml';
-
-		// remove comments
-		$s = String::replace($s, '#\\{\\*.*?\\*\\}[\r\n]*#s', '');
-
-		// snippets support (temporary solution)
-		$s = String::replace(
-			$s,
-			'#@(\\{[^}]+?\\})#s',
-			'<?php } ?>$1<?php if (Nette\Templates\SnippetHelper::$outputAllowed) { ?>'
-		);
 	}
 
 
@@ -209,26 +223,32 @@ class LatteMacros extends Nette\Object
 	{
 		// blocks closing check
 		if (count($this->blocks) === 1) { // auto-close last block
-			$s .= $this->macro('/block', '', '');
+			$s .= $this->macro('/block');
 
 		} elseif ($this->blocks) {
-			throw new \InvalidStateException("There are unclosed blocks.");
+			throw new LatteException("There are unclosed blocks.", 0, $this->filter->line);
 		}
-
-		// snippets support (temporary solution)
-		$s = "<?php\nif (" . 'Nette\Templates\SnippetHelper::$outputAllowed' . ") {\n?>$s<?php\n}\n?>";
 
 		// extends support
 		if ($this->namedBlocks || $this->extends) {
-			$s = "<?php\n"
-				. 'if ($_l->extends) { ob_start(); }' . "\n"
-				. 'elseif (isset($presenter, $control) && $presenter->isAjax()) { Nette\Templates\LatteMacros::renderSnippets($control, $_l, get_defined_vars()); }' . "\n"
-				. '?>' . $s . "<?php\n"
-				. 'if ($_l->extends) { ob_end_clean(); Nette\Templates\LatteMacros::includeTemplate($_l->extends, get_defined_vars(), $template)->render(); }' . "\n";
+			$s = '<?php
+if ($_l->extends) {
+	ob_start();
+} elseif (isset($presenter, $control) && $presenter->isAjax() && $control->isControlInvalid()) {
+	return Nette\Templates\LatteMacros::renderSnippets($control, $_l, get_defined_vars());
+}
+?>' . $s . '<?php
+if ($_l->extends) {
+	ob_end_clean();
+	Nette\Templates\LatteMacros::includeTemplate($_l->extends, get_defined_vars(), $template)->render();
+}
+';
 		} else {
-			$s = "<?php\n"
-				. 'if (isset($presenter, $control) && $presenter->isAjax()) { Nette\Templates\LatteMacros::renderSnippets($control, $_l, get_defined_vars()); }' . "\n"
-				. '?>' . $s;
+			$s = '<?php
+if (isset($presenter, $control) && $presenter->isAjax() && $control->isControlInvalid()) {
+	return Nette\Templates\LatteMacros::renderSnippets($control, $_l, get_defined_vars());
+}
+?>' . $s;
 		}
 
 		// named blocks
@@ -244,7 +264,9 @@ class LatteMacros extends Nette\Object
 						$func = '_lb' . substr(md5($uniq . $name), 0, 10) . '_' . preg_replace('#[^a-z0-9_]#i', '_', $name);
 						$code = "//\n// block $name\n//\n"
 							. "if (!function_exists(\$_l->blocks[" . var_export($name, TRUE) . "][] = '$func')) { "
-							. "function $func(\$_l, \$_args) { extract(\$_args)\n?>$content<?php\n}}";
+							. "function $func(\$_l, \$_args) { extract(\$_args)"
+							. ($name[0] === '_' ? '; $control->validateControl(' . var_export(substr($name, 1), TRUE) . ')' : '') // snippet
+							. "\n?>$content<?php\n}}";
 						return '';
 					}
 				);
@@ -267,31 +289,57 @@ class LatteMacros extends Nette\Object
 	 * @param  string
 	 * @return string
 	 */
-	public function macro($macro, $content, $modifiers)
+	public function macro($macro, $content = '', $modifiers = '')
 	{
+		if (func_num_args() === 1) {  // {macro val|modifiers}
+			list(, $macro, $content, $modifiers) = String::match($macro, '#^(/?[a-z0-9.:]+)?(.*?)(\\|[a-z](?:'.LatteFilter::RE_STRING.'|[^\'"]+)*)?$()#is');
+			$content = trim($content);
+		}
+
 		if ($macro === '') {
 			$macro = substr($content, 0, 2);
 			if (!isset($this->macros[$macro])) {
 				$macro = substr($content, 0, 1);
 				if (!isset($this->macros[$macro])) {
-					return NULL;
+					return FALSE;
 				}
 			}
 			$content = substr($content, strlen($macro));
 
 		} elseif (!isset($this->macros[$macro])) {
-			return NULL;
+			return FALSE;
 		}
+
+		$closing = $macro[0] === '/';
+		if ($closing) {
+			$node = array_pop($this->nodes);
+			if (!$node || "/$node->name" !== $macro || ($content && !String::startsWith("$node->content ", "$content ")) || $modifiers) {
+				$macro .= $content ? ' ' : '';
+				throw new LatteException("Unexpected macro {{$macro}{$content}{$modifiers}}"
+					. ($node ? ", expecting {/$node->name}" . ($content && $node->content ? " or eventually {/$node->name $node->content}" : '') : ''), 0, $this->filter->line);
+			}
+			$node->content = $node->modifiers = ''; // back compatibility
+
+		} else {
+			$node = (object) NULL;
+			$node->name = $macro;
+			$node->content = $content;
+			$node->modifiers = $modifiers;
+			if (isset($this->macros["/$macro"])) {
+				$this->nodes[] = $node;
+			}
+		}
+
 		$This = $this;
 		return String::replace(
 			$this->macros[$macro],
 			'#%(.*?)%#',
-			function ($m) use ($This, $content, $modifiers) {
+			function ($m) use ($This, $node) {
 				if ($m[1]) {
 					return callback($m[1][0] === ':' ? array($This, substr($m[1], 1)) : $m[1])
-						->invoke($content, $modifiers);
+						->invoke($node->content, $node->modifiers);
 				} else {
-					return $content;
+					return $This->formatMacroArgs($node->content);
 				}
 			}
 		);
@@ -335,8 +383,31 @@ class LatteMacros extends Nette\Object
 	 */
 	public function attrsMacro($code, $attrs, $closing)
 	{
-		$left = $right = '';
+		foreach ($attrs as $name => $content) {
+			if (substr($name, 0, 5) === 'attr-') {
+				if (!$closing) {
+					$pos = strrpos($code, '>');
+					if ($code[$pos-1] === '/') $pos--;
+					$code = substr_replace($code, str_replace('@@', substr($name, 5), $this->macro("@attr", $content)), $pos, 0);
+				}
+				unset($attrs[$name]);
+			}
+		}
+
+		$left = $right = array();
 		foreach ($this->macros as $name => $foo) {
+			if ($name[0] === '@') {
+				$name = substr($name, 1);
+				if (isset($attrs[$name])) {
+					if (!$closing) {
+						$pos = strrpos($code, '>');
+						if ($code[$pos-1] === '/') $pos--;
+						$code = substr_replace($code, $this->macro("@$name", $attrs[$name]), $pos, 0);
+					}
+					unset($attrs[$name]);
+				}
+			}
+
 			if (!isset($this->macros["/$name"])) { // must be pair-macro
 				continue;
 			}
@@ -344,31 +415,41 @@ class LatteMacros extends Nette\Object
 			$macro = $closing ? "/$name" : $name;
 			if (isset($attrs[$name])) {
 				if ($closing) {
-					$right .= $this->macro($macro, '', '');
+					$right[] = array($macro, '');
 				} else {
-					$left = $this->macro($macro, $attrs[$name], '') . $left;
+					array_unshift($left, array($macro, $attrs[$name]));
 				}
 			}
 
 			$innerName = "inner-$name";
 			if (isset($attrs[$innerName])) {
 				if ($closing) {
-					$left .= $this->macro($macro, '', '');
+					$left[] = array($macro, '');
 				} else {
-					$right = $this->macro($macro, $attrs[$innerName], '') . $right;
+					array_unshift($right, array($macro, $attrs[$innerName]));
 				}
 			}
 
 			$tagName = "tag-$name";
 			if (isset($attrs[$tagName])) {
-				$left = $this->macro($name, $attrs[$tagName], '') . $left;
-				$right .= $this->macro("/$name", '', '');
+				array_unshift($left, array($name, $attrs[$tagName]));
+				$right[] = array("/$name", '');
 			}
 
 			unset($attrs[$name], $attrs[$innerName], $attrs[$tagName]);
 		}
-
-		return $attrs ? NULL : $left . $code . $right;
+		if ($attrs) {
+			return FALSE;
+		}
+		$s = '';
+		foreach ($left as $item) {
+			$s .= $this->macro($item[0], $item[1]);
+		}
+		$s .= $code;
+		foreach ($right as $item) {
+			$s .= $this->macro($item[0], $item[1]);
+		}
+		return $s;
 	}
 
 
@@ -382,7 +463,7 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroDollar($var, $modifiers)
 	{
-		return self::formatModifiers('$' . $var, $modifiers);
+		return $this->formatModifiers($this->formatMacroArgs('$' . $var), $modifiers);
 	}
 
 
@@ -392,7 +473,7 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroTranslate($var, $modifiers)
 	{
-		return self::formatModifiers($var, '|translate' . $modifiers);
+		return $this->formatModifiers($this->formatMacroArgs($var), '|translate' . $modifiers);
 	}
 
 
@@ -425,7 +506,7 @@ class LatteMacros extends Nette\Object
 			break;
 
 		default:
-			throw new \InvalidStateException("Unknown syntax '$var' on line {$this->filter->line}.");
+			throw new LatteException("Unknown syntax '$var'", 0, $this->filter->line);
 		}
 	}
 
@@ -436,16 +517,16 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroInclude($content, $modifiers, $isDefinition = FALSE)
 	{
-		$destination = self::fetchToken($content); // destination [,] [params]
-		$params = self::formatArray($content) . ($content ? ' + ' : '');
+		$destination = $this->fetchToken($content); // destination [,] [params]
+		$params = $this->formatArray($content) . ($content ? ' + ' : '');
 
 		if ($destination === NULL) {
-			throw new \InvalidStateException("Missing destination in {include} on line {$this->filter->line}.");
+			throw new LatteException("Missing destination in {include}", 0, $this->filter->line);
 
 		} elseif ($destination[0] === '#') { // include #block
 			$destination = ltrim($destination, '#');
 			if (!String::match($destination, '#^' . self::RE_IDENTIFIER . '$#')) {
-				throw new \InvalidStateException("Included block name must be alphanumeric string, '$destination' given on line {$this->filter->line}.");
+				throw new LatteException("Included block name must be alphanumeric string, '$destination' given.", 0, $this->filter->line);
 			}
 
 			$parent = $destination === 'parent';
@@ -453,7 +534,7 @@ class LatteMacros extends Nette\Object
 				$item = end($this->blocks);
 				while ($item && $item[0] !== self::BLOCK_NAMED) $item = prev($this->blocks);
 				if (!$item) {
-					throw new \InvalidStateException("Cannot include $destination block outside of any block on line {$this->filter->line}.");
+					throw new LatteException("Cannot include $destination block outside of any block.", 0, $this->filter->line);
 				}
 				$destination = $item[1];
 			}
@@ -463,14 +544,14 @@ class LatteMacros extends Nette\Object
 				? "call_user_func(reset(\$_l->blocks[$name]), \$_l, $params)"
 				: 'Nette\Templates\LatteMacros::callBlock' . ($parent ? 'Parent' : '') . "(\$_l, $name, $params)";
 			return $modifiers
-				? "ob_start(); $cmd; echo " . self::formatModifiers('ob_get_clean()', $modifiers)
+				? "ob_start(); $cmd; echo " . $this->formatModifiers('ob_get_clean()', $modifiers)
 				: $cmd;
 
 		} else { // include "file"
-			$destination = self::formatString($destination);
+			$destination = $this->formatString($destination);
 			$cmd = 'Nette\Templates\LatteMacros::includeTemplate(' . $destination . ', ' . $params . '$template->getParams(), $_l->templates[' . var_export($this->uniq, TRUE) . '])';
 			return $modifiers
-				? 'echo ' . self::formatModifiers($cmd . '->__toString(TRUE)', $modifiers)
+				? 'echo ' . $this->formatModifiers($cmd . '->__toString(TRUE)', $modifiers)
 				: $cmd . '->render()';
 		}
 	}
@@ -482,18 +563,17 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroExtends($content)
 	{
-		$destination = self::fetchToken($content); // destination
-		if ($destination === NULL) {
-			throw new \InvalidStateException("Missing destination in {extends} on line {$this->filter->line}.");
+		if (!$content) {
+			throw new LatteException("Missing destination in {extends}", 0, $this->filter->line);
 		}
 		if (!empty($this->blocks)) {
-			throw new \InvalidStateException("{extends} must be placed outside any block; on line {$this->filter->line}.");
+			throw new LatteException("{extends} must be placed outside any block.", 0, $this->filter->line);
 		}
 		if ($this->extends !== NULL) {
-			throw new \InvalidStateException("Multiple {extends} declarations are not allowed; on line {$this->filter->line}.");
+			throw new LatteException("Multiple {extends} declarations are not allowed.", 0, $this->filter->line);
 		}
-		$this->extends = $destination !== 'none';
-		return $this->extends ? '$_l->extends = ' . self::formatString($destination) : '';
+		$this->extends = $content !== 'none';
+		return $this->extends ? '$_l->extends = ' . ($content === 'auto' ? '$layout' : $this->formatMacroArgs($content)) : '';
 	}
 
 
@@ -503,7 +583,7 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroBlock($content, $modifiers)
 	{
-		$name = self::fetchToken($content); // block [,] [params]
+		$name = $this->fetchToken($content); // block [,] [params]
 
 		if ($name === NULL) { // anonymous block
 			$this->blocks[] = array(self::BLOCK_ANONYMOUS, NULL, $modifiers);
@@ -512,17 +592,17 @@ class LatteMacros extends Nette\Object
 		} else { // #block
 			$name = ltrim($name, '#');
 			if (!String::match($name, '#^' . self::RE_IDENTIFIER . '$#')) {
-				throw new \InvalidStateException("Block name must be alphanumeric string, '$name' given on line {$this->filter->line}.");
+				throw new LatteException("Block name must be alphanumeric string, '$name' given.", 0, $this->filter->line);
 
 			} elseif (isset($this->namedBlocks[$name])) {
-				throw new \InvalidStateException("Cannot redeclare block '$name'; on line {$this->filter->line}.");
+				throw new LatteException("Cannot redeclare block '$name'", 0, $this->filter->line);
 			}
 
 			$top = empty($this->blocks);
 			$this->namedBlocks[$name] = $name;
 			$this->blocks[] = array(self::BLOCK_NAMED, $name, '');
-			if ($name[0] === '_') { // snippet - experimental
-				$tag = self::fetchToken($content);  // [name [,]] [tag]
+			if ($name[0] === '_') { // snippet
+				$tag = $this->fetchToken($content);  // [name [,]] [tag]
 				$tag = trim($tag, '<>');
 				$namePhp = var_export(substr($name, 1), TRUE);
 				if (!$tag) $tag = 'div';
@@ -554,16 +634,12 @@ class LatteMacros extends Nette\Object
 		if ($type === self::BLOCK_CAPTURE) { // capture - back compatibility
 			$this->blocks[] = array($type, $name, $modifiers);
 			return $this->macroCaptureEnd($content);
-		}
-
-		if (($type !== self::BLOCK_NAMED && $type !== self::BLOCK_ANONYMOUS) || ($content && $content !== $name)) {
-			throw new \InvalidStateException("Tag {/block $content} was not expected here on line {$this->filter->line}.");
 
 		} elseif ($type === self::BLOCK_NAMED) { // block
 			return "{/block $name}";
 
 		} else { // anonymous block
-			return $modifiers === '' ? '' : 'echo ' . self::formatModifiers('ob_get_clean()', $modifiers);
+			return $modifiers === '' ? '' : 'echo ' . $this->formatModifiers('ob_get_clean()', $modifiers);
 		}
 	}
 
@@ -574,18 +650,7 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroSnippet($content)
 	{
-		if (substr($content, 0, 1) === ':' || !$this->oldSnippetMode) { // experimental behaviour
-			$this->oldSnippetMode = FALSE;
-			return $this->macroBlock('_' . ltrim($content, ':'), '');
-		}
-		$args = array('');
-		if ($snippet = self::fetchToken($content)) {  // [name [,]] [tag]
-			$args[] = self::formatString($snippet);
-		}
-		if ($content) {
-			$args[] = self::formatString($content);
-		}
-		return '} if ($_l->foo = Nette\Templates\SnippetHelper::create($control' . implode(', ', $args) . ')) { $_l->snippets[] = $_l->foo';
+		return $this->macroBlock('_' . $content, '');
 	}
 
 
@@ -595,10 +660,7 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroSnippetEnd($content)
 	{
-		if (!$this->oldSnippetMode) {
-			return $this->macroBlockEnd('', '');
-		}
-		return 'array_pop($_l->snippets)->finish(); } if (Nette\Templates\SnippetHelper::$outputAllowed) {';
+		return $this->macroBlockEnd('', '');
 	}
 
 
@@ -608,10 +670,10 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroCapture($content, $modifiers)
 	{
-		$name = self::fetchToken($content); // $variable
+		$name = $this->fetchToken($content); // $variable
 
 		if (substr($name, 0, 1) !== '$') {
-			throw new \InvalidStateException("Invalid capture block parameter '$name' on line {$this->filter->line}.");
+			throw new LatteException("Invalid capture block parameter '$name'", 0, $this->filter->line);
 		}
 
 		$this->blocks[] = array(self::BLOCK_CAPTURE, $name, $modifiers);
@@ -626,12 +688,7 @@ class LatteMacros extends Nette\Object
 	public function macroCaptureEnd($content)
 	{
 		list($type, $name, $modifiers) = array_pop($this->blocks);
-
-		if ($type !== self::BLOCK_CAPTURE || ($content && $content !== $name)) {
-			throw new \InvalidStateException("Tag {/capture $content} was not expected here on line {$this->filter->line}.");
-		}
-
-		return $name . '=' . self::formatModifiers('ob_get_clean()', $modifiers);
+		return $name . '=' . $this->formatModifiers('ob_get_clean()', $modifiers);
 	}
 
 
@@ -643,7 +700,7 @@ class LatteMacros extends Nette\Object
 	{
 		return 'if (Nette\Templates\CachingHelper::create('
 			. var_export($this->uniq . ':' . $this->cacheCounter++, TRUE)
-			. ', $_l->g->caches' . self::formatArray($content, ', ') . ')) {';
+			. ', $_l->g->caches' . $this->formatArray($content, ', ') . ')) {';
 	}
 
 
@@ -653,7 +710,7 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroForeach($content)
 	{
-		return '$iterator = $_l->its[] = new Nette\SmartCachingIterator(' . preg_replace('# +as +#i', ') as ', $content, 1);
+		return '$iterator = $_l->its[] = new Nette\SmartCachingIterator(' . preg_replace('# +as +#i', ') as ', $this->formatMacroArgs($content), 1);
 	}
 
 
@@ -710,7 +767,7 @@ class LatteMacros extends Nette\Object
 	public function macroDump($content)
 	{
 		return 'Nette\Debug::barDump('
-			. ($content ? 'array(' . var_export($content, TRUE) . " => $content)" : 'get_defined_vars()')
+			. ($content ? 'array(' . var_export($this->formatMacroArgs($content), TRUE) . " => $content)" : 'get_defined_vars()')
 			. ', "Template " . str_replace(dirname(dirname($template->getFile())), "\xE2\x80\xA6", $template->getFile()))';
 	}
 
@@ -731,18 +788,20 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroControl($content)
 	{
-		$pair = self::fetchToken($content); // control[:method]
+		$pair = $this->fetchToken($content); // control[:method]
 		if ($pair === NULL) {
-			throw new \InvalidStateException("Missing control name in {control} on line {$this->filter->line}.");
+			throw new LatteException("Missing control name in {control}", 0, $this->filter->line);
 		}
 		$pair = explode(':', $pair, 2);
-		$name = self::formatString($pair[0]);
+		$name = $this->formatString($pair[0]);
 		$method = isset($pair[1]) ? ucfirst($pair[1]) : '';
 		$method = String::match($method, '#^(' . self::RE_IDENTIFIER . '|)$#') ? "render$method" : "{\"render$method\"}";
-		$param = self::formatArray($content);
+		$param = $this->formatArray($content);
 		if (strpos($content, '=>') === FALSE) $param = substr($param, 6, -1); // removes array()
-		return ($name[0] === '$' ? "if (is_object($name)) {$name}->$method($param); else " : '')
-			. "\$control->getWidget($name)->$method($param)";
+		return ($name[0] === '$' ? "if (is_object($name)) \$_ctrl = $name; else " : '')
+			. '$_ctrl = $control->getWidget(' . $name . '); '
+			. 'if ($_ctrl instanceof Nette\Application\IPartiallyRenderable) $_ctrl->validateControl(); '
+			. "\$_ctrl->$method($param)";
 	}
 
 
@@ -752,7 +811,7 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroLink($content, $modifiers)
 	{
-		return self::formatModifiers('$control->link(' . $this->formatLink($content) .')', $modifiers);
+		return $this->formatModifiers('$control->link(' . $this->formatLink($content) .')', $modifiers);
 	}
 
 
@@ -762,7 +821,7 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroPlink($content, $modifiers)
 	{
-		return self::formatModifiers('$presenter->link(' . $this->formatLink($content) .')', $modifiers);
+		return $this->formatModifiers('$presenter->link(' . $this->formatLink($content) .')', $modifiers);
 	}
 
 
@@ -783,7 +842,7 @@ class LatteMacros extends Nette\Object
 	 */
 	private function formatLink($content)
 	{
-		return self::formatString(self::fetchToken($content)) . self::formatArray($content, ', '); // destination [,] args
+		return $this->formatString($this->fetchToken($content)) . $this->formatArray($content, ', '); // destination [,] args
 	}
 
 
@@ -793,36 +852,17 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroVar($content, $modifiers, $extract = FALSE)
 	{
-		$tokenizer = new Tokenizer(array(
-			Tokenizer::T_WHITESPACE => '\s+',
-			Tokenizer::RE_STRING,
-			'true|false|null|and|or|xor|clone|new|instanceof',
-			self::T_SYMBOL => '\$?[0-9a-zA-Z_]+', // variable, string, number
-			'=>|[^"\']', // =>, any char except quotes
-		), 'i');
-
 		$out = '';
-		$quote = $var = TRUE;
-		$depth = 0;
-		foreach ($tokenizer->tokenize($content) as $n => $token) {
-			list($token, $name) = $token;
+		$var = TRUE;
+		foreach ($this->parseMacro($content) as $rec) {
+			list($token, $name, $depth) = $rec;
 
-			if ($name === self::T_SYMBOL) {
-				if ($var) {
-					if ($extract) {
-						$token = "'" . ($token[0] === '$' ? substr($token, 1) : $token) . "'";
-					} else {
-						$token = $token[0] === '$' ? $token : '$' . $token;
-		}
-				} elseif ($quote && $token[0] !== '$' && !is_numeric($token) && in_array($tokenizer->nextToken($n), array(',', '=>', ')', NULL), TRUE)) {
-					$token = "'$token'";
-		}
-			} elseif ($token === '(') {
-				$depth++;
-
-			} elseif ($token === ')') {
-				$depth--;
-
+			if ($var && ($name === self::T_SYMBOL || $name === self::T_VARIABLE)) {
+				if ($extract) {
+					$token = "'" . trim($token, "'$") . "'";
+				} else {
+					$token = '$' . trim($token, "'$");
+				}
 			} elseif (($token === '=' || $token === '=>') && $depth === 0) {
 				$token = $extract ? '=>' : '=';
 				$var = FALSE;
@@ -830,10 +870,6 @@ class LatteMacros extends Nette\Object
 			} elseif ($token === ',' && $depth === 0) {
 				$token = $extract ? ',' : ';';
 				$var = TRUE;
-	}
-
-			if ($name !== Tokenizer::T_WHITESPACE) {
-				$quote = in_array($token, array('[', ',', '=', '(', '=>'));
 			}
 			$out .= $token;
 		}
@@ -848,16 +884,6 @@ class LatteMacros extends Nette\Object
 	public function macroDefault($content)
 	{
 		return 'extract(array(' . $this->macroVar($content, '', TRUE) . '), EXTR_SKIP)';
-		}
-
-
-
-	/**
-	 * Escaping helper.
-	 */
-	public function macroEscape($content)
-	{
-		return $this->filter->escape;
 	}
 
 
@@ -867,7 +893,17 @@ class LatteMacros extends Nette\Object
 	 */
 	public function macroModifiers($content, $modifiers)
 	{
-		return self::formatModifiers($content, $modifiers);
+		return $this->formatModifiers($this->formatMacroArgs($content), $modifiers);
+	}
+
+
+
+	/**
+	 * Escaping helper.
+	 */
+	public function escape($content)
+	{
+		return $this->filter->escape;
 	}
 
 
@@ -882,30 +918,22 @@ class LatteMacros extends Nette\Object
 	 * @param  string
 	 * @return string
 	 */
-	public static function formatModifiers($var, $modifiers)
+	public function formatModifiers($var, $modifiers)
 	{
 		if (!$modifiers) return $var;
-		$tokenizer = new Tokenizer(array(
-			Tokenizer::T_WHITESPACE => '\s+',
-			Tokenizer::RE_STRING,
-			'true|false|null|and|or|xor|clone|new|instanceof',
-			'\$[_a-z0-9\x7F-\xFF]+', // variable
-			self::T_SYMBOL => '[_a-z0-9\x7F-\xFF]+', // string, number
-			'[^"\']', // =>, any char except quotes
-		), 'i');
-
 		$inside = FALSE;
-		foreach ($tokenizer->tokenize(ltrim($modifiers, '|')) as $n => $token) {
-			list($token, $name) = $token;
-			if ($name === Tokenizer::T_WHITESPACE) {
+		foreach ($this->parseMacro(ltrim($modifiers, '|')) as $rec) {
+			list($token, $name) = $rec;
+
+			if ($name === self::T_WHITESPACE) {
 				$var = rtrim($var) . ' ';
 
 			} elseif (!$inside) {
 				if ($name === self::T_SYMBOL) {
-					$var = "\$template->$token($var";
+					$var = "\$template->" . trim($token, "'") . "($var";
 					$inside = TRUE;
 				} else {
-					throw new \InvalidStateException("Modifier name must be alphanumeric string, '$token' given.");
+					throw new LatteException("Modifier name must be alphanumeric string, '$token' given.", 0, $this->filter->line);
 				}
 			} else {
 				if ($token === ':' || $token === ',') {
@@ -915,16 +943,9 @@ class LatteMacros extends Nette\Object
 					$var = $var . ')';
 					$inside = FALSE;
 
-				} elseif ($name === self::T_SYMBOL && $quote && !is_numeric($token)
-					&& in_array($tokenizer->nextToken($n), array(',', ':', ')', '|', NULL), TRUE)) {
-					$var .= "'$token'";
-
 				} else {
 					$var .= $token;
 				}
-			}
-			if ($name !== Tokenizer::T_WHITESPACE) {
-				$quote = in_array($token, array('[', ',', '=', '(', ':'));
 			}
 		}
 		return $inside ? "$var)" : $var;
@@ -937,54 +958,62 @@ class LatteMacros extends Nette\Object
 	 * @param  string
 	 * @return string
 	 */
-	public static function fetchToken(& $s)
+	public function fetchToken(& $s)
 	{
-		if ($matches = String::match($s, '#^((?>'.Tokenizer::RE_STRING.'|[^\'"\s,]+)+)\s*,?\s*(.*)$#')) { // token [,] tail
+		if ($matches = String::match($s, '#^((?>'.LatteFilter::RE_STRING.'|[^\'"\s,]+)+)\s*,?\s*(.*)$#')) { // token [,] tail
 			$s = $matches[2];
 			return $matches[1];
 		}
-
 		return NULL;
 	}
 
 
 
 	/**
-	 * Formats parameters to PHP array.
+	 * Reformats Latte to PHP code.
 	 * @param  string
 	 * @param  string
 	 * @return string
 	 */
-	public static function formatArray($input, $prefix = '')
+	public function formatMacroArgs($input)
 	{
-		$tokenizer = new Tokenizer(array(
-			Tokenizer::T_WHITESPACE => '\s+',
-			Tokenizer::T_COMMENT => '/\*.*?\*/',
-			Tokenizer::RE_STRING,
-			'true|false|null|and|or|xor|clone|new|instanceof',
-			'\$[_a-z0-9\x7F-\xFF]+', // variable
-			self::T_SYMBOL => '[_a-z0-9\x7F-\xFF]+', // string, number
-			'=>|[^"\']', // =>, any char except quotes
-		), 'i');
-
 		$out = '';
-		$quote = TRUE;
-		foreach ($tokenizer->tokenize($input) as $n => $token) {
-			list($token, $name) = $token;
+		foreach ($this->parseMacro($input) as $token) {
+			$out .= $token[0];
+		}
+		return $out;
+	}
 
-			if ($name === Tokenizer::T_COMMENT) {
-				continue;
 
-			} elseif ($name === self::T_SYMBOL && $quote && !is_numeric($token)
-				&& in_array($tokenizer->nextToken($n), array(',', '=>', ')', NULL), TRUE)) {
-				$token = "'$token'";
-			}
-			if ($name !== Tokenizer::T_WHITESPACE) {
-				$quote = in_array($token, array('[', ',', '=', '(', '=>'));
+
+	/**
+	 * Reformats Latte to PHP array.
+	 * @param  string
+	 * @param  string
+	 * @return string
+	 */
+	public function formatArray($input, $prefix = '')
+	{
+		$tokens = $this->parseMacro($input);
+		if (!$tokens) {
+			return '';
+		}
+		$out = '';
+		$expand = NULL;
+		$tokens[] = NULL; // sentinel
+		foreach ($tokens as $rec) {
+			list($token, $name, $depth) = $rec;
+			if ($token === '(expand)' && $depth === 0) {
+				$expand = TRUE;
+				$token = '),';
+
+			} elseif ($expand && ($token === ',' || $token === NULL) && !$depth) {
+				$expand = FALSE;
+				$token = ', array(';
 			}
 			$out .= $token;
 		}
-		return $out === '' ? '' : $prefix . "array($out)";
+		return $prefix . ($expand === NULL ? "array($out)" : "array_merge(array($out))");
 	}
 
 
@@ -994,10 +1023,83 @@ class LatteMacros extends Nette\Object
 	 * @param  string
 	 * @return string
 	 */
-	public static function formatString($s)
+	public function formatString($s)
 	{
 		static $keywords = array('true'=>1, 'false'=>1, 'null'=>1);
 		return (is_numeric($s) || strspn($s, '\'"$') || isset($keywords[strtolower($s)])) ? $s : '"' . $s . '"';
+	}
+
+
+
+	/**
+	 * Tokenizer and preparser.
+	 * @return array
+	 */
+	private function parseMacro($input)
+	{
+		$this->tokenizer->tokenize($input);
+		$this->tokenizer->tokens[] = NULL; // sentinel
+
+		$inTernary = $lastSymbol = $prev = NULL;
+		$tokens = $arrays = array();
+		$n = -1;
+		while (++$n < count($this->tokenizer->tokens)) {
+			list($token, $name) = $current = $this->tokenizer->tokens[$n];
+			$depth = count($arrays);
+
+			if ($name === self::T_COMMENT) {
+				continue; // remove comments
+
+			} elseif ($name === self::T_WHITESPACE) {
+				$current[2] = $depth;
+				$tokens[] = $current;
+				continue;
+
+			} elseif ($name === self::T_SYMBOL && in_array($prev[0], array(',', '(', '[', '=', '=>', ':', '?', NULL), TRUE)) {
+				$lastSymbol = count($tokens); // quoting pre-requirements
+
+			} elseif (is_int($lastSymbol) && in_array($token, array(',', ')', ']', '=', '=>', ':', '|', NULL), TRUE)) {
+				$tokens[$lastSymbol][0] = "'" . $tokens[$lastSymbol][0] . "'"; // quote symbols
+				$lastSymbol = NULL;
+
+			} else {
+				$lastSymbol = NULL;
+			}
+
+			if ($token === '?') { // short ternary operators without :
+				$inTernary = $depth;
+
+			} elseif ($token === ':') {
+				$inTernary = NULL;
+
+			} elseif ($inTernary === $depth && ($token === ',' || $token === ')' || $token === ']' || $token === NULL)) { // close ternary
+				$tokens[] = array(':', NULL, $depth);
+				$tokens[] = array('null', NULL, $depth);
+				$inTernary = NULL;
+			}
+
+			if ($token === '[') { // simplified array syntax [...]
+				if ($arrays[] = $prev[0] !== ']' && $prev[1] !== self::T_SYMBOL && $prev[1] !== self::T_VARIABLE) {
+					$tokens[] = array('array', NULL, $depth);
+					$current = array('(', NULL);
+				}
+			} elseif ($token === ']') {
+				if (array_pop($arrays) === TRUE) {
+					$current = array(')', NULL);
+				}
+			} elseif ($token === '(') { // only count
+				$arrays[] = '(';
+
+			} elseif ($token === ')') { // only count
+				array_pop($arrays);
+			}
+
+			if ($current) {
+				$current[2] = $depth;
+				$tokens[] = $prev = $current;
+			}
+		}
+		return $tokens;
 	}
 
 
@@ -1118,6 +1220,13 @@ class LatteMacros extends Nette\Object
 				$function = reset($function);
 				$function($local, $params);
 				$payload->snippets[$control->getSnippetId(substr($name, 1))] = ob_get_clean();
+			}
+		}
+		if ($control instanceof Nette\Application\Control) {
+			foreach ($control->getComponents(FALSE, 'Nette\Application\Control') as $child) {
+				if ($child->isControlInvalid()) {
+					$child->render();
+				}
 			}
 		}
 	}

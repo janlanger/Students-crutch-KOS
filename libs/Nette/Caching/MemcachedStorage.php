@@ -61,8 +61,8 @@ class MemcachedStorage extends Nette\Object implements ICacheStorage
 		$this->memcache = new \Memcache;
 		Nette\Debug::tryError();
 		$this->memcache->connect($host, $port);
-		if (Nette\Debug::catchError($msg)) {
-			throw new \InvalidStateException($msg);
+		if (Nette\Debug::catchError($e)) {
+			throw new \InvalidStateException($e->getMessage());
 		}
 	}
 
@@ -114,13 +114,14 @@ class MemcachedStorage extends Nette\Object implements ICacheStorage
 			throw new \NotSupportedException('Dependent items are not supported by MemcachedStorage.');
 		}
 
+		$key = $this->prefix . $key;
 		$meta = array(
 			self::META_DATA => $data,
 		);
 
 		$expire = 0;
-		if (isset($dp[Cache::EXPIRE])) {
-			$expire = (int) $dp[Cache::EXPIRE];
+		if (isset($dp[Cache::EXPIRATION])) {
+			$expire = (int) $dp[Cache::EXPIRATION];
 			if (!empty($dp[Cache::SLIDING])) {
 				$meta[self::META_DELTA] = $expire; // sliding time
 			}
@@ -134,10 +135,10 @@ class MemcachedStorage extends Nette\Object implements ICacheStorage
 			if (!$this->context) {
 				throw new \InvalidStateException('CacheJournal has not been provided.');
 			}
-			$this->getJournal()->write($this->prefix . $key, $dp);
+			$this->getJournal()->write($key, $dp);
 		}
 
-		$this->memcache->set($this->prefix . $key, $meta, 0, $expire);
+		$this->memcache->set($key, $meta, 0, $expire);
 	}
 
 

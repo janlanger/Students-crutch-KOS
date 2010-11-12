@@ -66,6 +66,17 @@ class RadioList extends FormControl
 
 
 	/**
+	 * Has been any radio button selected?
+	 * @return bool
+	 */
+	public function isFilled()
+	{
+		return $this->getValue() !== NULL;
+	}
+
+
+
+	/**
 	 * Sets options from which to choose.
 	 * @param  array
 	 * @return RadioList  provides a fluent interface
@@ -151,7 +162,7 @@ class RadioList extends FormControl
 			}
 
 			$container->add((string) $control . (string) $label . $separator);
-			unset($control->data['nette-rules']);
+			$control->data('nette-rules', NULL);
 			// TODO: separator after last item?
 		}
 
@@ -170,18 +181,6 @@ class RadioList extends FormControl
 		$label = parent::getLabel($caption);
 		$label->for = NULL;
 		return $label;
-	}
-
-
-
-	/**
-	 * Filled validator: has been any radio button selected?
-	 * @param  IFormControl
-	 * @return bool
-	 */
-	public static function validateFilled(IFormControl $control)
-	{
-		return $control->getValue() !== NULL;
 	}
 
 }

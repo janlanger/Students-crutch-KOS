@@ -35,14 +35,17 @@ class CachingHelper extends Nette\Object
 	/**
 	 * Starts the output cache. Returns CachingHelper object if buffering was started.
 	 * @param  string
-	 * @param  CachingHelper
+	 * @param  array of CachingHelper
 	 * @param  array
 	 * @return CachingHelper
 	 */
 	public static function create($key, & $parents, $args = NULL)
 	{
 		if ($args) {
-			$key .= md5(serialize($args));
+			$key .= array_intersect_key($args, range(0, count($args)));
+			if (array_key_exists('if', $args) && !$args['if']) {
+				return $parents[] = new self;
+			}
 		}
 		if ($parents) {
 			end($parents)->frame[Cache::ITEMS][] = $key;
@@ -58,7 +61,7 @@ class CachingHelper extends Nette\Object
 			$obj->key = $key;
 			$obj->frame = array(
 				Cache::TAGS => isset($args['tags']) ? $args['tags'] : NULL,
-				Cache::EXPIRE => isset($args['expire']) ? $args['expire'] : '+ 7 days',
+				Cache::EXPIRATION => isset($args['expire']) ? $args['expire'] : '+ 7 days',
 			);
 			ob_start();
 			return $parents[] = $obj;
@@ -73,7 +76,9 @@ class CachingHelper extends Nette\Object
 	 */
 	public function save()
 	{
-		$this->getCache()->save($this->key, ob_get_flush(), $this->frame);
+		if ($this->key !== NULL) {
+			$this->getCache()->save($this->key, ob_get_flush(), $this->frame);
+		}
 		$this->key = $this->frame = NULL;
 	}
 

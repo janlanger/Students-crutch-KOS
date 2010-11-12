@@ -50,7 +50,11 @@ class Context extends FreezableObject implements IContext
 			throw new AmbiguousServiceException("Service named '$name' has already been registered.");
 		}
 
-		if (is_object($service) && !($service instanceof \Closure || $service instanceof Callback)) {
+		if ($service instanceof self) {
+			$this->registry[$lower] = & $service->registry[$lower];
+			$this->factories[$lower] = & $service->factories[$lower];
+
+		} elseif (is_object($service) && !($service instanceof \Closure || $service instanceof Callback)) {
 			if (!$singleton || $options) {
 				throw new \InvalidArgumentException("Service named '$name' is an instantiated object and must therefore be singleton without options.");
 			}
@@ -118,8 +122,12 @@ class Context extends FreezableObject implements IContext
 					throw new AmbiguousServiceException("Cannot instantiate service '$name', class '$factory' not found.");
 				}
 				$service = new $factory;
-				if ($options && method_exists($service, 'setOptions')) {
-					$service->setOptions($options); // TODO: better!
+				if ($options) {
+					if (method_exists($service, 'setOptions')) {
+						$service->setOptions($options); // TODO: better!
+					} else {
+						throw new \InvalidStateException("Unable to set options, method $factory::setOptions() is missing.");
+					}
 				}
 
 			} else { // factory callback

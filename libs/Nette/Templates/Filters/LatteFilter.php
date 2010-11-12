@@ -12,8 +12,7 @@
 namespace Nette\Templates;
 
 use Nette,
-	Nette\String,
-	Nette\Tokenizer;
+	Nette\String;
 
 
 
@@ -24,6 +23,9 @@ use Nette,
  */
 class LatteFilter extends Nette\Object
 {
+	/** regular expression for single & double quoted PHP string */
+	const RE_STRING = '\'(?:\\\\.|[^\'\\\\])*\'|"(?:\\\\.|[^"\\\\])*"';
+
 	/** @internal special HTML tag or attribute prefix */
 	const HTML_PREFIX = 'n:';
 
@@ -93,8 +95,12 @@ class LatteFilter extends Nette\Object
 	 */
 	public function __invoke($s)
 	{
+		if (!String::checkEncoding($s)) {
+			throw new LatteException('Template is not valid UTF-8 stream.');
+		}
+
 		if (!$this->macroRe) {
-			$this->setDelimiters('\\{(?![\\s\'"{}])', '\\}');
+			$this->setDelimiters('\\{(?![\\s\'"{}*])', '\\}');
 		}
 
 		// context-aware escaping
@@ -133,17 +139,18 @@ class LatteFilter extends Nette\Object
 			if (!$matches) { // EOF
 				break;
 
-			} elseif (!empty($matches['macro'])) { // {macro|modifiers}
-				list(, $macro, $value, $modifiers) = String::match($matches['macro'], '#^(/?[a-z0-9.:]+)?(.*?)(\\|[a-z](?:'.Tokenizer::RE_STRING.'|[^\'"]+)*)?$()#is');
-				$code = $this->handler->macro($macro, trim($value), isset($modifiers) ? $modifiers : '');
-				if ($code === NULL) {
-					throw new \InvalidStateException("Unknown macro {{$matches['macro']}} on line $this->line.");
+			} elseif (!empty($matches['comment'])) { // {* *}
+
+			} elseif (!empty($matches['macro'])) { // {macro}
+				$code = $this->handler->macro($matches['macro']);
+				if ($code === FALSE) {
+					throw new LatteException("Unknown macro {{$matches['macro']}}", 0, $this->line);
 				}
-				$nl = isset($matches['newline']) ? "\n" : ''; // double newline
-				if ($nl && $matches['indent'] && strncmp($code, '<?php echo ', 11)) {
-					$this->output .= "\n" . $code; // remove indent, single newline
+				$nl = isset($matches['newline']) ? "\n" : '';
+				if ($nl && $matches['indent'] && strncmp($code, '<?php echo ', 11)) { // the only macro on line "without" output
+					$this->output .= "\n" . $code; // preserve new line from 'indent', remove indentation
 				} else {
-					$this->output .= $matches['indent'] . $code . (substr($code, -2) === '?>' ? $nl : '');
+					$this->output .= $matches['indent'] . $code . (substr($code, -2) === '?>' ? $nl : ''); // double newline to avoid newline eating by PHP
 				}
 
 			} else { // common behaviour
@@ -153,7 +160,7 @@ class LatteFilter extends Nette\Object
 
 		foreach ($this->tags as $tag) {
 			if (!$tag->isMacro && !empty($tag->attrs)) {
-				throw new \InvalidStateException("Missing end tag </$tag->name> for macro-attribute " . self::HTML_PREFIX . implode(' and ' . self::HTML_PREFIX, array_keys($tag->attrs)) . ".");
+				throw new LatteException("Missing end tag </$tag->name> for macro-attribute " . self::HTML_PREFIX . implode(' and ' . self::HTML_PREFIX, array_keys($tag->attrs)) . ".", 0, $this->line);
 			}
 		}
 
@@ -169,13 +176,13 @@ class LatteFilter extends Nette\Object
 	{
 		$matches = $this->match('~
 			(?:\n[ \t]*)?<(?P<closing>/?)(?P<tag>[a-z0-9:]+)|  ##  begin of HTML tag <tag </tag - ignores <!DOCTYPE
-			<(?P<comment>!--)|           ##  begin of HTML comment <!--
+			<(?P<htmlcomment>!--)|           ##  begin of HTML comment <!--
 			'.$this->macroRe.'           ##  curly tag
 		~xsi');
 
-		if (!$matches || !empty($matches['macro'])) { // EOF or {macro}
+		if (!$matches || !empty($matches['macro']) || !empty($matches['comment'])) { // EOF or {macro}
 
-		} elseif (!empty($matches['comment'])) { // <!--
+		} elseif (!empty($matches['htmlcomment'])) { // <!--
 			$this->context = self::CONTEXT_COMMENT;
 			$this->escape = 'Nette\Templates\TemplateHelpers::escapeHtmlComment';
 
@@ -193,7 +200,7 @@ class LatteFilter extends Nette\Object
 			do {
 				$tag = array_pop($this->tags);
 				if (!$tag) {
-					//throw new \InvalidStateException("End tag for element '$matches[tag]' which is not open on line $this->line.");
+					//throw new LatteException("End tag for element '$matches[tag]' which is not open.", 0, $this->line);
 					$tag = (object) NULL;
 					$tag->name = $matches['tag'];
 					$tag->isMacro = String::startsWith($tag->name, self::HTML_PREFIX);
@@ -221,7 +228,7 @@ class LatteFilter extends Nette\Object
 			'.$this->macroRe.'           ##  curly tag
 		~xsi');
 
-		if ($matches && empty($matches['macro'])) { // </tag
+		if ($matches && empty($matches['macro']) && empty($matches['comment'])) { // </tag
 			$tag->closing = TRUE;
 			$tag->pos = strlen($this->output);
 			$this->context = self::CONTEXT_TAG;
@@ -243,7 +250,7 @@ class LatteFilter extends Nette\Object
 			\s*(?P<attr>[^\s/>={]+)(?:\s*=\s*(?P<value>["\']|[^\s/>{]+))? ## begin of HTML attribute
 		~xsi');
 
-		if (!$matches || !empty($matches['macro'])) { // EOF or {macro}
+		if (!$matches || !empty($matches['macro']) || !empty($matches['comment'])) { // EOF or {macro}
 
 		} elseif (!empty($matches['end'])) { // end of HTML tag />
 			$tag = end($this->tags);
@@ -256,8 +263,8 @@ class LatteFilter extends Nette\Object
 			if ($tag->isMacro || !empty($tag->attrs)) {
 				if ($tag->isMacro) {
 					$code = $this->handler->tagMacro(substr($tag->name, strlen(self::HTML_PREFIX)), $tag->attrs, $tag->closing);
-					if ($code === NULL) {
-						throw new \InvalidStateException("Unknown tag-macro <$tag->name> on line $this->line.");
+					if ($code === FALSE) {
+						throw new LatteException("Unknown tag-macro <$tag->name>", 0, $this->line);
 					}
 					if ($isEmpty) {
 						$code .= $this->handler->tagMacro(substr($tag->name, strlen(self::HTML_PREFIX)), $tag->attrs, TRUE);
@@ -265,8 +272,8 @@ class LatteFilter extends Nette\Object
 				} else {
 					$code = substr($this->output, $tag->pos) . $matches[0] . (isset($matches['tagnewline']) ? "\n" : '');
 					$code = $this->handler->attrsMacro($code, $tag->attrs, $tag->closing);
-					if ($code === NULL) {
-						throw new \InvalidStateException("Unknown macro-attribute " . self::HTML_PREFIX . implode(' or ' . self::HTML_PREFIX, array_keys($tag->attrs)) . " on line $this->line.");
+					if ($code === FALSE) {
+						throw new LatteException("Unknown macro-attribute " . self::HTML_PREFIX . implode(' or ' . self::HTML_PREFIX, array_keys($tag->attrs)), 0, $this->line);
 					}
 					if ($isEmpty) {
 						$code = $this->handler->attrsMacro($code, $tag->attrs, TRUE);
@@ -330,7 +337,7 @@ class LatteFilter extends Nette\Object
 			'.$this->macroRe.'           ##  curly tag
 		~xsi');
 
-		if ($matches && empty($matches['macro'])) { // (attribute end) '"
+		if ($matches && empty($matches['macro']) && empty($matches['comment'])) { // (attribute end) '"
 			$this->context = self::CONTEXT_TAG;
 			$this->escape = 'Nette\Templates\TemplateHelpers::escapeHtml';
 		}
@@ -349,7 +356,7 @@ class LatteFilter extends Nette\Object
 			'.$this->macroRe.'           ##  curly tag
 		~xsi');
 
-		if ($matches && empty($matches['macro'])) { // --\s*>
+		if ($matches && empty($matches['macro']) && empty($matches['comment'])) { // --\s*>
 			$this->context = self::CONTEXT_TEXT;
 			$this->escape = 'Nette\Templates\TemplateHelpers::escapeHtml';
 		}
@@ -408,9 +415,10 @@ class LatteFilter extends Nette\Object
 	public function setDelimiters($left, $right)
 	{
 		$this->macroRe = '
+			(?:\r?\n?)(?P<comment>\\{\\*.*?\\*\\}[\r\n]{0,2})|
 			(?P<indent>\n[\ \t]*)?
 			' . $left . '
-				(?P<macro>(?:' . Tokenizer::RE_STRING . '|[^\'"]+?)*?)
+				(?P<macro>(?:' . self::RE_STRING . '|[^\'"]+?)*?)
 			' . $right . '
 			(?P<newline>[\ \t]*(?=\r|\n))?
 		';
@@ -445,4 +453,15 @@ class LatteFilter extends Nette\Object
 	}
 	/**#@-*/
 
+}
+
+
+
+/**
+ * The exception occured during Latte compilation.
+ *
+ * @author     David Grudl
+ */
+class LatteException extends TemplateException
+{
 }

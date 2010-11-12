@@ -70,19 +70,13 @@ class Session extends Nette\Object
 			throw new \InvalidStateException('A session had already been started by session.auto-start or session_start().');
 		}
 
-
-		// start session
-		try {
-			$this->configure($this->options);
-		} catch (\NotSupportedException $e) {
-			// ignore?
-		}
+		$this->configure($this->options);
 
 		Nette\Debug::tryError();
 		session_start();
-		if (Nette\Debug::catchError($msg)) {
+		if (Nette\Debug::catchError($e)) {
 			@session_write_close(); // this is needed
-			throw new \InvalidStateException($msg);
+			throw new \InvalidStateException($e->getMessage());
 		}
 
 		self::$started = TRUE;
@@ -424,7 +418,7 @@ class Session extends Nette\Object
 				$cookie[substr($key, 7)] = $value;
 
 			} elseif (!function_exists('ini_set')) {
-				if (ini_get($key) != $value) { // intentionally ==
+				if (ini_get($key) != $value && !Nette\Framework::$iAmUsingBadHost) { // intentionally ==
 					throw new \NotSupportedException('Required function ini_set() is disabled.');
 				}
 

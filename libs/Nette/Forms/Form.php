@@ -46,8 +46,8 @@ class Form extends FormContainer
 	const FILLED = ':filled';
 	const VALID = ':valid';
 
-	// CSRF protection, handled as :equal
-	const PROTECTION = ':protection';
+	// CSRF protection
+	const PROTECTION = 'Nette\Forms\HiddenField::validateEqual';
 
 	// button
 	const SUBMITTED = ':submitted';
@@ -59,6 +59,7 @@ class Form extends FormContainer
 	const EMAIL = ':email';
 	const URL = ':url';
 	const REGEXP = ':regexp';
+	const PATTERN = ':pattern';
 	const INTEGER = ':integer';
 	const NUMERIC = ':integer';
 	const FLOAT = ':float';
@@ -226,7 +227,7 @@ class Form extends FormContainer
 		}
 		$session->setExpiration($timeout, $key);
 		$this[self::PROTECTOR_ID] = new HiddenField($token);
-		$this[self::PROTECTOR_ID]->addRule(':protection', $message, $token);
+		$this[self::PROTECTOR_ID]->addRule(self::PROTECTION, $message, $token);
 	}
 
 
@@ -433,7 +434,6 @@ class Form extends FormContainer
 			return;
 		}
 
-		$httpRequest->setEncoding('utf-8');
 		if ($httpRequest->isMethod('post')) {
 			$data = Nette\ArrayTools::mergeTree($httpRequest->getPost(), $httpRequest->getFiles());
 		} else {
@@ -554,7 +554,7 @@ class Form extends FormContainer
 	final public function getRenderer()
 	{
 		if ($this->renderer === NULL) {
-			$this->renderer = new ConventionalRenderer;
+			$this->renderer = new DefaultFormRenderer;
 		}
 		return $this->renderer;
 	}
@@ -604,7 +604,7 @@ class Form extends FormContainer
 	 */
 	protected function getHttpRequest()
 	{
-		return class_exists('Nette\Environment') ? Nette\Environment::getHttpRequest() : new Nette\Web\HttpRequest;
+		return Nette\Environment::getHttpRequest();
 	}
 
 

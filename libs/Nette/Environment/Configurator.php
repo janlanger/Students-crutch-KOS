@@ -30,11 +30,12 @@ class Configurator extends Object
 	public $defaultServices = array(
 		'Nette\\Application\\Application' => array(__CLASS__, 'createApplication'),
 		'Nette\\Web\\HttpContext' => 'Nette\Web\HttpContext',
-		'Nette\\Web\\IHttpRequest' => 'Nette\Web\HttpRequest',
+		'Nette\\Web\\IHttpRequest' => array(__CLASS__, 'createHttpRequest'),
 		'Nette\\Web\\IHttpResponse' => 'Nette\Web\HttpResponse',
 		'Nette\\Web\\IUser' => 'Nette\Web\User',
 		'Nette\\Caching\\ICacheStorage' => array(__CLASS__, 'createCacheStorage'),
 		'Nette\\Caching\\ICacheJournal' => array(__CLASS__, 'createCacheJournal'),
+		'Nette\\Mail\\IMailer' => array(__CLASS__, 'createMailer'),
 		'Nette\\Web\\Session' => 'Nette\Web\Session',
 		'Nette\\Loaders\\RobotLoader' => array(__CLASS__, 'createRobotLoader'),
 	);
@@ -64,15 +65,27 @@ class Configurator extends Object
 				return FALSE;
 
 			} elseif (isset($_SERVER['SERVER_ADDR']) || isset($_SERVER['LOCAL_ADDR'])) {
-				$addr = isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : $_SERVER['LOCAL_ADDR'];
-				$oct = explode('.', $addr);
-				// 10.0.0.0/8   Private network
-				// 127.0.0.0/8  Loopback
-				// 169.254.0.0/16 & ::1  Link-Local
-				// 172.16.0.0/12  Private network
-				// 192.168.0.0/16  Private network
-				return $addr !== '::1' && (count($oct) !== 4 || ($oct[0] !== '10' && $oct[0] !== '127' && ($oct[0] !== '172' || $oct[1] < 16 || $oct[1] > 31)
-					&& ($oct[0] !== '169' || $oct[1] !== '254') && ($oct[0] !== '192' || $oct[1] !== '168')));
+				$addrs = array();
+				if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) { // proxy server detected
+					$addrs = preg_split('#,\s*#', $_SERVER['HTTP_X_FORWARDED_FOR']);
+				}
+				if (isset($_SERVER['REMOTE_ADDR'])) {
+					$addrs[] = $_SERVER['REMOTE_ADDR'];
+				}
+				$addrs[] = isset($_SERVER['SERVER_ADDR']) ? $_SERVER['SERVER_ADDR'] : $_SERVER['LOCAL_ADDR'];
+				foreach ($addrs as $addr) {
+					$oct = explode('.', $addr);
+					// 10.0.0.0/8   Private network
+					// 127.0.0.0/8  Loopback
+					// 169.254.0.0/16 & ::1  Link-Local
+					// 172.16.0.0/12  Private network
+					// 192.168.0.0/16  Private network
+					if ($addr !== '::1' && (count($oct) !== 4 || ($oct[0] !== '10' && $oct[0] !== '127' && ($oct[0] !== '172' || $oct[1] < 16 || $oct[1] > 31)
+						&& ($oct[0] !== '169' || $oct[1] !== '254') && ($oct[0] !== '192' || $oct[1] !== '168')))) {
+						return TRUE;
+					}
+				}
+				return FALSE;
 
 			} else {
 				return TRUE;
@@ -134,12 +147,12 @@ class Configurator extends Object
 					$context->removeService($key);
 					$context->addService($key, $value);
 				} else {
-					if ($value->factory) {
+					$factory = $value->factory ? $value->factory : (isset($this->defaultServices[$key]) ? $this->defaultServices[$key] : NULL);
+					if ($factory) {
 						$context->removeService($key);
-						$context->addService($key, $value->factory, isset($value->singleton) ? $value->singleton : TRUE, (array) $value->option);
-					} elseif (isset($this->defaultServices[$key])) {
-						$context->removeService($key);
-						$context->addService($key, $this->defaultServices[$key], isset($value->singleton) ? $value->singleton : TRUE, (array) $value->option);
+						$context->addService($key, $factory, isset($value->singleton) ? $value->singleton : TRUE, (array) $value->option);
+					} else {
+						throw new \InvalidStateException("Factory method is not specified for service $key.");
 					}
 					if ($value->run) {
 						$runServices[] = $key;
@@ -259,10 +272,10 @@ class Configurator extends Object
 	/**
 	 * @return Nette\Application\Application
 	 */
-	public static function createApplication()
+	public static function createApplication(array $options = NULL)
 	{
 		if (Environment::getVariable('baseUri', NULL) === NULL) {
-			Environment::setVariable('baseUri', Environment::getHttpRequest()->getUri()->getBasePath());
+			Environment::setVariable('baseUri', Environment::getHttpRequest()->getUri()->getBaseUri());
 		}
 
 		$context = clone Environment::getContext();
@@ -274,10 +287,23 @@ class Configurator extends Object
 			});
 		}
 
-		$application = new Nette\Application\Application;
+		$class = isset($options['class']) ? $options['class'] : 'Nette\Application\Application';
+		$application = new $class;
 		$application->setContext($context);
 		$application->catchExceptions = Environment::isProduction();
 		return $application;
+	}
+
+
+
+	/**
+	 * @return Nette\Web\HttpRequest
+	 */
+	public static function createHttpRequest()
+	{
+		$factory = new Nette\Web\HttpRequestFactory;
+		$factory->setEncoding('UTF-8');
+		return $factory->createHttpRequest();
 	}
 
 
@@ -288,10 +314,10 @@ class Configurator extends Object
 	public static function createCacheStorage()
 	{
 		$context = new Context;
-		$context->addService('Nette\\Caching\\ICacheJournal', array(__CLASS__, 'createCacheJournal'));
+		$context->addService('Nette\\Caching\\ICacheJournal', Environment::getContext());
 		$dir = Environment::getVariable('tempDir') . '/cache';
 		umask(0000);
-		@mkdir($dir, 0755); // @ - directory may exists
+		@mkdir($dir, 0777); // @ - directory may exists
 		return new Nette\Caching\FileStorage($dir, $context);
 	}
 
@@ -312,9 +338,23 @@ class Configurator extends Object
 
 
 	/**
+	 * @return Nette\Mail\IMailer
+	 */
+	public static function createMailer(array $options = NULL)
+	{
+		if (isset($options['smtp'])) {
+			return new Nette\Mail\SmtpMailer($options);
+		} else {
+			return new Nette\Mail\SendmailMailer;
+		}
+	}
+
+
+
+	/**
 	 * @return Nette\Loaders\RobotLoader
 	 */
-	public static function createRobotLoader($options)
+	public static function createRobotLoader(array $options = NULL)
 	{
 		$loader = new Nette\Loaders\RobotLoader;
 		$loader->autoRebuild = isset($options['autoRebuild']) ? $options['autoRebuild'] : !Environment::isProduction();

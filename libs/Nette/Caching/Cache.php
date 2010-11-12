@@ -24,6 +24,7 @@ class Cache extends Nette\Object implements \ArrayAccess
 {
 	/**#@+ dependency */
 	const PRIORITY = 'priority';
+	const EXPIRATION = 'expire';
 	const EXPIRE = 'expire';
 	const SLIDING = 'sliding';
 	const TAGS = 'tags';
@@ -100,14 +101,14 @@ class Cache extends Nette\Object implements \ArrayAccess
 	 * Writes item into the cache.
 	 * Dependencies are:
 	 * - Cache::PRIORITY => (int) priority
-	 * - Cache::EXPIRE => (timestamp) expiration
+	 * - Cache::EXPIRATION => (timestamp) expiration
 	 * - Cache::SLIDING => (bool) use sliding expiration?
 	 * - Cache::TAGS => (array) tags
 	 * - Cache::FILES => (array|string) file names
 	 * - Cache::ITEMS => (array|string) cache items
 	 * - Cache::CONSTS => (array|string) cache items
 	 *
-	 * @param  string key
+	 * @param  mixed  key
 	 * @param  mixed  value
 	 * @param  array  dependencies
 	 * @return mixed  value itself
@@ -115,15 +116,12 @@ class Cache extends Nette\Object implements \ArrayAccess
 	 */
 	public function save($key, $data, array $dp = NULL)
 	{
-		if (!is_string($key) && !is_int($key)) {
-			throw new \InvalidArgumentException("Cache key name must be string or integer, " . gettype($key) . " given.");
-		}
-		$this->key = (string) $key;
-		$key = $this->namespace . self::NAMESPACE_SEPARATOR . $key;
+		$this->key = is_scalar($key) ? (string) $key : serialize($key);
+		$key = $this->namespace . self::NAMESPACE_SEPARATOR . md5($this->key);
 
 		// convert expire into relative amount of seconds
-		if (isset($dp[Cache::EXPIRE])) {
-			$dp[Cache::EXPIRE] = Nette\Tools::createDateTime($dp[Cache::EXPIRE])->format('U') - time();
+		if (isset($dp[Cache::EXPIRATION])) {
+			$dp[Cache::EXPIRATION] = Nette\Tools::createDateTime($dp[Cache::EXPIRATION])->format('U') - time();
 		}
 
 		// convert FILES into CALLBACKS
@@ -139,7 +137,7 @@ class Cache extends Nette\Object implements \ArrayAccess
 		if (isset($dp[self::ITEMS])) {
 			$dp[self::ITEMS] = (array) $dp[self::ITEMS];
 			foreach ($dp[self::ITEMS] as $k => $item) {
-				$dp[self::ITEMS][$k] = $this->namespace . self::NAMESPACE_SEPARATOR . $item;
+				$dp[self::ITEMS][$k] = $this->namespace . self::NAMESPACE_SEPARATOR . md5(is_scalar($item) ? $item : serialize($item));
 			}
 		}
 
@@ -197,7 +195,7 @@ class Cache extends Nette\Object implements \ArrayAccess
 
 	/**
 	 * Inserts (replaces) item into the cache (\ArrayAccess implementation).
-	 * @param  string key
+	 * @param  mixed key
 	 * @param  mixed
 	 * @return void
 	 * @throws \InvalidArgumentException
@@ -211,22 +209,18 @@ class Cache extends Nette\Object implements \ArrayAccess
 
 	/**
 	 * Retrieves the specified item from the cache or NULL if the key is not found (\ArrayAccess implementation).
-	 * @param  string key
+	 * @param  mixed key
 	 * @return mixed|NULL
 	 * @throws \InvalidArgumentException
 	 */
 	public function offsetGet($key)
 	{
-		if (!is_string($key) && !is_int($key)) {
-			throw new \InvalidArgumentException("Cache key name must be string or integer, " . gettype($key) . " given.");
-		}
-
-		$key = (string) $key;
+		$key = is_scalar($key) ? (string) $key : serialize($key);
 		if ($this->key === $key) {
 			return $this->data;
 		}
 		$this->key = $key;
-		$this->data = $this->storage->read($this->namespace . self::NAMESPACE_SEPARATOR . $key);
+		$this->data = $this->storage->read($this->namespace . self::NAMESPACE_SEPARATOR . md5($key));
 		return $this->data;
 	}
 
@@ -234,7 +228,7 @@ class Cache extends Nette\Object implements \ArrayAccess
 
 	/**
 	 * Exists item in cache? (\ArrayAccess implementation).
-	 * @param  string key
+	 * @param  mixed key
 	 * @return bool
 	 * @throws \InvalidArgumentException
 	 */
@@ -247,7 +241,7 @@ class Cache extends Nette\Object implements \ArrayAccess
 
 	/**
 	 * Removes the specified item from the cache.
-	 * @param  string key
+	 * @param  mixed key
 	 * @return void
 	 * @throws \InvalidArgumentException
 	 */

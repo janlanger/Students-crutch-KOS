@@ -166,11 +166,11 @@ class FileStorage extends Nette\Object implements ICacheStorage
 			self::META_TIME => microtime(),
 		);
 
-		if (isset($dp[Cache::EXPIRE])) {
+		if (isset($dp[Cache::EXPIRATION])) {
 			if (empty($dp[Cache::SLIDING])) {
-				$meta[self::META_EXPIRE] = $dp[Cache::EXPIRE] + time(); // absolute time
+				$meta[self::META_EXPIRE] = $dp[Cache::EXPIRATION] + time(); // absolute time
 			} else {
-				$meta[self::META_DELTA] = (int) $dp[Cache::EXPIRE]; // sliding time
+				$meta[self::META_DELTA] = (int) $dp[Cache::EXPIRATION]; // sliding time
 			}
 		}
 
@@ -367,8 +367,7 @@ class FileStorage extends Nette\Object implements ICacheStorage
 	protected function getCacheFile($key)
 	{
 		if ($this->useDirs) {
-			$key = explode(Cache::NAMESPACE_SEPARATOR, $key, 2);
-			return $this->dir . '/' . (isset($key[1]) ? urlencode($key[0]) . '/_' . urlencode($key[1]) : '_' . urlencode($key[0]));
+			return $this->dir . '/_' . str_replace('%00', '/_', urlencode($key)); // %00 = urlencode(Cache::NAMESPACE_SEPARATOR)
 		} else {
 			return $this->dir . '/_' . urlencode($key);
 		}

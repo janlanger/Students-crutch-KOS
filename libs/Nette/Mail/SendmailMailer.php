@@ -16,7 +16,7 @@ use Nette;
 
 
 /**
- * Sends e-mails via the PHP internal mail() function.
+ * Sends emails via the PHP internal mail() function.
  *
  * @author     David Grudl
  */
@@ -24,7 +24,7 @@ class SendmailMailer extends Nette\Object implements IMailer
 {
 
 	/**
-	 * Sends e-mail.
+	 * Sends email.
 	 * @param  Mail
 	 * @return void
 	 */
@@ -44,8 +44,8 @@ class SendmailMailer extends Nette\Object implements IMailer
 			str_replace(Mail::EOL, PHP_EOL, $parts[0])
 		);
 
-		if (Nette\Debug::catchError($msg)) {
-			throw new \InvalidStateException($msg);
+		if (Nette\Debug::catchError($e)) {
+			throw new \InvalidStateException($e->getMessage());
 
 		} elseif (!$res) {
 			throw new \InvalidStateException('Unable to send email.');

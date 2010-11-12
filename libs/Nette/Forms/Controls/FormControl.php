@@ -34,7 +34,6 @@ use Nette,
  * @property-read Rules $rules
  * @property-read array $errors
  * @property   bool $disabled
- * @property   bool $rendered
  * @property   bool $required
 */
 abstract class FormControl extends Nette\Component implements IFormControl
@@ -192,11 +191,6 @@ abstract class FormControl extends Nette\Component implements IFormControl
 
 	/**
 	 * Sets user-specific option.
-	 * Common options:
-	 * - 'rendered' - indicate if method getControl() have been called
-	 * - 'required' - indicate if ':required' rule has been applied
-	 * - 'description' - textual or Html object description (recognized by ConventionalRenderer)
-	 *
 	 * @param  string key
 	 * @param  mixed  value
 	 * @return FormControl  provides a fluent interface
@@ -312,6 +306,17 @@ abstract class FormControl extends Nette\Component implements IFormControl
 
 
 	/**
+	 * Is control filled?
+	 * @return bool
+	 */
+	public function isFilled()
+	{
+		return (string) $this->getValue() !== ''; // NULL, FALSE, '' ==> FALSE
+	}
+
+
+
+	/**
 	 * Sets control's default value.
 	 * @param  mixed
 	 * @return FormControl  provides a fluent interface
@@ -374,15 +379,19 @@ abstract class FormControl extends Nette\Component implements IFormControl
 	public function getControl()
 	{
 		$this->setOption('rendered', TRUE);
+
 		$control = clone $this->control;
 		$control->name = $this->getHtmlName();
 		$control->disabled = $this->disabled;
 		$control->id = $this->getHtmlId();
+		$control->required = $this->isRequired();
+
 		$rules = self::exportRules($this->rules);
 		$rules = substr(json_encode($rules), 1, -1);
 		$rules = preg_replace('#"([a-z0-9]+)":#i', '$1:', $rules);
 		$rules = preg_replace('#(?<!\\\\)"([^\\\\\',]*)"#i', "'$1'", $rules);
-		$control->data['nette-rules'] = $rules ? $rules : NULL;
+		$control->data('nette-rules', $rules ? $rules : NULL);
+
 		return $control;
 	}
 
@@ -429,32 +438,6 @@ abstract class FormControl extends Nette\Component implements IFormControl
 	final public function getLabelPrototype()
 	{
 		return $this->label;
-	}
-
-
-
-	/**
-	 * Sets 'rendered' indicator.
-	 * @param  bool
-	 * @return FormControl  provides a fluent interface
-	 * @deprecated
-	 */
-	public function setRendered($value = TRUE)
-	{
-		$this->setOption('rendered', $value);
-		return $this;
-	}
-
-
-
-	/**
-	 * Does method getControl() have been called?
-	 * @return bool
-	 * @deprecated
-	 */
-	public function isRendered()
-	{
-		return !empty($this->options['rendered']);
 	}
 
 
@@ -519,12 +502,10 @@ abstract class FormControl extends Nette\Component implements IFormControl
 	 * Makes control mandatory.
 	 * @param  string  error message
 	 * @return FormControl  provides a fluent interface
-	 * @deprecated
 	 */
 	final public function setRequired($message = NULL)
 	{
-		$this->rules->addRule(Form::FILLED, $message);
-		return $this;
+		return $this->addRule(Form::FILLED, $message);
 	}
 
 
@@ -532,25 +513,15 @@ abstract class FormControl extends Nette\Component implements IFormControl
 	/**
 	 * Is control mandatory?
 	 * @return bool
-	 * @deprecated
 	 */
 	final public function isRequired()
 	{
-		return !empty($this->options['required']);
-	}
-
-
-
-	/**
-	 * New rule or condition notification callback.
-	 * @param  Rule
-	 * @return void
-	 */
-	public function notifyRule(Rule $rule)
-	{
-		if (is_string($rule->operation) && strcasecmp($rule->operation, ':filled') === 0) {
-			$this->setOption('required', TRUE);
+		foreach ($this->rules as $rule) {
+			if ($rule->type === Rule::VALIDATOR && !$rule->isNegative && $rule->operation === Form::FILLED) {
+				return TRUE;
+			}
 		}
+		return FALSE;
 	}
 
 
@@ -622,7 +593,7 @@ abstract class FormControl extends Nette\Component implements IFormControl
 	 */
 	public static function validateFilled(IFormControl $control)
 	{
-		return (string) $control->getValue() !== ''; // NULL, FALSE, '' ==> FALSE
+		return $control->isFilled();
 	}
 
 

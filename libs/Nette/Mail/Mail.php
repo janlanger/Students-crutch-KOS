@@ -17,7 +17,7 @@ use Nette,
 
 
 /**
- * Mail provides functionality to compose and send both text and MIME-compliant multipart e-mail messages.
+ * Mail provides functionality to compose and send both text and MIME-compliant multipart email messages.
  *
  * @author     David Grudl
  *
@@ -73,7 +73,7 @@ class Mail extends MailMimePart
 
 	/**
 	 * Sets the sender of the message.
-	 * @param  string  e-mail or format "John Doe" <doe@example.com>
+	 * @param  string  email or format "John Doe" <doe@example.com>
 	 * @param  string
 	 * @return Mail  provides a fluent interface
 	 */
@@ -98,7 +98,7 @@ class Mail extends MailMimePart
 
 	/**
 	 * Adds the reply-to address.
-	 * @param  string  e-mail or format "John Doe" <doe@example.com>
+	 * @param  string  email or format "John Doe" <doe@example.com>
 	 * @param  string
 	 * @return Mail  provides a fluent interface
 	 */
@@ -136,7 +136,7 @@ class Mail extends MailMimePart
 
 	/**
 	 * Adds email recipient.
-	 * @param  string  e-mail or format "John Doe" <doe@example.com>
+	 * @param  string  email or format "John Doe" <doe@example.com>
 	 * @param  string
 	 * @return Mail  provides a fluent interface
 	 */
@@ -150,7 +150,7 @@ class Mail extends MailMimePart
 
 	/**
 	 * Adds carbon copy email recipient.
-	 * @param  string  e-mail or format "John Doe" <doe@example.com>
+	 * @param  string  email or format "John Doe" <doe@example.com>
 	 * @param  string
 	 * @return Mail  provides a fluent interface
 	 */
@@ -164,7 +164,7 @@ class Mail extends MailMimePart
 
 	/**
 	 * Adds blind carbon copy email recipient.
-	 * @param  string  e-mail or format "John Doe" <doe@example.com>
+	 * @param  string  email or format "John Doe" <doe@example.com>
 	 * @param  string
 	 * @return Mail  provides a fluent interface
 	 */
@@ -177,7 +177,7 @@ class Mail extends MailMimePart
 
 
 	/**
-	 * Formats recipient e-mail.
+	 * Formats recipient email.
 	 * @param  string
 	 * @param  string
 	 * @return array
@@ -195,7 +195,7 @@ class Mail extends MailMimePart
 
 	/**
 	 * Sets the Return-Path header of the message.
-	 * @param  string  e-mail
+	 * @param  string  email
 	 * @return Mail  provides a fluent interface
 	 */
 	public function setReturnPath($email)
@@ -276,13 +276,8 @@ class Mail extends MailMimePart
 	 */
 	public function addEmbeddedFile($file, $content = NULL, $contentType = NULL)
 	{
-		$part = new MailMimePart;
-		$part->setBody($content === NULL ? $this->readFile($file, $contentType) : (string) $content);
-		$part->setContentType($contentType ? $contentType : 'application/octet-stream');
-		$part->setEncoding(self::ENCODING_BASE64);
-		$part->setHeader('Content-Disposition', 'inline; filename="' . String::fixEncoding(basename($file)) . '"');
-		$part->setHeader('Content-ID', '<' . md5(uniqid('', TRUE)) . '>');
-		return $this->inlines[$file] = $part;
+		return $this->inlines[$file] = $this->createAttachment($file, $content, $contentType, 'inline')
+			->setHeader('Content-ID', '<' . md5(uniqid('', TRUE)) . '>');
 	}
 
 
@@ -296,31 +291,33 @@ class Mail extends MailMimePart
 	 */
 	public function addAttachment($file, $content = NULL, $contentType = NULL)
 	{
-		$part = new MailMimePart;
-		$part->setBody($content === NULL ? $this->readFile($file, $contentType) : (string) $content);
-		$part->setContentType($contentType ? $contentType : 'application/octet-stream');
-		$part->setEncoding(self::ENCODING_BASE64);
-		$part->setHeader('Content-Disposition', 'attachment; filename="' . String::fixEncoding(basename($file)) . '"');
-		return $this->attachments[] = $part;
+		return $this->attachments[] = $this->createAttachment($file, $content, $contentType, 'attachment');
 	}
 
 
 
 	/**
 	 * Creates file MIME part.
-	 * @param  string
-	 * @param  string
-	 * @return string
+	 * @return MailMimePart
 	 */
-	private function readFile($file, & $contentType)
+	private function createAttachment($file, $content, $contentType, $disposition)
 	{
-		if (!is_file($file)) {
-			throw new \FileNotFoundException("File '$file' not found.");
+		$part = new MailMimePart;
+		if ($content === NULL) {
+			if (!is_file($file)) {
+				throw new \FileNotFoundException("File '$file' not found.");
+			}
+			if (!$contentType && $info = getimagesize($file)) {
+				$contentType = $info['mime'];
+			}
+			$part->setBody(file_get_contents($file));
+		} else {
+			$part->setBody((string) $content);
 		}
-		if (!$contentType && $info = getimagesize($file)) {
-			$contentType = $info['mime'];
-		}
-		return file_get_contents($file);
+		$part->setContentType($contentType ? $contentType : 'application/octet-stream');
+		$part->setEncoding(preg_match('#(multipart|message)/#A', $contentType) ? self::ENCODING_8BIT : self::ENCODING_BASE64);
+		$part->setHeader('Content-Disposition', $disposition . '; filename="' . String::fixEncoding(basename($file)) . '"');
+		return $part;
 	}
 
 
@@ -330,7 +327,7 @@ class Mail extends MailMimePart
 
 
 	/**
-	 * Sends e-mail.
+	 * Sends email.
 	 * @return void
 	 */
 	public function send()
@@ -368,7 +365,7 @@ class Mail extends MailMimePart
 
 
 	/**
-	 * Builds e-mail.
+	 * Builds email.
 	 * @return void
 	 */
 	protected function build()

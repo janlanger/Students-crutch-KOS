@@ -56,10 +56,10 @@ class FileTemplate extends Template implements IFileTemplate
 	 */
 	public function setFile($file)
 	{
-		if (!is_file($file)) {
+		$this->file = realpath($file);
+		if (!$this->file) {
 			throw new \FileNotFoundException("Missing template file '$file'.");
 		}
-		$this->file = $file;
 		return $this;
 	}
 
@@ -92,37 +92,36 @@ class FileTemplate extends Template implements IFileTemplate
 
 		$this->__set('template', $this);
 
-		$shortName = str_replace(dirname(dirname($this->file)), '', $this->file);
-
-		$cache = new Cache($this->getCacheStorage(), 'Nette.FileTemplate');
-		$key = trim(strtr($shortName, '\\/@', '.._'), '.') . '-' . md5($this->file);
-		$cached = $content = $cache[$key];
+		$cache = new Cache($storage = $this->getCacheStorage(), 'Nette.FileTemplate');
+		if ($storage instanceof TemplateCacheStorage) {
+			$storage->hint = str_replace(dirname(dirname($this->file)), '', $this->file);
+		}
+		$cached = $content = $cache[$this->file];
 
 		if ($content === NULL) {
-			if (!$this->getFilters()) {
-				$this->onPrepareFilters($this);
+			try {
+				$content = $this->compile(file_get_contents($this->file));
+				$content = "<?php\n\n// source file: $this->file\n\n?>$content";
+
+			} catch (TemplateException $e) {
+				$e->setSourceFile($this->file);
+				throw $e;
 			}
 
-			if (!$this->getFilters()) {
-				LimitedScope::load($this->file, $this->getParams());
-				return;
-			}
-
-			$content = $this->compile(file_get_contents($this->file), "file \xE2\x80\xA6$shortName");
 			$cache->save(
-				$key,
+				$this->file,
 				$content,
 				array(
 					Cache::FILES => $this->file,
-					Cache::EXPIRE => self::$cacheExpire,
+					Cache::EXPIRATION => self::$cacheExpire,
 					Cache::CONSTS => 'Nette\Framework::REVISION',
 				)
 			);
 			$cache->release();
-			$cached = $cache[$key];
+			$cached = $cache[$this->file];
 		}
 
-		if ($cached !== NULL && self::$cacheStorage instanceof TemplateCacheStorage) {
+		if ($cached !== NULL && $storage instanceof TemplateCacheStorage) {
 			LimitedScope::load($cached['file'], $this->getParams());
 			fclose($cached['handle']);
 
@@ -157,7 +156,7 @@ class FileTemplate extends Template implements IFileTemplate
 		if (self::$cacheStorage === NULL) {
 			$dir = Environment::getVariable('tempDir') . '/cache';
 			umask(0000);
-			@mkdir($dir, 0755); // @ - directory may exists
+			@mkdir($dir, 0777); // @ - directory may exists
 			self::$cacheStorage = new TemplateCacheStorage($dir);
 		}
 		return self::$cacheStorage;

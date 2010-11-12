@@ -100,26 +100,27 @@ abstract class TextBase extends FormControl
 
 	public function getControl()
 	{
-		return parent::getControl()->data('nette-empty-value', $this->emptyValue === '' ? NULL : $this->translate($this->emptyValue));
+		$control = parent::getControl();
+		foreach ($this->getRules() as $rule) {
+			if ($rule->type === Rule::VALIDATOR && !$rule->isNegative
+				&& ($rule->operation === Form::LENGTH || $rule->operation === Form::MAX_LENGTH)) {
+				$control->maxlength = is_array($rule->arg) ? $rule->arg[1] : $rule->arg;
+			}
+		}
+		if ($this->emptyValue !== '') {
+			$control->data('nette-empty-value', $this->translate($this->emptyValue));
+		}
+		return $control;
 	}
 
 
 
-	public function notifyRule(Rule $rule)
+	public function addRule($operation, $message = NULL, $arg = NULL)
 	{
-		if (is_string($rule->operation) && !$rule->isNegative) {
-			if (strcasecmp($rule->operation, ':float') === 0) {
-				$this->addFilter(callback(__CLASS__, 'filterFloat'));
-
-			} elseif (strcasecmp($rule->operation, ':length') === 0) {
-				$this->control->maxlength = is_array($rule->arg) ? $rule->arg[1] : $rule->arg;
-
-			} elseif (strcasecmp($rule->operation, ':maxLength') === 0) {
-				$this->control->maxlength = $rule->arg;
-			}
+		if ($operation === Form::FLOAT) {
+			$this->addFilter(callback(__CLASS__, 'filterFloat'));
 		}
-
-		parent::notifyRule($rule);
+		return parent::addRule($operation, $message, $arg);
 	}
 
 
@@ -196,15 +197,23 @@ abstract class TextBase extends FormControl
 
 
 
+	/** @deprecated */
+	public static function validateRegexp(TextBase $control, $regexp)
+	{
+		return (bool) String::match($control->getValue(), $regexp);
+	}
+
+
+
 	/**
 	 * Regular expression validator: matches control's value regular expression?
 	 * @param  TextBase
 	 * @param  string
 	 * @return bool
 	 */
-	public static function validateRegexp(TextBase $control, $regexp)
+	public static function validatePattern(TextBase $control, $pattern)
 	{
-		return (bool) String::match($control->getValue(), $regexp);
+		return (bool) String::match($control->getValue(), "\x01^($pattern)$\x01u");
 	}
 
 

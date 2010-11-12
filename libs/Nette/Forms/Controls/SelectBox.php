@@ -86,6 +86,18 @@ class SelectBox extends FormControl
 
 
 	/**
+	 * Has been any item selected?
+	 * @return bool
+	 */
+	public function isFilled()
+	{
+		$value = $this->getValue();
+		return is_array($value) ? count($value) > 0 : $value !== NULL;
+	}
+
+
+
+	/**
 	 * Ignores the first item in select box.
 	 * @param  string
 	 * @return SelectBox  provides a fluent interface
@@ -201,7 +213,7 @@ class SelectBox extends FormControl
 		$control = parent::getControl();
 		if ($this->skipFirst) {
 			reset($this->items);
-			$control->data['nette-empty-value'] = $this->useKeys ? key($this->items) : current($this->items);
+			$control->data('nette-empty-value', $this->useKeys ? key($this->items) : current($this->items));
 		}
 		$selected = $this->getValue();
 		$selected = is_array($selected) ? array_flip($selected) : array($selected => TRUE);
@@ -228,19 +240,6 @@ class SelectBox extends FormControl
 			}
 		}
 		return $control;
-	}
-
-
-
-	/**
-	 * Filled validator: has been any item selected?
-	 * @param  IFormControl
-	 * @return bool
-	 */
-	public static function validateFilled(IFormControl $control)
-	{
-		$value = $control->getValue();
-		return is_array($value) ? count($value) > 0 : $value !== NULL;
 	}
 
 }

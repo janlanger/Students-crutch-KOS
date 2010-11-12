@@ -103,11 +103,11 @@ class CliRouter extends Nette\Object implements IRouter
 
 	/**
 	 * This router is only unidirectional.
-	 * @param  Nette\Web\IHttpRequest
 	 * @param  PresenterRequest
+	 * @param  Nette\Web\Uri
 	 * @return NULL
 	 */
-	public function constructUrl(PresenterRequest $appRequest, Nette\Web\IHttpRequest $httpRequest)
+	public function constructUrl(PresenterRequest $appRequest, Nette\Web\Uri $refUri)
 	{
 		return NULL;
 	}

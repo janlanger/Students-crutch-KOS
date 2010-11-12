@@ -28,8 +28,11 @@ final class Framework
 
 	const VERSION = '2.0-dev';
 
-	const REVISION = 'a8e74c1 released on 2010-10-14';
+	const REVISION = '5bdf5b0 released on 2010-11-12';
 	/**#@-*/
+
+	/** @var bool set to TRUE if your host has disabled function ini_set */
+	public static $iAmUsingBadHost = FALSE;
 
 
 
@@ -39,18 +42,6 @@ final class Framework
 	final public function __construct()
 	{
 		throw new \LogicException("Cannot instantiate static class " . get_class($this));
-	}
-
-
-
-	/**
-	 * Nette Framework promotion.
-	 * @return void
-	 */
-	public static function promo()
-	{
-		echo '<a href="http://nette.org" title="Nette Framework - The Most Innovative PHP Framework"><img ',
-			'src="http://files.nette.org/icons/nette-powered.gif" alt="Powered by Nette Framework" width="80" height="15" /></a>';
 	}
 
 }

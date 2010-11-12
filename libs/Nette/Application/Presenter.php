@@ -194,8 +194,7 @@ abstract class Presenter extends Control implements IPresenter
 
 			if ($this->isAjax()) try {
 				$hasPayload = (array) $this->payload; unset($hasPayload['state']);
-				if ($this->response instanceof RenderResponse && ($this->isControlInvalid() || $hasPayload)) { // snippets - TODO
-					Nette\Templates\SnippetHelper::$outputAllowed = FALSE;
+				if ($this->response instanceof RenderResponse && $this->isControlInvalid()) { // snippets - TODO
 					$this->response->send();
 					$this->sendPayload();
 
@@ -415,9 +414,7 @@ abstract class Presenter extends Control implements IPresenter
 		$template = $this->getTemplate();
 		if (!$template) return;
 
-		if ($template instanceof Nette\Templates\IFileTemplate && !$template->getFile()) {
-
-			// content template
+		if ($template instanceof Nette\Templates\IFileTemplate && !$template->getFile()) { // content template
 			$files = $this->formatTemplateFiles($this->getName(), $this->view);
 			foreach ($files as $file) {
 				if (is_file($file)) {
@@ -430,22 +427,21 @@ abstract class Presenter extends Control implements IPresenter
 				$file = str_replace(Environment::getVariable('appDir'), "\xE2\x80\xA6", reset($files));
 				throw new BadRequestException("Page not found. Missing template '$file'.");
 			}
+		}
 
-			// layout template
-			if ($this->layout !== FALSE) {
-				$files = $this->formatLayoutTemplateFiles($this->getName(), $this->layout ? $this->layout : 'layout');
-				foreach ($files as $file) {
-					if (is_file($file)) {
-						$template->layout = $file;
-						$template->_extends = $file;
-						break;
-					}
+		if ($this->layout !== FALSE) { // layout template
+			$files = $this->formatLayoutTemplateFiles($this->getName(), $this->layout ? $this->layout : 'layout');
+			foreach ($files as $file) {
+				if (is_file($file)) {
+					$template->layout = $file;
+					$template->_extends = $file;
+					break;
 				}
+			}
 
-				if (empty($template->layout) && $this->layout !== NULL) {
-					$file = str_replace(Environment::getVariable('appDir'), "\xE2\x80\xA6", reset($files));
-					throw new \FileNotFoundException("Layout not found. Missing template '$file'.");
-				}
+			if (empty($template->layout) && $this->layout !== NULL) {
+				$file = str_replace(Environment::getVariable('appDir'), "\xE2\x80\xA6", reset($files));
+				throw new \FileNotFoundException("Layout not found. Missing template '$file'.");
 			}
 		}
 
@@ -466,10 +462,13 @@ abstract class Presenter extends Control implements IPresenter
 		$path = '/' . str_replace(':', 'Module/', $presenter);
 		$pathP = substr_replace($path, '/templates', strrpos($path, '/'), 0);
 		$list = array(
+			"$appDir$pathP/@$layout.latte",
+			"$appDir$pathP.@$layout.latte",
 			"$appDir$pathP/@$layout.phtml",
 			"$appDir$pathP.@$layout.phtml",
 		);
 		while (($path = substr($path, 0, strrpos($path, '/'))) !== FALSE) {
+			$list[] = "$appDir$path/templates/@$layout.latte";
 			$list[] = "$appDir$path/templates/@$layout.phtml";
 		}
 		return $list;
@@ -490,9 +489,11 @@ abstract class Presenter extends Control implements IPresenter
 		$pathP = substr_replace($path, '/templates', strrpos($path, '/'), 0);
 		$path = substr_replace($path, '/templates', strrpos($path, '/'));
 		return array(
+			"$appDir$pathP/$view.latte",
+			"$appDir$pathP.$view.latte",
 			"$appDir$pathP/$view.phtml",
 			"$appDir$pathP.$view.phtml",
-			"$appDir$path/@global.$view.phtml",
+			"$appDir$path/@global.$view.phtml", // deprecated
 		);
 	}
 
@@ -920,7 +921,7 @@ abstract class Presenter extends Control implements IPresenter
 		if ($mode === 'forward') return;
 
 		// CONSTRUCT URL
-		$uri = $router->constructUrl($this->lastCreatedRequest, $httpRequest);
+		$uri = $router->constructUrl($this->lastCreatedRequest, $httpRequest->getUri());
 		if ($uri === NULL) {
 			unset($args[self::ACTION_KEY]);
 			$params = urldecode(http_build_query($args, NULL, ', '));
