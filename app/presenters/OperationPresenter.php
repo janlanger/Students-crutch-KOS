@@ -26,14 +26,14 @@ class OperationPresenter extends BasePresenter {
 
     public function actionAddOperation($app_id) {
         $this['header']->addTitle('Přidání operace');
-        $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineOperation.phtml"));
+        $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineOperation.latte"));
         $this->template->edit=FALSE;
         $this['addOperationForm']['app_id']->setValue($app_id);
     }
 
     public function actionEditOperation($met_id) {
         $this['header']->addTitle('Úprava operace');
-        $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineOperation.phtml"));
+        $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineOperation.latte"));
         $this->template->edit=TRUE;
         $operation = Operation::find(array("met_id" => $met_id));
         if (count($operation) == 1) {
@@ -116,7 +116,7 @@ class OperationPresenter extends BasePresenter {
     public function actionEditSql($sql_id) {
         $operation=OperationSQL::find(array('sql_id'=>$sql_id));
 
-        $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineSql.phtml"));
+        $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineSql.latte"));
         $this->template->edit=TRUE;
         $this->template->params=unserialize($operation->params);
 

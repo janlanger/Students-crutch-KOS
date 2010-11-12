@@ -127,7 +127,7 @@ class Datagrid extends \Nette\Application\Control {
         );
 
         
-        $this->template->setFile(dirname(__FILE__).'/template/datagrid.phtml');
+        $this->template->setFile(dirname(__FILE__).'/template/datagrid.latte');
 
         $this->template->showHeader=$this->showHeader;
         $this->template->uriParams=$uriParams;

@@ -74,7 +74,7 @@ class Navigation extends Nette\Application\Control {
 	 */
 	public function renderMenu($renderChildren = true, $base = null, $renderHomepage = true) {
 		$template = $this->createTemplate()
-			->setFile(dirname(__FILE__) . "/menu.phtml");
+			->setFile(dirname(__FILE__) . "/menu.latte");
 		$template->homepage = $base ? $base : $this->getComponent("homepage");
 		$template->useHomepage = $this->useHomepage && $renderHomepage;
 		$template->renderChildren = $renderChildren;
@@ -117,7 +117,7 @@ class Navigation extends Nette\Application\Control {
 		}
 
 		$template = $this->createTemplate()
-			->setFile(dirname(__FILE__) . "/breadcrumbs.phtml");
+			->setFile(dirname(__FILE__) . "/breadcrumbs.latte");
 		$template->items = $items;
 		$template->render();
 	}
