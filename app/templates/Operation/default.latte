@@ -6,7 +6,7 @@
 
 {var $previous=""}
 {foreach $operations as $op}
-{dump $op}
+
     {if $op->name!=$previous}
         <h3>{$op->name} (
                 {if $op->params!=NULL}
