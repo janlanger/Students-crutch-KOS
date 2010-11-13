@@ -8,24 +8,40 @@
 
 <fieldset n:foreach="$form->getGroups() as $group">
     <legend>Tabulka {$group->getOption('label')}</legend>
-    <table>
-        <tr n:foreach="$group->getControls() as $item">
-            {continueIf Nette\String::endsWith($item->name,'_foreign')}
-            {continueIf strpos($item->name,"__")===FALSE}
-            <td>{$item->label}</td>
-            <td>{$item->control}</td>
-            <td>{$form[$item->name.'_foreign']->control}</td>
-        </tr>
-    </table>
-
+    <div n:inner-foreach="$group->getControls() as $item">
+        {continueIf Nette\String::endsWith($item->name,'_foreign')}
+        {continueIf strpos($item->name,"__")===FALSE}
+        <div>
+        <div class="item" style="float:left; width: 120px;">{$item->label}</div>
+        <div class="item" style="float:left; width: 100px;">{$item->control}</div>
+        <div class="item" style="float:left; width: 300px;">{$form[$item->name.'_foreign']->control}</div>
+        <br clear="all" />
+        </div>
+    </div>
+    <a href="#" class="shower">Zobrazit všechny sloupce</a>
 </fieldset>
-
 <br />
 
 {$form['send']->control}
 {control indexDefForm 'end'}
 
 <script type="text/javascript">
-
+    $(document).ready(function() {
+        $("fieldset select.type").each(function(key, item) {
+            item=$(item);
+            if(item.val()=="none") {
+                item.parent().parent().hide(500);
+            }
+            
+        });
+        $("a.shower").click(function() {
+            
+            $($(this).parent()[0]).find("div").each(function(key,item) {
+                item=$(item);
+                item.show(500);
+            });
+            return false;
+        });
+    });
 
 </script>

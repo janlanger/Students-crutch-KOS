@@ -41,8 +41,7 @@ class ImportPresenter extends BasePresenter {
                     continue;
                 $form->addSelect($table->name . '__' . $column->name, $column->name,
                                 array("none" => "-------", "primary" => 'PRIMARY', "index" => 'INDEX', "foreign" => 'FOREIGN'))
-                        ->skipFirst();
-
+                        ->skipFirst()->getControlPrototype()->class="type";
                 $items2 = $items;
                 unset($items2[$table->name . '.' . $column->name]);
                 array_unshift($items2, "-------");
