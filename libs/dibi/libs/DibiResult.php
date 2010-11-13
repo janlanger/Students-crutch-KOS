@@ -108,7 +108,7 @@ class DibiResult extends DibiObject implements IDataSource
 	 * @return IDibiResultDriver
 	 * @throws InvalidStateException
 	 */
-	private function getDriver()
+	public function getDriver()
 	{
 		if ($this->driver === NULL) {
 			throw new InvalidStateException('Result-set was released from memory.');

@@ -43,7 +43,9 @@ class DibiMySqlReflector extends DibiObject implements IDibiReflector
 			FROM INFORMATION_SCHEMA.TABLES
 			WHERE TABLE_SCHEMA = DATABASE()
 		");*/
-		$res = $this->driver->query("SHOW FULL TABLES");
+                $res=dibi::getConnection()->nativeQuery("SHOW FULL TABLES")->getDriver();
+		//$res = $this->driver->query("SHOW FULL TABLES");
+                
 		$tables = array();
 		while ($row = $res->fetch(FALSE)) {
 			$tables[] = array(
@@ -69,7 +71,7 @@ class DibiMySqlReflector extends DibiObject implements IDibiReflector
 			FROM INFORMATION_SCHEMA.COLUMNS
 			WHERE TABLE_NAME = $table AND TABLE_SCHEMA = DATABASE()
 		");*/
-		$res = $this->driver->query("SHOW FULL COLUMNS FROM `$table`");
+		$res = dibi::getConnection()->nativeQuery("SHOW FULL COLUMNS FROM `$table`")->getDriver();
 		$columns = array();
 		while ($row = $res->fetch(TRUE)) {
 			$type = explode('(', $row['Type']);
@@ -104,7 +106,7 @@ class DibiMySqlReflector extends DibiObject implements IDibiReflector
 			WHERE TABLE_NAME = $table AND TABLE_SCHEMA = DATABASE()
 			AND REFERENCED_COLUMN_NAME IS NULL
 		");*/
-		$res = $this->driver->query("SHOW INDEX FROM `$table`");
+		$res = dibi::getConnection()->nativeQuery("SHOW INDEX FROM `$table`")->getDriver();
 		$indexes = array();
 		while ($row = $res->fetch(TRUE)) {
 			$indexes[$row['Key_name']]['name'] = $row['Key_name'];
