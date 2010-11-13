@@ -1,6 +1,6 @@
 <?php
 
-if(defined(PHP_VERSION_ID) || PHP_VERSION_ID<50300) {
+if (defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300) {
     echo 'Sorry, but this application requires PHP 5.3 or later.';
     exit;
 }
@@ -14,9 +14,9 @@ if(defined(PHP_VERSION_ID) || PHP_VERSION_ID<50300) {
 use Nette\Debug;
 use Nette\Environment;
 
-
 // REMOVE THIS LINE
-if (!is_file(LIBS_DIR . '/Nette/loader.php')) die('Copy Nette Framework to /libs/ directory.');
+if (!is_file(LIBS_DIR . '/Nette/loader.php'))
+    die('Copy Nette Framework to /libs/ directory.');
 
 
 // Step 1: Load Nette Framework
@@ -28,9 +28,9 @@ require LIBS_DIR . '/Nette/loader.php';
 
 // Step 2: Configure environment
 // 2a) enable \Nette\Debug for better exception and error visualisation
-Debug::enable(NULL,APP_DIR.'/log/');
-Debug::$strictMode=true;
-Debug::$maxDepth=5;
+Debug::enable(NULL, APP_DIR . '/log/');
+Debug::$strictMode = true;
+Debug::$maxDepth = 5;
 
 // 2b) load configuration from config.ini file
 Environment::loadConfig();
@@ -38,3 +38,11 @@ Environment::loadConfig();
 dibi::connect(Environment::getConfig('database'));
 dibi::addSubst('main', "rozvrh_main.");
 
+\Nella\Panels\VersionPanel::register();
+\Nella\Panels\CallbackPanel::register(array(
+            '--robotloader' => array(
+                'name' => "Rebuild RobotLoader Cache",
+                'callback' => callback(Environment::getService('Nette\Loaders\RobotLoader'), 'rebuild'),
+                'args' => array()
+            ),
+        ));
