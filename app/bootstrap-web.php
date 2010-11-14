@@ -13,7 +13,13 @@ require_once APP_DIR . '/bootstrap.php';
 $application = Environment::getApplication();
 $application->errorPresenter = 'Error';
 //$application->catchExceptions = TRUE;
-
+\Nella\Panels\CallbackPanel::register(array(
+            '--robotloader' => array(
+                'name' => "Rebuild RobotLoader Cache",
+                'callback' => callback(Environment::getService('Nette\Loaders\RobotLoader'), 'rebuild'),
+                'args' => array()
+            ),
+        ));
 
 // Step 4: Setup application router
 $router = $application->getRouter();

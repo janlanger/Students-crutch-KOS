@@ -39,10 +39,4 @@ dibi::connect(Environment::getConfig('database'));
 dibi::addSubst('main', "rozvrh_main.");
 
 \Nella\Panels\VersionPanel::register();
-\Nella\Panels\CallbackPanel::register(array(
-            '--robotloader' => array(
-                'name' => "Rebuild RobotLoader Cache",
-                'callback' => callback(Environment::getService('Nette\Loaders\RobotLoader'), 'rebuild'),
-                'args' => array()
-            ),
-        ));
+
