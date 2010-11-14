@@ -10,7 +10,7 @@
  *
  * @author Honza
  */
-class CurlDownloader extends NComponent implements IDownloader {
+class CurlDownloader extends \Nette\Component implements IDownloader {
 
     private $url;
     private $login;
@@ -88,7 +88,7 @@ class CurlDownloader extends NComponent implements IDownloader {
             throw new InvalidStateException ('Path to local repository is not set.');
         }
         $xmls = array();
-        $files = NFinder::findFiles("*.xml")->in($this->localRepository);
+        $files = Nette\Finder::findFiles("*.xml")->in($this->localRepository);
         foreach ($files as $file) {
             $xmls[$file->getCTime()] = array(
                 'file' => $file->getRealPath()
