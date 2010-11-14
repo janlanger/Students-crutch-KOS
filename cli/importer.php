@@ -11,13 +11,14 @@ define('APP_DIR', WWW_DIR . '/../app');
 define('LIBS_DIR', WWW_DIR . '/../libs');
 include_once APP_DIR . '/bootstrap.php';
 $logger = \Nette\Environment::getService('ILogger');
-
+Nette\Debug::$showLocation=TRUE;
+Nette\Debug::$maxDepth = 6;
 
 $config = \Nette\Environment::getConfig('xml');
-try {
+/*try {
     $downloader = \Nette\Environment::getContext()->getService('IDownloader');
     /* @var $downloader CurlDownloader */
-    $downloader->setLocalRepository($config['localRepository'])
+/*    $downloader->setLocalRepository($config['localRepository'])
             ->setLogin($config['login'])
             ->setPassword($config['password'])
             ->setUrl($config['remoteURL']);
@@ -25,7 +26,7 @@ try {
 
     if ($downloader->checkForNewer() == IDownloader::MODIFIED) {
         $return = $downloader->download();
-        $logger->logMessage('Downloaded XML file - ' . basename($return['file']) . ', ' . NTemplateHelpers::bytes($return['size']) . ' (elapsed: ' . round($return['time'], 3) . 's)', Logger::INFO, 'XMLDownloader-CLI');
+        $logger->logMessage('Downloaded XML file - ' . basename($return['file']) . ', ' . Nette\Templates\TemplateHelpers::bytes($return['size']) . ' (elapsed: ' . round($return['time'], 3) . 's)', Logger::INFO, 'XMLDownloader-CLI');
     } else {
         $logger->logMessage('No newer file found.', Logger::INFO, 'XMLDownloader-CLI');
     }
@@ -33,27 +34,28 @@ try {
     $logger->logMessage($e->getMessage(), Logger::CRITICAL, 'XMLDownloader-CLI');
     \Nette\Debug::log($e);
     exit;
-}
-
+}*/
+$return['file']='d:\web\_bp\www\xml\rz-2010-11-14-00-59-48.xml';
 if (isset($return['file'])) {
     //run import
     try {
         \Nette\Debug::timer("importer-total");
-        $importer = new XMLImporter(NULL, 'importer');
+        $importer = Nette\Environment::getService('IImporter');
 
-        /* @var $importer XMLImporter */
-        $importer->setFile(basename($return['file']));
-        $tables = $importer->tables;
+        $importer->setFile($return['file']);
+       // $importer->buildDaatabase();
+        /*$tables = $importer->tables;
         foreach ($tables as $table) {
-            /* @var $table XMLi_Entity */
+          
             $table->setPrimaryKeys($table->getGuessedPrimaryKeys());
             $table->setIndexes($table->getGuessedIndexes());
-        }
+        }*/
         $database_name = $config['liveDatabase'];
         $importer->buildDatabase($database_name, TRUE);
         $logger->logMessage("Database import sucessfull. Total time: " . round(\Nette\Debug::timer("importer-total"),3).'s', Logger::INFO,'XMLImport-CLI');
         
     } catch (Exception $e) {
+        throw $e;
         $logger->logMessage($e->getMessage(), Logger::CRITICAL,'XMLImport-CLI');
         \Nette\Debug::log($e);
         exit;
