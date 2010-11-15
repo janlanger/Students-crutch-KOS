@@ -1,0 +1,20 @@
+{**
+ * My Application layout template.
+ *
+ * @copyright  Copyright (c) 2010 John Doe
+ * @package    MyApplication
+ *
+ * @param string   $basePath web base path
+ * @param string   $robots   tell robots how to index the content of a page (optinal)
+ * @param array    $flashes  flash messages
+ *}
+
+<body>
+
+    
+
+	{foreach $flashes as $flash}<div class="flash {$flash->type}">{!$flash->message}</div>{/foreach}
+
+	{include #content}
+</body>
+</html>

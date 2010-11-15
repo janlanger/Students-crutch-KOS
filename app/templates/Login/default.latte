@@ -1,7 +1,78 @@
-{var robots => noindex}
+{extends NULL}
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
 
-{block #content}
+<html>
+    <head>
+        <title>Log in</title>
 
-<h1>Log in</h1>
+        <style type="text/css">
+            body {
+                font: 16px/1.5 Calibri,"Trebuchet MS", "Geneva CE", lucida, sans-serif;
 
-{widget loginForm}
+                background: #BFBFBF; /* old browsers */
+                background: -moz-linear-gradient(top, #BFBFBF 0%, #F2F2F2 99%); /* firefox */
+
+                background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#BFBFBF), color-stop(99%,#F2F2F2)); /* webkit */
+
+                filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#BFBFBF', endColorstr='#F2F2F2',GradientType=0 ); /* ie */
+
+            }
+            h1,h2,h3{
+                font-family: 'Trebuchet MS',  'Geneva CE', lucida, sans-serif;
+            }
+            h1 {
+                font-size: 130%;
+                color: #000;
+                margin: 5px auto 10px;
+            }
+            #outer { height: 400px; overflow: hidden; position: relative; width: 100%;}
+            #outer[id] { display: table; position: static;}
+
+            #middle { position: absolute; top: 50%; width: 100%; text-align: center;} /* for explorer only*/
+            #middle[id] { display: table-cell; vertical-align: middle; position: static;}
+
+            #inner { position: relative; top: -50%; text-align: left;} /* for explorer only */
+            #inner { width: 400px; margin-left: auto; margin-right: auto; text-align: center;} /* for all browsers*/
+            #inner[id] { position: static;}
+            body, html { height: 100%;}
+            #outer { height: 100%; overflow: visible;} /* or without overflow */
+            #inner {
+                border: 1px solid #999;
+                background-color: #ddd;
+                padding: 10px;
+            }
+            table {
+                margin: auto;
+            }
+            ul.error {
+                list-style: outside none;
+                background: #fff0f0 url(/images/icons/error-32.png) no-repeat scroll 15px 50%;
+                border: 1px solid #f08888;
+                color:#770000;
+                padding: 0px;
+                width: 200px;
+                min-height: 20px;
+                margin: 5px auto;
+                text-align: left;
+                padding: 6px 10px 6px 62px;
+            }
+            ul.error li {
+                margin: 0px;
+                padding: 0px;
+            }
+
+        </style>
+    </head>
+
+    <body>
+        <div id="outer" class="greenBorder">
+            <div id="middle">
+                <div id="inner">
+                    <h1>Přihlášení</h1>
+
+                    {control loginForm}
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

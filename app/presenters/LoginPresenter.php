@@ -6,8 +6,7 @@
  * @copyright  Copyright (c) 2010 John Doe
  * @package    MyApplication
  */
-
-
+use Nette\Application\Presenter;
 
 /**
  * Login / logout presenters.
@@ -15,48 +14,46 @@
  * @author     John Doe
  * @package    MyApplication
  */
-class LoginPresenter extends BasePresenter
-{
+class LoginPresenter extends Presenter {
 
+     /** @persistent */
+    public $backlink = '';
 
-	/**
-	 * Login form component factory.
-	 * @return mixed
-	 */
-	protected function createComponentLoginForm()
-	{
-		$form = new \Nette\Application\AppForm;
-		$form->addText('username', 'Username:')
-			->addRule(\Nette\Application\AppForm::FILLED, 'Please provide a username.');
+    /**
+     * Login form component factory.
+     * @return mixed
+     */
+    protected function createComponentLoginForm() {
+        $form = new \Nette\Application\AppForm;
+        $form->addText('username', 'Uživatel:')
+                ->addRule(\Nette\Application\AppForm::FILLED, 'Vložte uživatelské jméno.');
 
-		$form->addPassword('password', 'Password:')
-			->addRule(\Nette\Application\AppForm::FILLED, 'Please provide a password.');
+        $form->addPassword('password', 'Heslo:')
+                ->addRule(\Nette\Application\AppForm::FILLED, 'Vložte heslo.');
 
-		$form->addCheckbox('remember', 'Remember me on this computer');
+        $form->addSubmit('login', 'Login');
 
-		$form->addSubmit('login', 'Login');
+        $form->onSubmit[] = callback($this, 'loginFormSubmitted');
+        return $form;
+    }
 
-		$form->onSubmit[] = callback($this, 'loginFormSubmitted');
-		return $form;
-	}
+    public function loginFormSubmitted($form) {
+        try {
+            $values = $form->values;
 
+            $this->getUser()->setExpiration('+ 20 minutes', TRUE);
 
+            $this->getUser()->login($values['username'], $values['password']);
+            $this->getApplication()->restoreRequest($this->backlink);
+            $this->redirect('Default:');
+        } catch (\Nette\Security\AuthenticationException $e) {
+            $form->addError($e->getMessage());
+        }
+    }
 
-	public function loginFormSubmitted($form)
-	{
-		try {
-			$values = $form->values;
-			if ($values['remember']) {
-				$this->getUser()->setExpiration('+ 14 days', FALSE);
-			} else {
-				$this->getUser()->setExpiration('+ 20 minutes', TRUE);
-			}
-			$this->getUser()->login($values['username'], $values['password']);
-			$this->redirect('Homepage:');
-
-		} catch (NAuthenticationException $e) {
-			$form->addError($e->getMessage());
-		}
-	}
+    public function actionLogout() {
+        $this->getUser()->logout();
+        $this->redirect("default");
+    }
 
 }

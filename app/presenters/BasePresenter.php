@@ -1,6 +1,8 @@
 <?php
+
 use Nette\Application\Presenter;
 use Nette\Environment;
+
 /**
  * My NApplication
  *
@@ -15,10 +17,22 @@ use Nette\Environment;
  * @package    MyApplication
  */
 abstract class BasePresenter extends Presenter {
-    const  FLASH_SUCCESS = 'success';
-    const  FLASH_WARNING = 'warning';
-    const  FLASH_ERROR   = 'error';
+    const FLASH_SUCCESS = 'success';
+    const FLASH_WARNING = 'warning';
+    const FLASH_ERROR = 'error';
 
+    protected function startup() {
+        parent::startup();
+        $user = $this->getUser();
+        if (!$user->isLoggedIn()) {
+            if ($user->getLogoutReason() === Nette\Web\User::INACTIVITY) {
+                $this->flashMessage('Uplynula doba neaktivity! Systém vás z bezpečnostných dôvodov odhlásil.', 'warning');
+            }
+
+
+            $this->redirect('Login:', array('backlink' => Environment::getApplication()->storeRequest()));
+        }
+    }
 
     public function createComponentHeader() {
         Environment::getSession()->start();
@@ -43,6 +57,7 @@ abstract class BasePresenter extends Presenter {
         //$nav->add('Import', $this->link('Import:'));
         $nav->add('Správa aplikací', $this->link("App:"));
         $nav->add('Log', $this->link('Default:showLog'));
+        $nav->add("Odhlásit", $this->link("Login:logout"));
         return $nav;
     }
 
