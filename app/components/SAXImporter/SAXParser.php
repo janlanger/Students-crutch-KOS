@@ -95,7 +95,7 @@ class Parser{
             }
 
             if ($this->reader->depth == 2) {
-                if ($table->getNumOfRows() % 500 == 0 && $table->getNumOfRows() != 0) {
+                if ($table->getNumOfRows() % 700 == 0 && $table->getNumOfRows() != 0) {
                     $this->importQueue->add($table);
                 }
                 $table->addRow();

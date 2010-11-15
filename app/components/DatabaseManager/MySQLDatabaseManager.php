@@ -76,7 +76,7 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
     public function fillTables($data) {
         
         foreach ($data as $table => $rows) {
-            $maxRowsPerInsert = 200;
+            $maxRowsPerInsert = 500;
             $rows = array_chunk($rows, $maxRowsPerInsert);
 
             for ($i = 0; $i < count($rows); $i++) {
