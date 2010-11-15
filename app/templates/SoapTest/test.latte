@@ -4,11 +4,11 @@
 {control form}
 
 {ifset $sql}
-<h3>Provedený SQL dotaz</h3> <code class="jush-sql">{$sql}</code>
-{/if}
+<h3>Provedený SQL dotaz</h3> <code class="jush-sql">{!$sql}</code>
+{/ifset}
 
 {ifset $soapReturn}
 <h3>Odpověď služby</h3>
     
     {!$soapReturn}
-{/if}
+{/ifset}
