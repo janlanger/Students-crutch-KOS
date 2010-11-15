@@ -114,7 +114,7 @@ class OperationPresenter extends BasePresenter {
 
 
     public function actionEditSql($sql_id) {
-        $operation=OperationSQL::find(array('sql_id'=>$sql_id));
+        $operation=(OperationSQL::find(array('sql_id'=>$sql_id)));
 
         $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineSql.latte"));
         $this->template->edit=TRUE;
@@ -129,13 +129,13 @@ class OperationPresenter extends BasePresenter {
         ));
 
         if($operation->fetchType!='assoc') {
-            $form['fetchType']->setDisables();
+            $form['assocKey']->setDisabled();
         }
     }
 
     public function actionDefineSql($met_id,$rev_id) {
         $this->template->edit=FALSE;
-        $operation=reset(Operation::find(array('met_id'=>$met_id)));
+        $operation=@reset(Operation::find(array('met_id'=>$met_id)));
         $this->template->params=unserialize($operation->params);
 
         $form=$this['addSQLForm'];
@@ -143,7 +143,7 @@ class OperationPresenter extends BasePresenter {
         $form['rev_id']->setDefaultValue($rev_id);
 
         if($operation->fetchType!='assoc') {
-            $form['fetchType']->setDisables();
+            $form['assocKey']->setDisabled();
         }
 
     }
@@ -188,7 +188,7 @@ class OperationPresenter extends BasePresenter {
             $this->flashMessage('SQL definice byla uložena.', 'success');
             $this->redirect('default');
         } catch (Exception $e) {
-            if($e instanceof NAbortException) {
+            if($e instanceof \Nette\Application\AbortException) {
                 throw $e;
             }
             $this->flashMessage('Došlo k chybě. ' . $e->getMessage(), 'error');
