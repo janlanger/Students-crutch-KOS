@@ -15,10 +15,10 @@ Nette\Debug::$showLocation=TRUE;
 Nette\Debug::$maxDepth = 6;
 
 $config = \Nette\Environment::getConfig('xml');
-/*try {
+try {
     $downloader = \Nette\Environment::getContext()->getService('IDownloader');
     /* @var $downloader CurlDownloader */
-/*    $downloader->setLocalRepository($config['localRepository'])
+    $downloader->setLocalRepository($config['localRepository'])
             ->setLogin($config['login'])
             ->setPassword($config['password'])
             ->setUrl($config['remoteURL']);
@@ -34,8 +34,8 @@ $config = \Nette\Environment::getConfig('xml');
     $logger->logMessage($e->getMessage(), Logger::CRITICAL, 'XMLDownloader-CLI');
     \Nette\Debug::log($e);
     exit;
-}*/
-$return['file']='d:\web\_bp\www\xml\rz-2010-11-14-00-59-48.xml';
+}
+
 if (isset($return['file'])) {
     //run import
     try {
