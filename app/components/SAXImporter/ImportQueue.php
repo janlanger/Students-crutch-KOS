@@ -1,6 +1,8 @@
 <?php
 
-namespace SAX;
+namespace SAX\Queue;
+use SAX\Entity\Entity;
+use SAX\Entity\EntityDefinition;
 
 /**
  * Description of ImportQueue
@@ -9,9 +11,13 @@ namespace SAX;
  */
 class ImportQueue {
 
-    private $queue = array();
-    private $indexCache = array();
+    private $dataQueue = array();
+    private $tableQueue = array();
+    private $keyCache = array();
+    /** @var IndexCache */
+    private $indexCache = NULL;
     private $dependencyCache=array();
+    private $calls=0;
     /**
      *
      * @var \MySQLDatabaseManager
@@ -19,36 +25,56 @@ class ImportQueue {
     private $databaseCreator;
 
     public function __construct() {
+        $this->loadIndexDefinition();
         $this->databaseCreator = \Nette\Environment::getService('IDatabaseManager');
+        $this->indexCache = new IndexCache($this->keyCache);
     }
 
-    public function add(Entity\Entity $entity) {
-        if (!isset($this->queue[$entity->getName()])) {
-            $this->queue[$entity->getName()] = $entity;
-        }
-        $this->flushQueue();
-    }
+    public function add(Entity $entity) {
 
-    public function flushQueue() {
-        foreach ($this->queue as $key=>$entity) {
-            $this->flushEntity($entity);
-            if(!\count($entity->rows) && $entity->isParseCompleted() && !$entity->hasDependants()) {
-                unset($this->queue[$key]);
+        if ($entity->hasData()) {
+            $this->dataQueue[] = $entity;
+            if(!isset($this->tableQueue[$entity->getDefinition()->getName()])) {
+                $this->tableQueue[$entity->getDefinition()->getName()]=$entity->getDefinition();
             }
-            
+        }
+        $this->flush();
+    }
+
+    public function flush($all=FALSE) {
+        $this->calls++;
+        foreach($this->tableQueue as $key=>$table) {
+                $this->createTable($table);
+                if($table->tableCreated && $table->isParseCompleted()) {
+                    unset($this->tableQueue[$key]);
+            }
+        }
+        if($this->calls%200 == 0 || $all) {
+            $this->flushEntityCache();
+        }
+    }
+
+    private function flushEntityCache() {
+        foreach ($this->dataQueue as $key=>$entity) {
+            if($entity->getDefinition()->tableCreated && $this->checkDependency($entity)) {
+                $this->databaseCreator->fillTable($entity);
+                $this->indexCache->add($entity);
+                unset($this->dataQueue[$key]);
+            }
+        }
+    }
+
+    private function createTable(EntityDefinition $table) {
+        if(!$table->tableCreated) {
+            $this->setIndexes($table);
+            //$this->initIndexCacheFor($table);
+            $this->databaseCreator->createTable($table);
+        } elseif (count($table->alterTable)) {
+            $this->databaseCreator->alterTable($table);
         }
     }
 
     private function flushEntity(Entity\Entity $entity) {
-        //TODO DEPENDENCIES
-        if (!$entity->tableCreated) {
-            $this->setIndexes($entity);
-            $entity->setDependants($this->getDependantsFor($entity));
-            $this->databaseCreator->createTable($entity);
-        }
-        elseif(count($entity->alterTable)) {
-            $this->databaseCreator->alterTable($entity);
-        }
         
         $toInsert = array();
         foreach ($entity->rows as $key => $row) {
@@ -67,37 +93,16 @@ class ImportQueue {
         }
     }
 
-    private function checkDependency(Entity\Entity $entity, $row) {
-        $return = TRUE;
-        foreach ($entity->getForeigns() as $key=>$value) {
-            if(!isset ($row[$key])) {
-                $return = TRUE;
-                continue;
-            }
-
-            //$value['foreign']=\explode(".", $value['foreign']); //0 - table, 1 - col
-
-            if(isset($this->queue[$value['foreign'][0]])) {
-                if($this->queue[$value['foreign'][0]]->hasBeenImported($row[$key],$value['foreign'][1])) {
-                    $return = TRUE;
-                }
-                else {
-                    $return = FALSE;
-                }
-            }
-            iF(!$return) {
-                break;  //aspon jeden nevyhovuje - neimportovat
-            }
-        }
-        return $return;
+    private function checkDependency(Entity $entity) {
+        return $this->indexCache->hasFulfilledDeps($entity);
     }
 
-    private function setIndexes(Entity\Entity $entity) {
-        if (!count($this->indexCache)) {
+    private function setIndexes(EntityDefinition $entity) {
+        if (!count($this->keyCache)) {
             $this->loadIndexDefinition();
         }
-        if (isset($this->indexCache[$entity->getName()])) {
-            $in = $this->indexCache[$entity->getName()];
+        if (isset($this->keyCache[$entity->getName()])) {
+            $in = $this->keyCache[$entity->getName()];
             foreach ($in as $key => $index) {
                 if ($index['type'] == 'primary') {
                     $entity->addPrimaryKey($key);
@@ -112,7 +117,12 @@ class ImportQueue {
         }
     }
 
-    private function getDependantsFor(Entity\Entity $entity) {
+
+    private function initIndexCacheFor(EntityDefinition $table) {
+        $this->indexCache->init($table,  $this->getDependantsFor($table));
+    }
+
+    private function getDependantsFor(EntityDefinition $entity) {
         if (!count($this->dependencyCache)) {
             $this->buildDependencyCache();
         }
@@ -123,11 +133,11 @@ class ImportQueue {
     }
 
     private function buildDependencyCache() {
-        if (!count($this->indexCache)) {
+        if (!count($this->keyCache)) {
             $this->loadIndexDefinition();
         }
 
-        foreach($this->indexCache as $table=>$columns) {
+        foreach($this->keyCache as $table=>$columns) {
             foreach($columns as $col=>$index) {
                 if($index['type']=='foreign') {
                     //$index['foreign']=\explode(".", $index['foreign']);
@@ -146,7 +156,7 @@ class ImportQueue {
     private function loadIndexDefinition() {
         $result = \IndexDefinition::find();
         foreach ($result as $row) {
-            $this->indexCache[$row->table][$row->column] = array("type" => $row->index_type, "foreign" => explode(".",$row->foreign));
+            $this->keyCache[$row->table][$row->column] = array("type" => $row->index_type, "foreign" => explode(".",$row->foreign));
         }
     }
 

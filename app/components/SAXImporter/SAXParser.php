@@ -3,6 +3,7 @@
 namespace SAX;
 
 use XMLReader;
+use SAX\Queue\ImportQueue;
 
 /**
  * Description of SAXParser
@@ -52,7 +53,7 @@ class Parser{
         while ($r->read()) {
             if ($r->nodeType == XMLReader::ELEMENT) {
                 if ($r->depth == 0) {   //root
-                    $this->loadRootNode();
+                    //$this->loadRootNode();
                     continue;
                 }
                 if ($r->depth == 1) { //table
@@ -62,6 +63,7 @@ class Parser{
             }
         }
         //dump($this->importQueue);
+        echo \dibi::$numOfQueries;
     }
 
     private function loadRootNode() {
@@ -78,32 +80,36 @@ class Parser{
     }
 
     private function loadTable() {
-        $table = new Entity\Entity();
+        $table = new Entity\EntityDefinition();
         $table->setName($this->reader->name);
+        $entity=new Entity\Entity($table);
         while ($this->reader->read() && $this->reader->depth > 1) {
             if ($this->reader->nodeType == XMLReader::ELEMENT) {
                 if ($this->reader->hasAttributes) {
                     while ($this->reader->moveToNextAttribute()) {
 //                        $table->addColumn($this->reader->name);
-                        $table->addValue($this->reader->name, $this->reader->value);
+                        $entity->add($this->reader->name, $this->reader->value);
                     }
                 }
                 if ($this->reader->depth > 2 && $this->reader->nodeType==XMLReader::ELEMENT) {
 //                    $table->addColumn($this->reader->name);
-                    $table->addValue($this->reader->name, $this->reader->value);
+                    $entity->add($this->reader->name, $this->reader->value);
                 }
             }
 
             if ($this->reader->depth == 2) {
-                if ($table->getNumOfRows() % 700 == 0 && $table->getNumOfRows() != 0) {
+                /*if ($table->getNumOfRows() % 700 == 0 && $table->getNumOfRows() != 0) {
                     $this->importQueue->add($table);
-                }
-                $table->addRow();
+                }*/
+                $this->importQueue->add($entity);
+                $entity=new Entity\Entity($table);
             }
         }
         $table->parseComplete();
-        $this->importQueue->add($table);
-        /*if ($table->getName() == 'ucitele') {
+        $this->importQueue->flush(TRUE);
+        //$this->importQueue->add($table);
+        /*if ($table->getName() == 'listky') {
+            $this->importQueue->flush(TRUE);
             dump($this->importQueue);
             exit;
         }*/

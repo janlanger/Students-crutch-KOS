@@ -7,7 +7,7 @@ namespace SAX\Entity;
  *
  * @author Jan Langer, kontakt@janlanger.cz
  */
-class Entity {
+class EntityDefinition {
 
     private $name;
     private $columns = array();
@@ -16,40 +16,36 @@ class Entity {
     private $foreigns = array();
     public $dependecies;
     public $rows = array();
-    private $rowId = -1;
+    public $createDelayed = FALSE;
     public $tableCreated = FALSE;
     private $indexCache = array();
     private $completeParse = FALSE;
     public $alterTable = array();
 
     public function __construct() {
-        $this->rows[0] = array();
-        $this->rowId= 0;
+        /*$this->rows[0] = array();
+        $this->rowId= 0;*/
     }
 
-    private function addColumn($column) {
+    public function addColumn($column) {
         if (!isset($this->columns[$column])) {
             $this->columns[$column] = new Column($column, $this);
-            if ($this->rowId >= 0) {
-                foreach ($this->rows as $key => $row) {
-                    if (!array_key_exists($column, $row)) {
-                        $this->rows[$key][$column] = NULL;
-                    }
-                }
+            if($this->tableCreated) {
+                $this->alterTable['add'][$column]=TRUE;
             }
         }
     }
 
-    public function addValue($column, $value) {
+    /*public function addValue($column, $value) {
         if (!count($this->rows[$this->rowId])) {
             $this->rows[$this->rowId] = array_fill_keys(array_keys($this->columns), NULL);
         }
         $column = str_replace(".", "_", $column);
         $this->addColumn($column);
         $this->addToRow($column, $value);
-    }
+    }*/
 
-    private function addToRow($column, $value) {
+    /*private function addToRow($column, $value) {
         $this->columns[$column]->checkType($value);
         $this->rows[$this->rowId][$column] = $value;
     }
@@ -63,10 +59,13 @@ class Entity {
 
     public function getNumOfRows() {
         return $this->rowId;
-    }
+    }*/
 
     public function getName() {
         return $this->name;
+    }
+    public function isColumnExists($column) {
+        return isset($this->columns[$column]);
     }
 
     public function setName($name) {
@@ -82,15 +81,27 @@ class Entity {
     }
 
     public function addPrimaryKey($k) {
-        $this->primaryKeys[] = $k;
+        if(!\in_array($k, $this->primaryKeys)) {
+            if($k!="id") {
+                $this->addIndex($k);
+            }
+            $this->primaryKeys[] = $k;
+        }
     }
 
     public function addIndex($k) {
-        $this->indexes[] = $k;
+        if(!\in_array($k, $this->indexes))
+            $this->indexes[] = $k;
     }
 
     public function addForeignKey($k, $c) {
-        $this->foreigns[$k] = array("type" => $k, "foreign" => $c);
+        if(!isset($this->foreigns[$k])) {
+            $this->foreigns[$k] = array("column" => $k, "foreign" => $c);
+            if(!isset($this->columns[$k])) {
+                $this->addColumn($k);
+                $this->createDelayed=TRUE;
+            }
+        }
     }
 
     public function setDependants($array) {
@@ -106,7 +117,7 @@ class Entity {
         return count($this->dependecies);
     }
 
-    public function hasBeenImported($value, $key) {
+    /*public function hasBeenImported($value, $key) {
         return \in_array($value, $this->indexCache[$key]);
     }
 
@@ -119,7 +130,7 @@ class Entity {
         }
         unset ($this->rows[$key]);
         $this->rowId--;
-    }
+    }*/
 
     public function getPrimaryKeys() {
         return $this->primaryKeys;

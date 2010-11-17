@@ -13,7 +13,7 @@ class Column {
     private $table;
     private $type;
 
-    public function __construct($name, Entity $table) {
+    public function __construct($name, EntityDefinition $table) {
         $this->name = $name;
         $this->table = $table;
     }
@@ -38,8 +38,8 @@ class Column {
         } else {
             $type = "text";
         }
-        if($this->type!=$type && $this->table->tableCreated) {
-            $this->table->alterTable[]=$this->name;
+        if($this->type!=$type && $this->table->tableCreated && !isset($this->table->alterTable['add'][$this->name])) {
+            $this->table->alterTable['change'][$this->name]=TRUE;
         }
         $this->type = $type;
     }

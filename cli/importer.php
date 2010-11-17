@@ -12,13 +12,13 @@ define('LIBS_DIR', WWW_DIR . '/../libs');
 include_once APP_DIR . '/bootstrap.php';
 $logger = \Nette\Environment::getService('ILogger');
 Nette\Debug::$showLocation=TRUE;
-Nette\Debug::$maxDepth = 6;
+Nette\Debug::$maxDepth = 5;
 
 $config = \Nette\Environment::getConfig('xml');
 try {
     $downloader = \Nette\Environment::getContext()->getService('IDownloader');
     /* @var $downloader CurlDownloader */
-    $downloader->setLocalRepository($config['localRepository'])
+  $downloader->setLocalRepository($config['localRepository'])
             ->setLogin($config['login'])
             ->setPassword($config['password'])
             ->setUrl($config['remoteURL']);
@@ -35,7 +35,6 @@ try {
     \Nette\Debug::log($e);
     exit;
 }
-
 if (isset($return['file'])) {
     //run import
     try {

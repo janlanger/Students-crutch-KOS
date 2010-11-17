@@ -1,6 +1,7 @@
 <?php
 
 use SAX\Entity\Entity;
+use SAX\Entity\EntityDefinition;
 
 /*
  * To change this template, choose Tools | Templates
@@ -20,8 +21,11 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         "text" => "text"
     );
 
-    public function createTable(Entity $table) {
+    public function createTable(EntityDefinition $table) {
         if (!count($table->getColumns())) {
+            return;
+        }
+        if($table->createDelayed) {
             return;
         }
 
@@ -57,7 +61,7 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         return (isset(self::$typeMap[$type]) ? self::$typeMap[$type] : "varchar(255)");
     }
 
-    private function createConstrains(Entity $table) {
+    private function createConstrains(EntityDefinition $table) {
         if (!count($table->getForeigns())) {
             return;
         }
@@ -66,14 +70,18 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         $sql = 'ALTER TABLE [' . $table->getName() . ']';
         
         foreach ($table->getForeigns() as $key) {
-            //$key['foreign'] = explode(".", $key['foreign']);
-            $ref[] = ' ADD FOREIGN KEY ([' . $key['type'] . ']) REFERENCES [' . $key['foreign'][0] . '] ([' . $key['foreign'][1] . '])';
+            
+            $ref[] = ' ADD FOREIGN KEY ([' . $key['column'] . ']) REFERENCES [' . $key['foreign'][0] . '] ([' . $key['foreign'][1] . '])';
         }
         $sql.=implode(", \n", $ref);
         dibi::query($sql);
     }
 
-    public function fillTables($data) {
+    public function fillTable(Entity $entity) {
+
+        $data=$entity->getData();
+        dibi::query("INSERT INTO [".$entity->getDefinition()->getName()."] %v",$data);
+        return;
         
         foreach ($data as $table => $rows) {
             $maxRowsPerInsert = 500;
@@ -99,15 +107,20 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         }
     }
 
-    public function alterTable(Entity $entity) {
+    public function alterTable(EntityDefinition $entity) {
         $sql='ALTER TABLE ['.$entity->getName().']';
         $alters=array();
-        foreach ($entity->alterTable as $value) {
-            
-            $alters[]='MODIFY ['.$value.'] '.$this->getNativeType($entity->getColumn($value)->getType()).' NULL';
+        if(isset($entity->alterTable['change']))
+        foreach ($entity->alterTable['change'] as $key=>$value) {
+            $alters[]=' MODIFY ['.$key.'] '.$this->getNativeType($entity->getColumn($key)->getType()).' NULL';
+        }
+        if(isset($entity->alterTable['add']))
+        foreach ($entity->alterTable['add'] as $key=>$value) {
+            $alters[]=' ADD ['.$key.'] '.$this->getNativeType($entity->getColumn($key)->getType()).' NULL';
         }
         $sql.=implode(", ",$alters);
         dibi::query($sql);
+        
         $entity->alterTable=array();
     }
 

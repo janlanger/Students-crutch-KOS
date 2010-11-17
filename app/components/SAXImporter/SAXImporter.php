@@ -1,6 +1,7 @@
 <?php
 
 namespace SAX;
+use SAX\Queue\ImportQueue;
 
 /**
  * Description of SAXImporter
