@@ -153,15 +153,6 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         dibi::query("USE [$name]");
     }
 
-    public function getTables($database) {
-        $result = dibi::query('SHOW TABLES IN [' . $database . ']');
-        $tables = array();
-        foreach ($result as $table) {
-            $tables[] = $table['Tables_in_' . $database];
-        }
-        return $tables;
-    }
-
     public function createRevision($fromDb, $toDb, $tables) {
         try {
             $this->createDatabase($toDb);
