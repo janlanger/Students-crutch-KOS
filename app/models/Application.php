@@ -36,13 +36,32 @@ class Application extends Model {
             }
             $app_id=$this->app_id;
             unset($this->app_id);
-            dibi::update(':main:application', $this)->where(array("app_id"=>$app_id))->execute();
-            return TRUE;
+            try{
+                dibi::update(':main:application', $this)->where(array("app_id"=>$app_id))->execute();
+                return TRUE;
+            } catch (DibiException $e) {
+                \Nette\Debug::log($e);
+                throw new ModelException('Application wasn\'t updated. Try again later.', NULL, $e);
+            }
         } else {
             $this->app_id=NULL;
             $this->password=self::hashPassword($this->password);
-            dibi::insert(':main:application', $this)->execute();
-            return TRUE;
+            try{
+                dibi::begin();
+                dibi::insert(':main:application', $this)->execute();
+                dibi::insert(':main:revision', array(
+                    'db_name'=>  \Nette\Environment::getConfig('xml')->liveDatabase,
+                    'app_id'=>dibi::getInsertId(),
+                    'isMain'=>TRUE,
+                    'alias'=>'live'
+                ))->execute();
+                dibi::commit();
+                return TRUE;
+            } catch (DibiException $e) {
+                dibi::rollback();
+                \Nette\Debug::log($e);
+                throw new ModelException('Application wasn\'t created. Try again later.', NULL, $e);
+            }
         }  
     }
 

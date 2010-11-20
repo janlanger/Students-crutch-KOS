@@ -90,7 +90,7 @@ class AppPresenter extends BasePresenter {
             Application::create($values)->save();
             $this->flashMessage('Aplikace byla uložena.','success');
             $this->redirect('App:');
-        } catch (DibiException $e) {
+        } catch (ModelException $e) {
             $this->flashMessage('Došlo k chybě. '.$e->getMessage(),'error');
             \Nette\Debug::log($e);
         }
