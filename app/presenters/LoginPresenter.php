@@ -41,7 +41,7 @@ class LoginPresenter extends Presenter {
         try {
             $values = $form->values;
 
-            $this->getUser()->setExpiration('+ 20 minutes', TRUE);
+            $this->getUser()->setExpiration('+ 60 minutes', TRUE);
 
             $this->getUser()->login($values['username'], $values['password']);
             $this->getApplication()->restoreRequest($this->backlink);
