@@ -567,7 +567,7 @@ final class Debug
 
 		if (!$return && self::$showLocation) {
 			$trace = debug_backtrace();
-			$i = isset($trace[1]['class']) && $trace[1]['class'] === __CLASS__ ? 1 : 1;
+			$i = isset($trace[1]['class']) && $trace[1]['class'] === __CLASS__ ? 1 : 0;
 			if (isset($trace[$i]['file'], $trace[$i]['line'])) {
 				$output = substr_replace($output, ' <small>' . htmlspecialchars("in file {$trace[$i]['file']} on line {$trace[$i]['line']}", ENT_NOQUOTES) . '</small>', -8, 0);
 			}

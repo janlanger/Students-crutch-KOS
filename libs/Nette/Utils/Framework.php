@@ -28,7 +28,7 @@ final class Framework
 
 	const VERSION = '2.0-dev';
 
-	const REVISION = '5bdf5b0 released on 2010-11-12';
+	const REVISION = 'e1a3fa8 released on 2010-11-15';
 	/**#@-*/
 
 	/** @var bool set to TRUE if your host has disabled function ini_set */
