@@ -47,18 +47,12 @@ class DatagridActions {
      * @return DatagridActions fluent
      */
     public function add($link,$label,$type) {
-        $this->actions[$label]=array('link'=>$link, 'label'=>$label,'type'=>$type);
-        return $this;
+        $action=new DatagridAction($link, $label, $type);
+        $this->actions[]=$action;
+        return $action;
     }
 
-    /**
-     * Set javascript confirmation when link is clicked
-     * @param string $label action label
-     * @param string $question question
-     */
-    public function setConfirmQuestion($label,$question) {
-        $this->actions[$label]['question']=$question;
-    }
+    
 
     /**
      * Gets count of actions
@@ -81,7 +75,10 @@ class DatagridActions {
         $links=array();
 
         foreach ($this->actions as $action) {
-            $link=$action['link'];
+            $link=$action->link;
+            if($action->hasValidator() && !$action->validate($row)) {
+                continue;
+            }
 
             if(isset($row[$link['param']])) {
                 $link=$this->grid->presenter->link($link['action'], array($link['param']=>$row[$link['param']]));
@@ -89,10 +86,10 @@ class DatagridActions {
             else {
                 $link=$this->grid->presenter->link($link['action']);
             }
-            $tag=\Nette\Web\Html::el('a')->href($link)->setText($action['label']);
-            $tag->class=$action['type'];
-            if(isset($action['question'])) {
-                $tag->onclick('if(confirm(\''.$action['question'].'\')) location.href=\''.$link.'\'; return(false);');
+            $tag=\Nette\Web\Html::el('a')->href($link)->setText($action->label);
+            $tag->class=$action->type;
+            if($action->question!="") {
+                $tag->onclick('if(confirm(\''.$action->question.'\')) location.href=\''.$link.'\'; return(false);');
                 $tag->href("#");
             }
             $links[]=$tag;
