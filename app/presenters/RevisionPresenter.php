@@ -80,7 +80,9 @@ class RevisionPresenter extends BasePresenter {
 
         $tables = Revision::getAvaiableTables();
         foreach ($tables as $table) {
-            $form->addCheckbox($table, $table);
+
+/* @var $table DibiTableInfo */
+            $form->addCheckbox($table->name, $table->name);
         }
         $form->addGroup();
         $form->addHidden("app_id", $this->app_id);

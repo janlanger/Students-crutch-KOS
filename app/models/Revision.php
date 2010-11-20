@@ -31,7 +31,8 @@ class Revision extends Model {
             $database = \Nette\Environment::getConfig('xml')->liveDatabase;
 
         $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager');
-        return $databaseManager->getTables($database);
+        $databaseManager->setDefaultDatabase($database);
+        return dibi::getDatabaseInfo()->getTables();
     }
 
     public static function create($name, $app_id, $isMain, $database, $tables, $from=NULL) {
