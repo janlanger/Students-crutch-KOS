@@ -61,7 +61,12 @@ class RevisionPresenter extends BasePresenter {
         $grid->setColumnFormat('created_time', DatagridFormatter::DATE);
         $grid->setColumnFormat('isMain', DatagridFormatter::CHECKBOX_YES_NO);
         $grid->addAction(array('action' => 'Revision:edit', 'param' => 'rev_id'), 'Upravit', 'edit');
-        $grid->addAction(array('action' => 'Revision:delete', 'param' => 'rev_id'), 'Smazat', 'delete')->setConfirmQuestion('Smazat', 'Opravdu chcete smazat tuto revizi? Bude odstraněna celá svázaná databáze.');
+        $grid->addAction(array('action' => 'Revision:delete', 'param' => 'rev_id'), 'Smazat', 'delete')
+                ->setConfirmQuestion('Smazat', 'Opravdu chcete smazat tuto revizi? Bude odstraněna celá svázaná databáze.')
+            ->setValidator(function($row,$action) {
+                if($row['db_name']=='rozvrh_live') return false;
+                return true;
+            });
     }
 
     protected function createComponentCreateForm($name) {
