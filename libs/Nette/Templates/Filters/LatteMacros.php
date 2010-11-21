@@ -992,9 +992,10 @@ if (isset($presenter, $control) && $presenter->isAjax() && $control->isControlIn
 	 * @param  string
 	 * @return string
 	 */
-	public function formatArray($input, $prefix = '')
+	public static function formatArray($input, $prefix = '')
 	{
-		$tokens = $this->parseMacro($input);
+                $_this=new self();
+		$tokens = $_this->parseMacro($input);
 		if (!$tokens) {
 			return '';
 		}
