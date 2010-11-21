@@ -62,8 +62,19 @@ class Parser{
                 }
             }
         }
-        //dump($this->importQueue);
-        echo \dibi::$numOfQueries;
+        $queue_size=$this->importQueue->getQueueSize()+1;
+        $loop_counter=0;
+        while($queue_size>0 && $queue_size>$this->importQueue->getQueueSize() && $loop_counter<2000) {
+            $queue_size=$this->importQueue->getQueueSize();
+            $this->importQueue->flush(TRUE);
+            $loop_counter++;
+            if($loop_counter % 10 == 0) {
+                echo $loop_counter."\n";
+            }
+        }
+        echo 'loops:'.$loop_counter."\n";
+        echo 'size of queue:'.$queue_size."\n";
+        echo 'queries:'.\dibi::$numOfQueries;
     }
 
     private function loadRootNode() {

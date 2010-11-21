@@ -160,6 +160,11 @@ class ImportQueue {
         }
     }
 
+
+    public function getQueueSize() {
+        return count($this->dataQueue);
+    }
+
 }
 
 ?>
