@@ -1,5 +1,4 @@
 <?php
-
 // absolute filesystem path to the web root
 define('CLI_DIR', dirname(__FILE__));
 define('WWW_DIR', dirname(__FILE__) . '/../www');
@@ -15,6 +14,7 @@ Nette\Debug::$showLocation=TRUE;
 Nette\Debug::$maxDepth = 5;
 
 $config = \Nette\Environment::getConfig('xml');
+if(!in_array('skip-download', $argv)) {
 try {
     $downloader = \Nette\Environment::getContext()->getService('IDownloader');
     /* @var $downloader CurlDownloader */
@@ -35,13 +35,22 @@ try {
     \Nette\Debug::log($e);
     exit;
 }
-if (isset($return['file'])) {
+$import_file=$return['file'];
+} else {
+    
+    if(!isset($argv[2]) || !file_exists($argv[2])) {
+        echo 'Parameter after skip-download must be an file to import.';
+        exit (1);
+    }
+    $import_file=$argv[2];
+}
+if (isset($import_file)) {
     //run import
     try {
         \Nette\Debug::timer("importer-total");
         $importer = Nette\Environment::getService('IImporter');
 
-        $importer->setFile($return['file']);
+        $importer->setFile($import_file);
        // $importer->buildDaatabase();
         /*$tables = $importer->tables;
         foreach ($tables as $table) {
