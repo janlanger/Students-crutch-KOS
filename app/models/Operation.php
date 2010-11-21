@@ -49,7 +49,22 @@ class Operation extends Model {
     }
 
     public static function create($values) {
-        $_this=new self($values);
+        $val=array();
+        foreach($values as $k=>$v) {
+            if($k=='dynamicContainer') {
+                $params=array();
+                foreach($v as $k1=>$v1) {
+                    $params[]=array(
+                        'type'=>$v1['type'],
+                        'name'=>'$'.$v1['param']
+                    );
+                }
+                $val['params']=serialize($params);
+            } else {
+                $val[$k]=$v;
+            }
+        }
+        $_this=new self($val);
         return $_this;
     }
 

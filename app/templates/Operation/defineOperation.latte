@@ -3,10 +3,54 @@
 
 
 {if $edit}
-    {control editOperationForm}
+    {var $form=$control['editOperationForm']}
 {else}
-    {control addOperationForm}
+    {var $form=$control['addOperationForm']}
 {/if}
+
+{form $form}
+        {formErrors 'li style="color: red"', 'ul style="font-size: 1.5em"'}
+<table>
+    <tr>
+        <th>{label name}</th><td>{input name}</td>
+    </tr>
+    <tr>
+        <th>Parametry:</th>
+        <td>
+            <table>
+                <tr>
+                    <th>Typ</th>
+                    <th>Název proměnné (bez $)</th>
+                    <th>{input addButtonOfDynamicContainer}</th>
+                </tr>
+
+	{dynamicContainer dynamicContainer}
+                <tr>
+                    <td>{input type}</td>
+                    <td>{input param}</td>
+                    <td>{input removeButtonOfDynamicContainer}</td>
+                </tr>
+	{/dynamicContainer}
+            </table>
+        </td>
+    </tr>
+    <tr>
+        <th>{label return}</th>
+        <td>{input return}</td>
+    </tr>
+    <tr>
+        <th>{label fetchType}</th>
+        <td>{input fetchType}</td>
+    </tr>
+    <tr>
+        <th>&nbsp;</th>
+        <td>
+            {if !$edit}{input app_id}{else}{input met_id}{/if}
+            {input submitButton}
+        </td>
+    </tr>
+</table>
+{/form}
 
 <strong>Způsob získání výsledků:</strong>
 <ul>
