@@ -73,7 +73,8 @@ class Revision extends Model {
     public function getTables() {
         $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager');
         try {
-            return $databaseManager->getTables($this->db_name);
+            $databaseManager->setDefaultDatabase($this->db_name);
+            return dibi::getDatabaseInfo()->getTables();
         } catch (DatabaseManagerException $e) {
             throw new ModelException('Nepodařilo se získat seznam tabulek. ' . $e->getMessage(), NULL, $e);
         }
