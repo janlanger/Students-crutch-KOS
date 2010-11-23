@@ -32,6 +32,14 @@ class Entity {
         return (bool) count($this->data);
     }
 
+    public function free() {
+        $this->definition=NULL;
+    }
+
+    public function __destruct() {
+        $this->free();
+    }
+
     /**
      *
      * @return EntityDefinition

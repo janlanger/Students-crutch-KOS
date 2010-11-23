@@ -59,6 +59,7 @@ class ImportQueue {
             if($entity->getDefinition()->tableCreated && $this->checkDependency($entity)) {
                 $this->databaseCreator->fillTable($entity);
                 $this->indexCache->add($entity);
+                $this->dataQueue[$key]->free();
                 unset($this->dataQueue[$key]);
             }
         }

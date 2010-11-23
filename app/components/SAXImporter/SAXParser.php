@@ -53,7 +53,7 @@ class Parser{
         while ($r->read()) {
             if ($r->nodeType == XMLReader::ELEMENT) {
                 if ($r->depth == 0) {   //root
-                    //$this->loadRootNode();
+                    $this->loadRootNode();
                     continue;
                 }
                 if ($r->depth == 1) { //table
@@ -74,18 +74,21 @@ class Parser{
         }
         echo 'loops:'.$loop_counter."\n";
         echo 'size of queue:'.$queue_size."\n";
+        echo 'memory peak: '.round(\memory_get_peak_usage()/1024/1024,2)." MB\n";
+        echo 'memory system peak: '.round(\memory_get_peak_usage(TRUE)/1024/1024,2)." MB\n";
         echo 'queries:'.\dibi::$numOfQueries;
     }
 
     private function loadRootNode() {
         if ($this->reader->hasAttributes) {
-            $table = new Entity\Entity();
+            $table = new Entity\EntityDefinition();
             $table->setName($this->reader->localName);
+            $entity=new Entity\Entity($table);
             while ($this->reader->moveToNextAttribute()) {
 //                $table->addColumn($this->reader->name);
-                $table->addValue($this->reader->name, $this->reader->value);
+                $entity->add($this->reader->name, $this->reader->value);
             }
-            $this->importQueue->add($table);
+            $this->importQueue->add($entity);
             $table->parseComplete();
         }
     }

@@ -26,6 +26,14 @@ class EntityDefinition {
         /*$this->rows[0] = array();
         $this->rowId= 0;*/
     }
+    
+    public function free() {
+        $this->columns=NULL;
+    }
+
+    public function __destruct() {
+        $this->free();
+    }
 
     public function addColumn($column) {
         if (!isset($this->columns[$column])) {
