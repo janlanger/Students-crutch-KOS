@@ -38,5 +38,12 @@ Environment::loadConfig();
 dibi::connect(Environment::getConfig('database'));
 dibi::addSubst('main', "rozvrh_main.");
 
+if(!Environment::isProduction()) {
+    $user=Environment::getUser();
+    if(!$user->isLoggedIn()) {
+        $user->login('test', 'TEST');
+    }
+}
+
 \Nella\Panels\VersionPanel::register();
 
