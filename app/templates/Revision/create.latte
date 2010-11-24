@@ -1,3 +1,76 @@
+
 {block content}
 
-{control createForm}
+{form createForm}
+ {formErrors 'li style="color: red"', 'ul style="font-size: 1.5em"'}
+<fieldset>
+    <legend>Základní nastavení</legend>
+    <table>
+        <tr>
+            <th>{label name}</th>
+            <td>{input name}</td>
+        </tr>
+        <tr>
+            <th>{label isMain}</th>
+            <td>{input isMain}</td>
+        </tr>
+    </table>
+    <div class="warnings">
+
+    </div>
+</fieldset>
+<fieldset>
+    <legend>Obsah revize</legend>
+    <table n:inner-foreach="$tables as $name=>$table" width="100%">
+        <tr style="border-bottom:1px solid black">
+            <th style="vertical-align: top; width:200px;">{$name}</th>
+            <td>{input $name, class=>'table'}{label $name}
+                <table style="width:900px; margin-bottom:15px;" id="{$name}" >
+                    <tr>
+                        <th style="width:500px">Nastavení</th>
+                        <th style="width:400px">Sloupce</th>
+                    </tr>
+                    <tr style="border-bottom:1px solid black">
+                        <td style="vertical-align: top">
+                            <table>
+                                <tr>
+                                    <td colspan="3">
+                                        {input $name.'_update_schema'}
+                                    </td>
+                                </tr>
+                                
+                                <tr id="{$name}data-max">
+                                    <td style="width: 200px;">{label $name.'_update_data_max',setHtml=>'Maximální počet změn <small>(-1~vše)</small>:'}</td>
+                                    <td>{input $name.'_update_data_max','style'=>"width:50px"}</td>
+                                    <td><small>Maximální počet změn v datech pro provedení automatické aktualizace.</small></td>
+                                </tr>
+                                <tr>
+                                    <td>{label $name.'_condition'}</td>
+                                    <td colspan="2">{input $name.'_condition'}</td>
+                                </tr>
+                            </table>
+                        </td>
+                        <td>
+                            <input type="checkbox" class="all-checker" id="{$name}-all" /><label for="{$name}-all">Vybrat všechny</label><br />
+                            <div class="columns">
+
+                                <div n:foreach="$table['columns'] as $column=>$k" _style="float:left; width:295px;">
+                                {input $name.'__'.$column,'class'=>'column'}{label $name.'__'.$column}
+                                </div>
+                                <br clear="all" />
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+
+            </td>
+        </tr>
+    </table>
+</fieldset>
+{input s}
+{/form}
+
+<script type="text/javascript">
+    constraint_map = {$tables}
+</script>
+<script type="text/javascript"  src="/js/revision.js"></script>

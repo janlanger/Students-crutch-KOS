@@ -66,7 +66,8 @@ class FormMacros extends \Nette\Object {
 	// <editor-fold defaultstate="collapsed" desc="{formErrors}">
 
 	public static function macroFormErrors($content) {
-		$params = LatteMacros::formatArray($content);
+            $latte=new LatteMacros();
+		$params = $latte->formatArray($content);
 		return "Addons\Forms\FormMacros::formErrors($params)";
 	}
 	public static function formErrors($parameters) { // todo: refactor

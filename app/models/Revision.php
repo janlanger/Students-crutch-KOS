@@ -29,10 +29,10 @@ class Revision extends Model {
     public static function getAvaiableTables($database=NULL) {
         if ($database == NULL)
             $database = \Nette\Environment::getConfig('xml')->liveDatabase;
-
+        $_this = new self(array("db_name"=>$database));
         $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager');
         $databaseManager->setDefaultDatabase($database);
-        return dibi::getDatabaseInfo()->getTables();
+        return $_this->getTables();
     }
 
     public static function create($name, $app_id, $isMain, $database, $tables, $from=NULL) {
@@ -73,8 +73,9 @@ class Revision extends Model {
     public function getTables() {
         $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager');
         try {
-            $databaseManager->setDefaultDatabase($this->db_name);
-            return dibi::getDatabaseInfo()->getTables();
+            return $databaseManager->getDatabaseStructure($this->db_name);
+
+
         } catch (DatabaseManagerException $e) {
             throw new ModelException('Nepodařilo se získat seznam tabulek. ' . $e->getMessage(), NULL, $e);
         }

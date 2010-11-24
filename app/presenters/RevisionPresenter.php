@@ -1,5 +1,7 @@
 <?php
 
+use Nette\Forms\Form;
+
 /**
  * Description of RevisionPresenter
  *
@@ -16,7 +18,9 @@ class RevisionPresenter extends BasePresenter {
     }
 
     public function actionCreate() {
+        Addons\Forms\FormMacros::register();
         $this['header']->addTitle('Vytvoření revize');
+        $this['createForm']; //inits tamplate
     }
 
     public function actionEdit($rev_id) {
@@ -28,11 +32,11 @@ class RevisionPresenter extends BasePresenter {
         }
         $rev = @reset($rev);
         $this['editForm']->setDefaults(array(
-            "name"=>$rev->alias,
-            "rev_id"=>$rev_id,
-            "isMain"=>$rev->isMain
+            "name" => $rev->alias,
+            "rev_id" => $rev_id,
+            "isMain" => $rev->isMain
         ));
-        $this->template->revision=$rev;
+        $this->template->revision = $rev;
     }
 
     public function actionDelete($rev_id) {
@@ -63,26 +67,63 @@ class RevisionPresenter extends BasePresenter {
         $grid->addAction(array('action' => 'Revision:edit', 'param' => 'rev_id'), 'Upravit', 'edit');
         $grid->addAction(array('action' => 'Revision:delete', 'param' => 'rev_id'), 'Smazat', 'delete')
                 ->setConfirmQuestion('Smazat', 'Opravdu chcete smazat tuto revizi? Bude odstraněna celá svázaná databáze.')
-            ->setValidator(function($row,$action) {
-                if($row['db_name']=='rozvrh_live') return false;
-                return true;
-            });
+                ->setValidator(function($row, $action) {
+                            if ($row['db_name'] == 'rozvrh_live')
+                                return false;
+                            return true;
+                        });
     }
 
     protected function createComponentCreateForm($name) {
         $form = new \Nette\Application\AppForm($this, $name);
+
+        $render = $form->getRenderer();
+        /* @var $render \Nette\Forms\DefaultFormRenderer  */
+        /* $render->wrappers['controls']['container']=NULL;
+          $render->wrappers['pair']['container']=NULL;
+          $render->wrappers['controls']['container'] = 'dl';
+          $render->wrappers['control']['container'] = 'dd';
+          $render->wrappers['label']['container'] = 'dt'; */
+
+
+
         $group = $form->addGroup('Základní nastavení');
         $form->addText('name', 'Název revize')->setRequired('Vyplňte prosím název revize');
         //$form->addText('db_name','Jméno databáze')->setRequired('Vyplňte prosím jméno databáze'); //automat
         $form->addCheckbox('isMain', 'Používat jako výchozí');
 
-        $group = $form->addGroup('Obsah revize')->setOption('description', 'Vyberte tabulky, které chcete zkopírovat do revize.');
+        $main = $form->addGroup('Obsah revize')->setOption('description', 'Vyberte tabulky, které chcete zkopírovat do revize.');
 
         $tables = Revision::getAvaiableTables();
-        foreach ($tables as $table) {
+        $this->template->tables = $tables;
+        foreach ($tables as $table_name => $table) {
+            $form->addCheckbox($table_name, 'Zahrnout')->addCondition(Form::FILLED, FALSE)->toggle($table_name);
+            $group = $form->addGroup($table_name, TRUE)->setOption('container', \Nette\Web\Html::el('div')->id($table_name));
 
-/* @var $table DibiTableInfo */
-            $form->addCheckbox($table->name, $table->name);
+            $columns = $table['columns'];
+            foreach ($columns as $column => $v) {
+                $key = $table_name . '__' . $column;
+                $item = $form->addCheckbox($key, $column.(isset($table['foreign'][$column])?' (-> '.$table['foreign'][$column].')':''));
+
+                if (isset($table['primary'][$column])) {
+                    $item->setDefaultValue(TRUE);
+                    $item->setDisabled();
+                }
+                $group->add($item);
+            }
+            $form->addRadioList($table_name.'_update_schema', NULL, array(
+                'none'=>'Neaktualizovat',
+                "structure"=>'Udržovat tabulku kompletně aktuální.',
+                'data'=>'Udržovat data pouze aktuální.'
+                ))->setDefaultValue('none')
+                    ->addCondition(Form::EQUAL,'data')->toggle($table_name . 'data-max');
+            $form->addText($table_name . '_update_data_max')
+                    ->setType('number')
+                    ->setDefaultValue(-1)
+                    ->setOption('description', 'Maximální počet změn v datech pro provedení automatické aktualizace.');
+            $form->addText($table_name . '_condition', 'Omezující podmínka:');
+
+            $form->setCurrentGroup($main);
         }
         $form->addGroup();
         $form->addHidden("app_id", $this->app_id);
@@ -93,7 +134,8 @@ class RevisionPresenter extends BasePresenter {
 
     public function createRevision(\Nette\Forms\SubmitButton $bnt) {
         $values = $bnt->getForm()->getValues();
-
+        dump($values);
+        exit;
         $tables = Revision::getAvaiableTables();
         $tbl = array();
         foreach ($values as $key => $value) {
@@ -113,31 +155,30 @@ class RevisionPresenter extends BasePresenter {
     }
 
     protected function createComponentEditForm($name) {
-        $form=new \Nette\Application\AppForm($this, $name);
+        $form = new \Nette\Application\AppForm($this, $name);
         $form->addText('name', 'Název revize')->setRequired('Vyplňte prosím název revize');
         //$form->addText('db_name','Jméno databáze')->setRequired('Vyplňte prosím jméno databáze'); //automat
         $form->addCheckbox('isMain', 'Používat jako výchozí');
         $form->addHidden('rev_id');
-        $form->addSubmit('s','Odeslat')->onClick[]=callback($this,'editRevision');
+        $form->addSubmit('s', 'Odeslat')->onClick[] = callback($this, 'editRevision');
     }
 
     public function editRevision(\Nette\Forms\SubmitButton $bnt) {
         $values = $bnt->getForm()->getValues();
-        $revision = Revision::find(array("rev_id"=>$values['rev_id']));
-        if(count($revision)!=1) {
+        $revision = Revision::find(array("rev_id" => $values['rev_id']));
+        if (count($revision) != 1) {
             $this->flashMessage('Neznámá revize.', 'error');
         } else {
-            $revision=@reset($revision);
+            $revision = @reset($revision);
             try {
                 $revision->setValues($values)->save();
-                $this->flashMessage('Revize byla upravena.','success');
+                $this->flashMessage('Revize byla upravena.', 'success');
                 $this->redirect('default');
             } catch (ModelException $e) {
-                $this->flashMessage($e->getMessage(),'error');
+                $this->flashMessage($e->getMessage(), 'error');
                 \Nette\Debug::log($e);
             }
         }
-
     }
 
 }
