@@ -53,19 +53,35 @@ class Revision extends Model {
         if ($from == NULL)
             $from = \Nette\Environment::getConfig('xml')->liveDatabase;
 
-        $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager');
+       // $databaseManager = \Nette\Environment::getContext()->getService('IDatabaseManager');
         try {
-            $databaseManager->createRevision($from, $database, $tables);
+            //$databaseManager->createRevision($from, $database, $tables);
+            dibi::begin();
             dibi::insert(":main:revision", array(
                 "app_id" => $app_id,
                 "alias" => $name,
                 "db_name" => $database,
                 "isMain" => $isMain
             ))->execute();
+            $rev_id=dibi::getInsertId();
+            foreach($tables as $table=>$items) {
+                dibi::insert(":main:revision_table_definition", array(
+                    'rev_id'=>$rev_id,
+                    'table'=>$table,
+                    'columns'=>  serialize($items['columns']),
+                    'condition' => $items['condition']
+                ))->execute();
+                dibi::insert(":main:revision_watch", array(
+                   "def_id" => dibi::getInsertId(),
+                   "schema" => $items['schema'],
+                    'max_changes' => (isset($items['max_changes'])?$items['max_changes']:0)
+                ))->execute();
+            }
+            dibi::insert(":main:revision_to_create", array("rev_id"=>$rev_id))->execute();
+            dibi::commit();
             return TRUE;
-        } catch (DatabaseManagerException $e) {
-            throw new ModelException('Unable to create revision ' . $name . '. ' . $e->getMessage(), NULL, $e);
         } catch (DibiException $e) {
+            dibi::rollback();
             throw new ModelException($e->getMessage(), $e->getCode(), $e);
         }
     }

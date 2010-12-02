@@ -2,7 +2,7 @@
 {block content}
 
 {form createForm}
- {formErrors 'li style="color: red"', 'ul style="font-size: 1.5em"'}
+ {formErrors 'div class="flash warning"', ''}
 <fieldset>
     <legend>Základní nastavení</legend>
     <table>
@@ -67,6 +67,7 @@
         </tr>
     </table>
 </fieldset>
+{input app_id}
 {input s}
 {/form}
 

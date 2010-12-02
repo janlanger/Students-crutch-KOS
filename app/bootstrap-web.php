@@ -4,7 +4,12 @@ use Nette\Environment;
 use Nette\Application\Route;
 
 require_once APP_DIR . '/bootstrap.php';
-
+if(!Environment::isProduction()) {
+    $user=Environment::getUser();
+    if(!$user->isLoggedIn()) {
+        $user->login('test', 'TEST');
+    }
+}
 
 
 // Step 3: Configure application

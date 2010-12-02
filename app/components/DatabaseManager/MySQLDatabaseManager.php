@@ -98,7 +98,7 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
                     $data .= implode(", ",$row);
                     $sql[]=$data.")";
                 }
-                $keys=array_keys($row);
+                $keys=array_keys($row); //speedup
                 array_walk($keys, function (&$item, $key) {
                         $item="`".mysql_real_escape_string($item)."`";
                     });
@@ -156,8 +156,22 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
     public function createRevision($fromDb, $toDb, $tables) {
         try {
             $this->createDatabase($toDb);
-            foreach ($tables as $table) {
-                $this->copyTable($table, $fromDb, $toDb);
+            $structure = $this->getDatabaseStructure($fromDb);
+            foreach ($tables as $table => $items) {
+                if(isset($structure[$table]['primary'])) {
+                    $tables[$table]['primary']=$structure[$table]['primary'];
+                }
+                if(isset($structure[$table]['foreign'])) {
+                    foreach($structure[$table]['foreign'] as $column=>$reference) {
+                        $col=explode(".",$reference);
+                        if(isset($tables[$table]['columns'][$column]) && isset($tables[$col[0]]['columns'][$col[1]])) {
+                            $tables[$table]['foreign'][$column]=$reference;
+                        }
+                    }
+                }
+            }
+            foreach ($tables as $table=>$items) {
+                $this->copyTable($table, $items, $fromDb, $toDb);
             }
         } catch (DatabaseManagerException $e) {
             //rollback
@@ -166,9 +180,21 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         }
     }
 
-    public function copyTable($table, $fromDb, $toDb) {
+    public function copyTable($table, $items, $fromDb, $toDb) {
         try {
-            dibi::query("CREATE TABLE [$toDb.$table] SELECT * FROM [$fromDb.$table]");
+            $columns=array_keys($items['columns']);
+            
+            $sql="CREATE TABLE [$toDb.$table]
+                    (PRIMARY KEY(".implode(",",array_keys($items['primary'])).")";
+            if(isset($items['foreign'])) {
+                foreach($items['foreign'] as $column=>$ref) {
+                    $col=explode(".",$ref);
+                    $sql.=", FOREIGN KEY ([$column]) REFERENCES [$col[0]] ([$col[1]])";
+                }
+            }
+            $sql.=") SELECT ".implode(",",$columns)." FROM [$fromDb.$table]";
+            dibi::query($sql);
+            
         } catch (DibiException $e) {
             throw new DatabaseManagerException("Unable to copy table. " . $e->getMessage(), NULL, $e);
         }

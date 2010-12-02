@@ -114,7 +114,7 @@ class RevisionPresenter extends BasePresenter {
             $form->addRadioList($table_name.'_update_schema', NULL, array(
                 'none'=>'Neaktualizovat',
                 "structure"=>'Udržovat tabulku kompletně aktuální.',
-                'data'=>'Udržovat data pouze aktuální.'
+                'data'=>'Udržovat pouze data aktuální.'
                 ))->setDefaultValue('none')
                     ->addCondition(Form::EQUAL,'data')->toggle($table_name . 'data-max');
             $form->addText($table_name . '_update_data_max')
@@ -134,19 +134,49 @@ class RevisionPresenter extends BasePresenter {
 
     public function createRevision(\Nette\Forms\SubmitButton $bnt) {
         $values = $bnt->getForm()->getValues();
-        dump($values);
-        exit;
+       
         $tables = Revision::getAvaiableTables();
         $tbl = array();
-        foreach ($values as $key => $value) {
-            if (in_array($key, $tables) && $value == TRUE) {
-                $tbl[] = $key;
+        foreach ($tables as $table => $items) {
+            if(isset($values[$table]) && $values[$table]) {
+                $tbl[$table]=array();
+                foreach ($items['columns'] as $column => $value) {
+                    if(isset($values[$table.'__'.$column]) && $values[$table.'__'.$column]) {
+                        $tbl[$table]['columns'][$column]=1;
+                    }
+                    if(isset($items['columns']['id'])) {
+                        $tbl[$table]['columns']['id']=1;
+                    }
+                }
+                if(!isset($tbl[$table]['columns']) || count($tbl[$table]['columns'])<1) {
+                    $bnt->getForm()->addError('Tabulka '.$table.' nemá vybraný žádný sloupec. Buď nějaký vyberte, nebo tabulku nezařazujte do revize.');
+                }
+                if(isset($values[$table.'_update_schema']) && $values[$table.'_update_schema']) {
+                    $tbl[$table]['schema']=$values[$table.'_update_schema'];
+                    if($values[$table.'_update_schema']=='data') {
+                        if(isset($values[$table.'_update_data_max'])) {
+                            if($values[$table.'_update_data_max'] == 0) {
+                                $bnt->getForm()->addError('Nastavili jste, že u tabulky '. $table .' se má aktualizovat maximálně 0 řádků. Takové schéma je stejné jako neaktualizovat vůbec, vyberte prosím toto schéma.');
+                            }
+                            else {
+                                $tbl[$table]['max-changes']=$values[$table.'_update_data_max'];
+                            }
+                        }
+                    }
+                }
+                if(isset($values[$table.'_condition'])) {
+                    $tbl[$table]['condition']=$values[$table.'_condition'];
+                }
             }
         }
+        if($bnt->getForm()->hasErrors()) {
+            return;
+        }
+        
         $database_name = "rozvrh_" . \Nette\String::webalize(@reset(Application::find(array("app_id" => $values['app_id'])))->name) . "_" . $values['name'] . '_' . date("Ymd");
         try {
             Revision::create($values['name'], $values['app_id'], $values['isMain'], $database_name, $tbl);
-            $this->flashMessage('Revize byla úspěšně vytvořena.', 'success');
+            $this->flashMessage('Definice revize byla uložena. Revize jsou vytvářeny automatickým skriptem spuštěným v noci.', 'success');
             $this->redirect('default');
         } catch (ModelException $e) {
             $this->flashMessage('Revizi se nepodařilo vytvořit. Chyba: ' . $e->getMessage(), 'error');
