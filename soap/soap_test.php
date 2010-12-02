@@ -1,27 +1,18 @@
 <?php
 
 include "./bootstrap-soap.php";
-/*$requestPayloadString = <<<XML
-<ns1:echoX xmlns:ns1="http://wso2.org/wsfphp/samples"><text>Hello World!</text></ns1:echoString>
-XML;
 
-$client=new WSClient(array("to"=>'http://bp.local/soap/berlicka'));
-$responseMessage=$client->request($requestPayloadString);
+$soap = new SoapClient(NULL, array(
+    "location" => 'http://bp.local/soap/',
+    "uri" => 'http://bp.local/soap/'));
+try {
+    $soap->authenticate('berlicka', 'test');
+    $soap->useRevision('testing');
 
-        printf("Response = %s <br>", htmlspecialchars($responseMessage->str));*/
-\Nette\Debug::timer();
-$soap=new SoapClient(NULL,array("location"=>'http://bp.local/soap/berlicka',"uri"=>'http://bp.local/soap/berlicka'));
-
-$soap->authenticate('berlicka','test');
-dump($soap->useRevision('testing'));
-try{
-$return=($soap->getStudentsInfo(355981000,'B101'));
-} catch(SoapFault $e) {
-    dump($e);
-    
+    $return = ($soap->getStudentsInfo(array('langeja1')));
+    var_dump($return);
+} catch (SoapFault $e) {
+    echo $soap->getLastError();
 }
-dump($soap->getLastError());
-echo \Nette\Debug::timer();
-
 
 ?>
