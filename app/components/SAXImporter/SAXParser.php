@@ -9,7 +9,6 @@ use SAX\Queue\ImportQueue;
  * Description of SAXParser
  *
  * @author Jan Langer, kontakt@janlanger.cz
- * @property-read \XMLReader $getReader()
  */
 class Parser{
 
@@ -85,7 +84,6 @@ class Parser{
             $table->setName($this->reader->localName);
             $entity=new Entity\Entity($table);
             while ($this->reader->moveToNextAttribute()) {
-//                $table->addColumn($this->reader->name);
                 $entity->add($this->reader->name, $this->reader->value);
             }
             $this->importQueue->add($entity);
@@ -101,32 +99,21 @@ class Parser{
             if ($this->reader->nodeType == XMLReader::ELEMENT) {
                 if ($this->reader->hasAttributes) {
                     while ($this->reader->moveToNextAttribute()) {
-//                        $table->addColumn($this->reader->name);
                         $entity->add($this->reader->name, $this->reader->value);
                     }
                 }
                 if ($this->reader->depth > 2 && $this->reader->nodeType==XMLReader::ELEMENT) {
-//                    $table->addColumn($this->reader->name);
                     $entity->add($this->reader->name, $this->reader->value);
                 }
             }
 
             if ($this->reader->depth == 2) {
-                /*if ($table->getNumOfRows() % 700 == 0 && $table->getNumOfRows() != 0) {
-                    $this->importQueue->add($table);
-                }*/
                 $this->importQueue->add($entity);
                 $entity=new Entity\Entity($table);
             }
         }
         $table->parseComplete();
         $this->importQueue->flush(TRUE);
-        //$this->importQueue->add($table);
-        /*if ($table->getName() == 'listky') {
-            $this->importQueue->flush(TRUE);
-            dump($this->importQueue);
-            exit;
-        }*/
     }
 
 }

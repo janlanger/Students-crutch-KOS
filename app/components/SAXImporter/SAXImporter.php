@@ -15,6 +15,11 @@ class Importer extends \Nette\Object {
     private $Parser;
     private $queue;
 
+    /**
+     * Instatinate parser (if needed) and returns it.
+     * @internal
+     * @return Parser
+     */
     public function getParser() {
         if ($this->Parser == NULL) {
             $this->Parser = \Nette\Environment::getContext()->getService('IParser');
@@ -22,10 +27,21 @@ class Importer extends \Nette\Object {
         return $this->Parser;
     }
 
+    /**
+     * Sets parser file name
+     * @param string $filename
+     * @return Importer fluent
+     */
     public function setFile($filename) {
         $this->parser->setFile($filename);
+        return $this;
     }
 
+    /**
+     * Starts the import
+     * @param string $db_name name of database for import
+     * @param bool $owerwrite should owerwrite existent database?
+     */
     public function buildDatabase($db_name, $owerwrite=FALSE) {
         $tableCreator = \Nette\Environment::getContext()->getService('IDatabaseManager');
         if ($owerwrite) {

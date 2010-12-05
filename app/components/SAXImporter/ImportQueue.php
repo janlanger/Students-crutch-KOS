@@ -16,7 +16,6 @@ class ImportQueue {
     private $keyCache = array();
     /** @var IndexCache */
     private $indexCache = NULL;
-    private $dependencyCache=array();
     private $calls=0;
     /**
      *
@@ -75,25 +74,6 @@ class ImportQueue {
         }
     }
 
-    private function flushEntity(Entity\Entity $entity) {
-        
-        $toInsert = array();
-        foreach ($entity->rows as $key => $row) {
-            if ($this->checkDependency($entity,$row)) {
-                if (!isset($toInsert[$entity->getName()])) {
-                    $toInsert[$entity->getName()] = array();
-                }
-                if(count($row)) {
-                    $toInsert[$entity->getName()][] = $row;
-                }
-                $entity->removeRow($key);
-            }
-        }
-        if (count($toInsert)) {
-            $this->databaseCreator->fillTables($toInsert);
-        }
-    }
-
     private function checkDependency(Entity $entity) {
         return $this->indexCache->hasFulfilledDeps($entity);
     }
@@ -119,40 +99,9 @@ class ImportQueue {
     }
 
 
-    private function initIndexCacheFor(EntityDefinition $table) {
-        $this->indexCache->init($table,  $this->getDependantsFor($table));
-    }
 
-    private function getDependantsFor(EntityDefinition $entity) {
-        if (!count($this->dependencyCache)) {
-            $this->buildDependencyCache();
-        }
-        if(isset($this->dependencyCache[$entity->getName()])) {
-            return $this->dependencyCache[$entity->getName()];
-        }
-        return array();
-    }
 
-    private function buildDependencyCache() {
-        if (!count($this->keyCache)) {
-            $this->loadIndexDefinition();
-        }
 
-        foreach($this->keyCache as $table=>$columns) {
-            foreach($columns as $col=>$index) {
-                if($index['type']=='foreign') {
-                    //$index['foreign']=\explode(".", $index['foreign']);
-                    if(!isset($this->dependencyCache[$index['foreign'][0]])) {
-                        $this->dependencyCache[$index['foreign'][0]]=array();
-                    }
-                    if(!isset($this->dependencyCache[$index['foreign'][0]][$index['foreign'][1]])) {
-                        $this->dependencyCache[$index['foreign'][0]][$index['foreign'][1]]=array();
-                    }
-                    $this->dependencyCache[$index['foreign'][0]][$index['foreign'][1]][]=array($table,$col);
-                }
-            }
-        }
-    }
 
     private function loadIndexDefinition() {
         $result = \IndexDefinition::find();
