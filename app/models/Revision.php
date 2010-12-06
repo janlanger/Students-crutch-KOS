@@ -12,6 +12,8 @@
  */
 class Revision extends Model {
 
+    private $definition;
+
     public static function find($where = NULL, $order = NULL, $offset = NULL, $limit = NULL) {
         $q = dibi::select("*")->from("[:main:revision]");
         if ($where != NULL)
@@ -147,6 +149,48 @@ class Revision extends Model {
         }
     }
 
+    public function getDefinition() {
+        if($this->definition==NULL) {
+            $this->definition=RevisionDefinition::find(array("rev_id"=>$this->rev_id));
+        }
+        return ($this->definition);
+    }
+
+}
+
+class RevisionDefinition {
+
+    private $columns;
+    private $tables;
+    private $conditions;
+
+    public static function find($where = NULL, $order = NULL, $offset = NULL, $limit = NULL) {
+        $q = dibi::select("*")->from("[:main:revision_table_definition]");
+        if ($where != NULL)
+            $q->where($where);
+        if ($order != NULL)
+            $q->orderBy($order);
+        if ($limit != NULL)
+            $q->limit($limit);
+        if ($offset != NULL)
+            $q->offset($offset);
+
+        $result=$q->fetchAssoc('id');
+        $_this=new self();
+        foreach($result as $res) {
+            $_this->tables[]=$res->table;
+            $_this->columns[$res->table]=unserialize($res->columns);
+            $_this->conditions[$res->table]=$res->condition;
+        }
+        return $_this;
+    }
+
+    public function hasCondition($table) {
+        return isset($this->conditions[$table]) && $this->conditions[$table]!="";
+    }
+    public function getCondition($table) {
+        return $this->conditions[$table];
+    }
 }
 
 ?>

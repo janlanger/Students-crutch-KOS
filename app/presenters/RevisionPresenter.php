@@ -39,6 +39,37 @@ class RevisionPresenter extends BasePresenter {
         $this->template->revision = $rev;
     }
 
+    public function actionCompare() {
+         Addons\Forms\FormMacros::register(); // register form macros
+    }
+
+    protected function createComponentRevisionChoose($name) {
+        $form=new Nette\Application\AppForm($this, $name);
+        $revisions=Revision::find(array("app_id"=>$this->app_id));
+        $data=array();
+        foreach ($revisions as $v) {
+            $data[$v->rev_id]=$v->alias;
+        }
+        $form->addSelect('revision1', 'Porovnat ',$data);
+        $form->addSelect('revision2', ' s ',$data);
+        $form->addSubmit('send','Porovnat');
+        $presenter = $this;
+        $form->onSubmit[]=function ($form) use ($presenter) {
+            //$form=$button->getForm();
+            $values=$form->getValues();
+            if($values['revision1']==$values['revision2']) {
+                $form->addError('Proč chcete porovnávat stejné revize?');
+                return;
+            }
+            $presenter['compare']->revisions=array($values['revision1'], $values['revision2']);
+        };
+
+    }
+
+    protected function createComponentCompare($name) {
+        return new RevisonComparator($this, $name);
+    }
+
     public function actionDelete($rev_id) {
         $rev = Revision::find(array("app_id" => $this->app_id, "rev_id" => $rev_id));
         if (count($rev) != 1) {

@@ -1,0 +1,19 @@
+
+{block content}
+
+{form revisionChoose}
+{formErrors 'div class="flash warning"', ''}
+<table>
+    <tr>
+        <td>{label revision1}: {input revision1}</td>
+        <td>{label revision2}: {input revision2}</td>
+        <td>{input send}</td>
+    </tr>
+</table>
+
+{/form}
+
+{if $control['revisionChoose']->isSubmitted() && $control['revisionChoose']->isValid()}
+<hr />
+    {control compare}
+{/if}

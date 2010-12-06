@@ -1,0 +1,63 @@
+
+
+{foreach $tables as $name}
+<h3>{$name}</h3>
+{if isset($structure[$name]['missing'])}
+Tabulka chybí v revizi <b>{$structure[$name]['missing']|dbToRevision}</b>
+<hr />
+    {continueIf TRUE}
+
+{elseif isset($structure[$name]['fields']) || isset($structure[$name]['diference'])}
+<h4>Struktura</h4>
+<ul>
+    {ifset $structure[$name]['fields']}
+
+    <li n:foreach="$structure[$name]['fields'] as $col=>$db">Sloupec tabulky <b>{$col}</b> chybí v revizi <b>{$db|dbToRevision}</b></li>
+
+    {/ifset}
+    {ifset $structure[$name]['diference']}
+    <li n:foreach="$structure[$name]['diference'] as $field=>$items">Sloupec tabulky <b>{$field}</b> má různou definici:
+        <ul>
+            <li n:foreach="$items as $param=>$diff">parametr <b>{$param}</b> má v revizi <b>{=key($diff)|dbToRevision}</b> hodnotu '{=current($diff)}' {? next($diff)}, ale v revizi <b>{=key($diff)|dbToRevision}</b> hodnotu '{=current($diff)}'</li>
+        </ul>
+    </li>
+    {/ifset}
+</ul>
+{else}
+Struktura tabulky je stejná.<br />
+{/if}
+{if isset($data[$name]) && count($data[$name])>0}
+<h4>Data</h4>
+Tabulka má mezi revizemi rozdíl v {=count($data[$name])} řádcích.<br />
+<div style="max-height:400px; overflow: scroll">
+    <table width="100%" border="1" cellspacing="0">
+        <tr>
+            <th width="50%" colspan="{=count($columns[$name])}">{$rev1->alias}</th>
+            <th width="20">&nbsp;</th>
+            <th colspan="{=count($columns[$name])}">{$rev2->alias}</th>
+        </tr>
+        <tr>
+            <th n:foreach="$columns[$name] as $col">{$col}</th>
+            <th>&nbsp;</th>
+            <th n:foreach="$columns[$name] as $col">{$col}</th>
+        </tr>
+        <tr n:foreach="$data[$name] as $row">
+            <td style="white-space: nowrap" n:foreach="$columns[$name] as $col">{$row[0][$col]}</td>
+            <td style="background-color:{if $row[1]==NULL} blue;{else} red{/if};" >&nbsp;</td>
+            {if $row[1]!=NULL}
+            <td style="white-space: nowrap" n:foreach="$columns[$name] as $col">
+                    <span {if $row[1][$col]!=$row[0][$col]} style="color:red;"{/if}>
+                        {$row[1][$col]}
+                    </span>
+                </td>
+            {else}
+                <td colspan="{=count($columns[$name])}">&nbsp;</td>
+            {/if}
+        </tr>
+</table>
+</div>
+{else}
+Datový obsah je stejný.<br />
+{/if}
+<hr />
+{/foreach}

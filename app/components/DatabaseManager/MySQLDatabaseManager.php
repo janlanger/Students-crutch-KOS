@@ -209,12 +209,12 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
     }
 
     public function getDatabaseStructure($database) {
-        $tables = dibi::select("*")->from("information_schema.TABLES")->where(array("TABLE_SCHEMA"=>"rozvrh_live"))->fetchAssoc('TABLE_NAME');
+        $tables = dibi::select("*")->from("information_schema.TABLES")->where(array("TABLE_SCHEMA"=>$database))->fetchAssoc('TABLE_NAME');
         $tables_name = array_keys($tables);
         $keys = dibi::select(array("TABLE_NAME","CONSTRAINT_NAME","COLUMN_NAME","REFERENCED_TABLE_NAME","REFERENCED_COLUMN_NAME"))
                 ->from("information_schema.KEY_COLUMN_USAGE k")
-                    ->where(array("k.TABLE_SCHEMA"=>"rozvrh_live"))->fetchAll();
-        $columns = dibi::select("*")->from("information_schema.COLUMNS")->where(array("TABLE_SCHEMA"=>"rozvrh_live"))->fetchAll();
+                    ->where(array("k.TABLE_SCHEMA"=>$database))->fetchAll();
+        $columns = dibi::select("*")->from("information_schema.COLUMNS")->where(array("TABLE_SCHEMA"=>$database))->fetchAll();
         $exit = array_fill_keys($tables_name, array());
         foreach ($columns as $col) {
             $exit[$col['TABLE_NAME']]['columns'][$col['COLUMN_NAME']]=TRUE;
