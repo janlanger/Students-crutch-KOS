@@ -191,6 +191,12 @@ class RevisionDefinition {
     public function getCondition($table) {
         return $this->conditions[$table];
     }
+
+    public function getTables() {
+        return $this->tables;
+    }
+
+
 }
 
 ?>
