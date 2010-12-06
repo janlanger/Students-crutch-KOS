@@ -91,10 +91,24 @@ class RevisionPresenter extends BasePresenter {
 
         $grid = new Datagrid($this, $name);
         $grid->setDataTable(":main:revision");
-        $grid->setColumns(array("rev_id" => 'ID#', 'db_name' => 'Databáze', 'alias' => 'Alias', 'created_time' => 'Čas vytvoření', 'isMain' => 'Výchozí'));
+        $grid->setColumns(array("rev_id" => 'ID#', 'alias' => 'Alias','exist'=>'Vytvořena', 'created_time' => 'Čas vytvoření', 'isMain' => 'Výchozí'));
+        $grid->getSql()->columns=array("rev_id" , 'db_name', 'alias', 'db_name'=>'exist', 'created_time', 'isMain');
         $grid->getSql()->where(array("app_id" => $this->app_id));
         $grid->setColumnFormat('created_time', DatagridFormatter::DATE);
         $grid->setColumnFormat('isMain', DatagridFormatter::CHECKBOX_YES_NO);
+        $grid->setColumnFormat('exist', DatagridFormatter::CALLBACK, function ($record) {
+            $db=\Nette\Environment::getService("IDatabaseManager");
+            $img=\Nette\Web\Html::el('img');
+            try{
+                $db->setDefaultDatabase($record);
+                $img->src="/images/icons/accept.png";
+                
+            } catch(DibiException $e) {
+                $img->src="/images/icons/critical.png";
+            }
+            echo $img;
+        });
+
         $grid->addAction(array('action' => 'Revision:edit', 'param' => 'rev_id'), 'Upravit', 'edit');
         $grid->addAction(array('action' => 'Revision:delete', 'param' => 'rev_id'), 'Smazat', 'delete')
                 ->setConfirmQuestion('Smazat', 'Opravdu chcete smazat tuto revizi? Bude odstraněna celá svázaná databáze.')
