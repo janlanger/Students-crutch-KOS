@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<phpunit bootstrap="D:/web/_bp/test/bootstrap.php" colors="false" stopOnFailure="true" backupGlobals="false" backupStaticAttributes="false">
+	<filter>
+		<blacklist>
+			<directory suffix=".php">D:/web/_bp/libs/</directory>
+		</blacklist>
+	</filter>
+</phpunit>

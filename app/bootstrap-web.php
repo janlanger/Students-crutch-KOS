@@ -45,4 +45,6 @@ $router[] = new Route('<presenter>/<action>/<id>', array(
 
 
 // Step 5: Run the application!
-$application->run();
+if(!defined("UNIT_TESTS")) {
+    $application->run();
+}
