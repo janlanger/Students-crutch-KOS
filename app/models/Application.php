@@ -49,9 +49,10 @@ class Application extends Model {
             try{
                 dibi::begin();
                 dibi::insert(':main:application', $this)->execute();
+                $this->app_id=dibi::getInsertId();
                 dibi::insert(':main:revision', array(
                     'db_name'=>  \Nette\Environment::getConfig('xml')->liveDatabase,
-                    'app_id'=>dibi::getInsertId(),
+                    'app_id'=>$this->app_id,
                     'isMain'=>TRUE,
                     'alias'=>'live'
                 ))->execute();
