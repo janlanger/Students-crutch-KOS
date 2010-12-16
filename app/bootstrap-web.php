@@ -2,6 +2,7 @@
 
 use Nette\Environment;
 use Nette\Application\Route;
+use Nette\Application\CliRouter;
 
 require_once APP_DIR . '/bootstrap.php';
 if(!Environment::isProduction()) {
@@ -26,13 +27,21 @@ $application->errorPresenter = 'Error';
             ),
         ));
 
+if(Environment::isConsole()) {
+    $application->allowedMethods=FALSE;
+}
+
 // Step 4: Setup application router
 $router = $application->getRouter();
 
+$router[]= new FixedCliRouter(array(
+            "presenter" => 'Import',
+            'action' => 'default'
+));
 
 
 $router[] = new Route('index.php', array(
-            'presenter' => 'Homepage',
+            'presenter' => 'Default',
             'action' => 'default',
                 ), Route::ONE_WAY);
 
