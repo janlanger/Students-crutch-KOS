@@ -1,6 +1,6 @@
 <?php
 
-if (defined(PHP_VERSION_ID) || PHP_VERSION_ID < 50300) {
+if (!defined("PHP_VERSION_ID") || PHP_VERSION_ID < 50300) {
     echo 'Sorry, but this application requires PHP 5.3 or later.';
     exit;
 }
