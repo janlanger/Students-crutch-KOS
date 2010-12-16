@@ -54,6 +54,10 @@ class IndexCache {
         }
     }
 
+    public function removeDependency($table, $column, $ref_table, $ref_column) {
+        unset($this->dependencies[$table][$column]); //TODO better
+    }
+
 }
 
 ?>

@@ -45,7 +45,7 @@ class ImportQueue {
         foreach($this->tableQueue as $key=>$table) {
                 $this->createTable($table);
                 if($table->tableCreated && $table->isParseCompleted()) {
-                    unset($this->tableQueue[$key]);
+                    //unset($this->tableQueue[$key]);
             }
         }
         if($this->calls%200 == 0 || $all) {
@@ -92,6 +92,11 @@ class ImportQueue {
                     $entity->addIndex($key);
                 }
                 if ($index['type'] == 'foreign') {
+                    
+                    if(!isset($this->tableQueue[$index['foreign'][0]]) || !$this->tableQueue[$index['foreign'][0]]->hasColumn($index['foreign'][1])) {
+                        $this->indexCache->removeDependency($entity->getName(), $key, $index['foreign'][0], $index['foreign'][1]);
+                        
+                    }
                     $entity->addForeignKey($key, $index['foreign']);
                 }
             }

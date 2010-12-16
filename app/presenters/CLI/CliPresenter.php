@@ -14,7 +14,7 @@ class CliPresenter extends BasePresenter {
 	 */
 	protected function startup() {
 		parent::startup();
-                if(!\Nette\Environment::isConsole()) {
+                if(!\Nette\Environment::isConsole() && \Nette\Environment::isProduction()) {
                     echo 'This presenter should be called only from CLI interface.';
                     $this->terminate();
                 }

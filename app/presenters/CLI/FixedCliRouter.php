@@ -59,7 +59,6 @@ class FixedCliRouter extends \Nette\Application\CliRouter {
             throw new \InvalidStateException('Missing presenter & action in route definition.');
         }
         $presenter = $params[self::PRESENTER_KEY];
-        dump($presenter);
         if ($a = strrpos($presenter, ':')) {
             $params[self::PRESENTER_KEY] = substr($presenter, $a + 1);
             $presenter = substr($presenter, 0, $a);

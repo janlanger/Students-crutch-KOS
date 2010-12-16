@@ -58,6 +58,10 @@ class EntityDefinition {
         return $this->columns[$key];
     }
 
+    public function hasColumn($key) {
+        return isset($this->columns[$key]);
+    }
+
     public function addPrimaryKey($k) {
         if(!\in_array($k, $this->primaryKeys)) {
             if($k!="id") {

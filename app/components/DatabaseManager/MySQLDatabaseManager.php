@@ -70,11 +70,17 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         $sql = 'ALTER TABLE [' . $table->getName() . ']';
         
         foreach ($table->getForeigns() as $key) {
-            
-            $ref[] = ' ADD FOREIGN KEY ([' . $key['column'] . ']) REFERENCES [' . $key['foreign'][0] . '] ([' . $key['foreign'][1] . '])';
+            if($this->columnExists($key['foreign'][0],$key['foreign'][1]))
+                $ref[] = ' ADD FOREIGN KEY ([' . $key['column'] . ']) REFERENCES [' . $key['foreign'][0] . '] ([' . $key['foreign'][1] . '])';
         }
-        $sql.=implode(", \n", $ref);
-        dibi::query($sql);
+        if(count($ref)) {
+            $sql.=implode(", \n", $ref);
+            dibi::query($sql);
+        }
+    }
+
+    private function columnExists($table, $column) {
+        return count(dibi::fetchAll("SHOW TABLES LIKE '$table'")) && count(dibi::fetchAll("SHOW COLUMNS FROM [$table] WHERE [Field]=%s",$column));
     }
 
     public function fillTable(Entity $entity) {
