@@ -192,6 +192,7 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
                             }
                         }
                     }
+                    //todo condions for subselecting
                     $this->copyTable($table, $items, $fromDb, $toDb, $def->getCondition($table));
                     unset($tables[$table]);
                 }
