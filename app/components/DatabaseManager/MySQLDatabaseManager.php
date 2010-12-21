@@ -159,11 +159,16 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         dibi::query("USE [$name]");
     }
 
-    public function createRevision($fromDb, $toDb, $tables) {
+    public function createRevision($fromDb, $toDb, RevisionDefinition $def) {
         try {
             $this->createDatabase($toDb);
             $structure = $this->getDatabaseStructure($fromDb);
-            foreach ($tables as $table => $items) {
+            $tables=array_fill_keys($def->getTables(), array());
+            foreach (array_flip($def->getTables()) as $table => $items) {
+                $tables[$table]['name']=$table;
+                $tables[$table]['columns']=$def->getColumns($table);
+            }
+            foreach (array_flip($def->getTables()) as $table => $items) {
                 if(isset($structure[$table]['primary'])) {
                     $tables[$table]['primary']=$structure[$table]['primary'];
                 }
@@ -176,8 +181,23 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
                     }
                 }
             }
-            foreach ($tables as $table=>$items) {
-                $this->copyTable($table, $items, $fromDb, $toDb);
+
+            while(TRUE) {
+                foreach ($tables as $table=>$items) {
+                    if(isset($items['foreign'])) {
+                        foreach($items['foreign'] as $column=>$reference) {
+                            $c=explode(".",$reference);
+                            if(isset($tables[$c[0]])) { //after creation is table unset
+                                continue 2;
+                            }
+                        }
+                    }
+                    $this->copyTable($table, $items, $fromDb, $toDb, $def->getCondition($table));
+                    unset($tables[$table]);
+                }
+                if(!count($tables)) {
+                    break;
+                }
             }
         } catch (DatabaseManagerException $e) {
             //rollback
@@ -186,7 +206,7 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         }
     }
 
-    public function copyTable($table, $items, $fromDb, $toDb) {
+    public function copyTable($table, $items, $fromDb, $toDb, $condition) {
         try {
             $columns=array_keys($items['columns']);
             
@@ -198,7 +218,8 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
                     $sql.=", FOREIGN KEY ([$column]) REFERENCES [$col[0]] ([$col[1]])";
                 }
             }
-            $sql.=") SELECT ".implode(",",$columns)." FROM [$fromDb.$table]";
+            $sql.=") SELECT ".implode(",",$columns)." FROM [$fromDb.$table]".($condition!=NULL?' WHERE '.$condition:'');
+
             dibi::query($sql);
             
         } catch (DibiException $e) {

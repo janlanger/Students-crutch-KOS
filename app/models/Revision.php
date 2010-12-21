@@ -28,6 +28,16 @@ class Revision extends Model {
         return $q->execute()->setRowClass(get_called_class())->fetchAssoc('rev_id');
     }
 
+
+    public static function getToCreate() {
+        $q=dibi::select("rev_id, id")->from(":main:revision_to_create")->fetchAll();
+        $data=array();
+        foreach($q as $row) {
+            $data[$row['rev_id']]=@reset(self::find(array("rev_id"=>$row['rev_id'])));
+        }
+        return $data;
+    }
+
     public static function getAvaiableTables($database=NULL) {
         if ($database == NULL)
             $database = \Nette\Environment::getConfig('xml')->liveDatabase;
@@ -185,6 +195,7 @@ class RevisionDefinition {
         return $_this;
     }
 
+
     public function hasCondition($table) {
         return isset($this->conditions[$table]) && $this->conditions[$table]!="";
     }
@@ -192,6 +203,17 @@ class RevisionDefinition {
         return $this->conditions[$table];
     }
 
+    public function getColumns($table=NULL) {
+        if($table==NULL) {
+            return $this->columns;
+        }
+        elseif(isset($this->columns[$table])) {
+            return $this->columns[$table];
+        }
+        return array();
+    }
+
+    
     public function getTables() {
         return $this->tables;
     }

@@ -14,8 +14,8 @@ interface IDatabaseManager {
     public function setDefaultDatabase($name);
     public function createDatabase($name);
     public function fillDatabase($tables);
-    public function copyTable($table,$items,$fromDb,$toDb);
+    //public function copyTable($table,$items,$fromDb,$toDb);
     public function getDatabaseSize($database);
-    public function createRevision($fromDb, $toDb, $tables);
+    //public function createRevision($fromDb, $toDb, $tables);
 }
 ?>
