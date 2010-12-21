@@ -102,7 +102,13 @@ class ImportPresenter extends CliPresenter {
         if(count($toCreate)) {
             //create rev
             foreach($toCreate as $revision) {
-                $creator->create($revision);
+                try {
+                    $creator->create($revision);
+                } catch(ModelException $e) {
+                    $this->flashMessage($e->getMessage(),'error');
+                    $this->logger->logMessage($e->getMessage(), Logger::CRITICAL, 'XMLUpdate-CLI');
+                    Nette\Debug::log($e);
+                }
             }
         }
         $this->terminate();
