@@ -4,7 +4,7 @@
  *
  * @author Jan Langer, kontakt@janlanger.cz
  */
-class RevisionCreator {
+class RevisionManipulator {
 
     /** @var MySQLDatabaseManager $manager */
     private $manager=null;
@@ -28,6 +28,15 @@ class RevisionCreator {
         catch (Exception $e) {
             $this->manager->dropDatabase($rev->db_name);
             throw new ModelException('Cannot create revision: '.$e->getMessage(), $e->getCode(), $e);
+        }
+    }
+
+    public function update(Revision $revision) {
+        try{
+            $definition=$revision->getDefinition();
+
+        } catch (Exception $e) {
+            throw $e;
         }
     }
 

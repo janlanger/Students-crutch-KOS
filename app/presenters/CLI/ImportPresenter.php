@@ -94,7 +94,7 @@ class ImportPresenter extends CliPresenter {
 
     public function actionUpdate() {
         $manager=$this->getApplication()->getService('IDatabaseManager');
-        $creator=new RevisionCreator();
+        $creator=new RevisionManipulator();
         $creator->setManager($manager);
         $creator->setLive_database(\Nette\Environment::getConfig('xml')->liveDatabase);
 
@@ -109,6 +109,12 @@ class ImportPresenter extends CliPresenter {
                     $this->logger->logMessage($e->getMessage(), Logger::CRITICAL, 'XMLUpdate-CLI');
                     Nette\Debug::log($e);
                 }
+            }
+        }
+        $toUpdate=Revision::getToUpdate();
+        if(count($toUpdate)) {
+            foreach ($toUpdate as $revision) {
+                $creator->update($revision);
             }
         }
         $this->terminate();

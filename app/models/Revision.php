@@ -38,6 +38,15 @@ class Revision extends Model {
         return $data;
     }
 
+    public static function getToUpdate() {
+        $q=dibi::select("rev_id")->from(":main:revision_table_definition")->setFlag('DISTINCT')->fetchAll();
+        $data=array();
+        foreach($q as $row) {
+            $data[$row['rev_id']]=@reset(self::find(array("rev_id"=>$row['rev_id'])));
+        }
+        return $data;
+    }
+
     public static function getAvaiableTables($database=NULL) {
         if ($database == NULL)
             $database = \Nette\Environment::getConfig('xml')->liveDatabase;
