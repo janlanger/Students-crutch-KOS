@@ -32,9 +32,17 @@ class RevisionManipulator {
     }
 
     public function update(Revision $revision) {
+        $comparator=new RevisonComparator(NULL, NULL);
         try{
             $definition=$revision->getDefinition();
+            foreach($definition->getTables() as $table) {
+                if($definition->getSchema($table)=='data') {
+                    
+                }
+                elseif($definition->getSchema($table)=='structure') {
 
+                }
+            }
         } catch (Exception $e) {
             throw $e;
         }

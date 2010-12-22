@@ -179,6 +179,8 @@ class RevisionDefinition {
     private $columns;
     private $tables;
     private $conditions;
+    private $schemas;
+    private $max_changes;
 
     public static function find($where = NULL, $order = NULL, $offset = NULL, $limit = NULL) {
         $q = dibi::select("*")->from("[:main:revision_table_definition]");
@@ -197,6 +199,11 @@ class RevisionDefinition {
             $_this->tables[]=$res->table;
             $_this->columns[$res->table]=unserialize($res->columns);
             $_this->conditions[$res->table]=$res->condition;
+            $_this->schemas[$res->table]=$res->schema;
+            if($res->schema=='data') {
+                $_this->max_changes[$res->table]=$res->max_changes;
+            }
+
         }
         return $_this;
     }
