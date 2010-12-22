@@ -90,11 +90,8 @@ class Revision extends Model {
                     'rev_id'=>$rev_id,
                     'table'=>$table,
                     'columns'=>  serialize($items['columns']),
-                    'condition' => $items['condition']
-                ))->execute();
-                dibi::insert(":main:revision_watch", array(
-                   "def_id" => dibi::getInsertId(),
-                   "schema" => $items['schema'],
+                    'condition' => $items['condition'],
+                    "schema" => $items['schema'],
                     'max_changes' => (isset($items['max_changes'])?$items['max_changes']:0)
                 ))->execute();
             }
