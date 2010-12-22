@@ -61,4 +61,8 @@ abstract class BasePresenter extends Presenter {
         return $nav;
     }
 
+    protected function isCli() {
+        return Environment::isConsole();
+    }
+
 }
