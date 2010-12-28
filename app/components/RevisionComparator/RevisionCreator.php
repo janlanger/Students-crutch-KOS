@@ -33,11 +33,15 @@ class RevisionManipulator {
 
     public function update(Revision $revision) {
         $comparator=new RevisonComparator(NULL, NULL);
+        $comparator->setFirst(@reset(Revision::find(array('app_id'=>$revision->app_id,'db_name'=>'rozvrh_live'))));
+        $comparator->setSecond($revision);
         try{
             $definition=$revision->getDefinition();
             foreach($definition->getTables() as $table) {
                 if($definition->getSchema($table)=='data') {
-                    
+                    if(!count($comparator->compareStructure(TRUE))) { //0 diferencies - same tables
+                        dump($comparator->compareData());
+                    }
                 }
                 elseif($definition->getSchema($table)=='structure') {
 

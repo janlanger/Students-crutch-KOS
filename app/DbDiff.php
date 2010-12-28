@@ -63,7 +63,7 @@ class DbDiff {
 	 * @param string $schema2 The second database schema.
 	 * @return void
 	 */
-	function compare($schema1, $schema2) {
+	function compare($schema1, $schema2, $ignoreMissing) {
 		
 		$schema1 = $this->export($schema1);
                 $tables1 = array_keys($schema1['tables']);
@@ -78,15 +78,16 @@ class DbDiff {
 			// Check tables exist in both databases
 			
 			if (!isset($schema1['tables'][$table_name])) {
-
+                            if(!$ignoreMissing) {
 				$results[$table_name]['missing']=$schema1['name'];
-
+                            }
 				continue;
 			}
 
 			if (!isset($schema2['tables'][$table_name])) {
+                            if(!$ignoreMissing) {
 				$results[$table_name]['missing']=$schema2['name'];
-
+                            }
 				continue;
 			}
 			

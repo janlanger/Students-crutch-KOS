@@ -29,7 +29,17 @@ class RevisonComparator extends \Nette\Application\Control {
         $this->revisions = $revisions;
     }
 
+
+
     
+    public function setFirst($first) {
+        $this->first = $first;
+    }
+
+    public function setSecond($second) {
+        $this->second = $second;
+    }
+
     public function render() {
 
         if(count($this->revisions)!=2) {
@@ -51,37 +61,41 @@ class RevisonComparator extends \Nette\Application\Control {
         $this->second=$revisons[$this->revisions[1]];
         
         
-        $rev1=$this->first->getTables();
-        
-        $rev2=$this->second->getTables();
 
-        $this->template->tables=$tables=array_unique(array_merge(array_keys($rev1),  array_keys($rev2)));
+        $this->template->tables=array_unique(array_merge(array_keys($this->first->getTables()),  array_keys($this->second->getTables())));
         
         $this->template->structure=$structure=($this->compareStructure());
 
+        
+        
+        $this->template->rev1=  $this->first;
+        $this->template->rev2=  $this->second;
+
+        $this->template->data=$this->compareData();
+        $this->template->render();
+    }
+
+    public function compareStructure($ignore_missing=FALSE) {
+        $diff=new DbDiff();
+        return $diff->compare($this->first->db_name, $this->second->db_name, $ignore_missing);
+    }
+
+    public function compareData() {
         $data=array();
          $this->template->columns=array();
+         $tables=array_unique(array_merge(array_keys($this->first->getTables()),  array_keys($this->second->getTables())));
         foreach($tables as $table) {
             if(isset($rev1[$table]) && isset($rev2[$table])) {
                 $this->template->columns[$table]=$columns
                         =array_intersect(array_keys($rev1[$table]['columns']),  array_keys($rev2[$table]['columns']));
-                
-                $data[$table]=$this->compareData($table,$columns);
+
+                $data[$table]=$this->compareTable($table,$columns);
             }
         }
-        $this->template->rev1=  $this->first;
-        $this->template->rev2=  $this->second;
-
-        $this->template->data=$data;
-        $this->template->render();
+        return $data;
     }
 
-    public function compareStructure() {
-        $diff=new DbDiff();
-        return $diff->compare($this->first->db_name, $this->second->db_name);
-    }
-
-    public function compareData($table,$columns) {
+    private function compareTable($table,$columns) {
         $data1=dibi::select($columns)->from($this->first->db_name.".".$table);
         $data2=dibi::select($columns)->from($this->second->db_name.".".$table);
         if($this->first->getDefinition()->hasCondition($table)) {

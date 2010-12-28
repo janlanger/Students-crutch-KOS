@@ -93,6 +93,7 @@ class ImportPresenter extends CliPresenter {
     }
 
     public function actionUpdate() {
+
         $manager=$this->getApplication()->getService('IDatabaseManager');
         $creator=new RevisionManipulator();
         $creator->setManager($manager);
@@ -111,6 +112,7 @@ class ImportPresenter extends CliPresenter {
                 }
             }
         }
+        $this->terminate();
         $toUpdate=Revision::getToUpdate();
         if(count($toUpdate)) {
             foreach ($toUpdate as $revision) {

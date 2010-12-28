@@ -225,8 +225,11 @@ class RevisionDefinition {
         }
         return array();
     }
+    public function getSchema($table) {
+        return $this->schemas[$table];
+    }
 
-    
+
     public function getTables() {
         return $this->tables;
     }
