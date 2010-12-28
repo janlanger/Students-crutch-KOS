@@ -190,6 +190,10 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
                             if(isset($tables[$c[0]])) { //after creation is table unset
                                 continue 2;
                             }
+                            else {
+                                
+                                $def->setConstrain($table,$column,dibi::select($c[1])->from("[$toDb.".$c[0]."]")->fetchAssoc($c[1]));
+                            }
                         }
                     }
                     //todo condions for subselecting
@@ -211,15 +215,25 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         try {
             $columns=array_keys($items['columns']);
             
-            $sql="CREATE TABLE [$toDb.$table]
-                    (PRIMARY KEY(".implode(",",array_keys($items['primary'])).")";
+            $sql="CREATE TABLE [$toDb.$table]";
+            $keys='';
+            if(isset($items['primary'])) {
+                $keys.="PRIMARY KEY(".implode(",",array_keys($items['primary'])).")";
+            }
             if(isset($items['foreign'])) {
+
                 foreach($items['foreign'] as $column=>$ref) {
                     $col=explode(".",$ref);
-                    $sql.=", FOREIGN KEY ([$column]) REFERENCES [$col[0]] ([$col[1]])";
+                    if($keys) {
+                        $keys.=', ';
+                    }
+                    $keys.="FOREIGN KEY ([$column]) REFERENCES [$col[0]] ([$col[1]])";
                 }
             }
-            $sql.=") SELECT ".implode(",",$columns)." FROM [$fromDb.$table]".($condition!=NULL?' WHERE '.$condition:'');
+            if($keys) {
+                $sql.="($keys)";
+            }
+            $sql.=" SELECT ".implode(",",$columns)." FROM [$fromDb.$table]".($condition!=NULL?' WHERE '.$condition:'');
 
             dibi::query($sql);
             

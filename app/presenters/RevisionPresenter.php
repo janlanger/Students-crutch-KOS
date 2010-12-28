@@ -182,16 +182,20 @@ class RevisionPresenter extends BasePresenter {
        
         $tables = Revision::getAvaiableTables();
         $tbl = array();
+        
         foreach ($tables as $table => $items) {
             if(isset($values[$table]) && $values[$table]) {
                 $tbl[$table]=array();
+                if(isset($items['primary'])) {
+                    foreach($items['primary'] as $col => $v) {
+                        $tbl[$table]['columns'][$col]=1;
+                    }
+                }
                 foreach ($items['columns'] as $column => $value) {
                     if(isset($values[$table.'__'.$column]) && $values[$table.'__'.$column]) {
                         $tbl[$table]['columns'][$column]=1;
                     }
-                    if(isset($items['columns']['id'])) {
-                        $tbl[$table]['columns']['id']=1;
-                    }
+                    
                 }
                 if(!isset($tbl[$table]['columns']) || count($tbl[$table]['columns'])<1) {
                     $bnt->getForm()->addError('Tabulka '.$table.' nemá vybraný žádný sloupec. Buď nějaký vyberte, nebo tabulku nezařazujte do revize.');

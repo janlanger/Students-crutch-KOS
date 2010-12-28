@@ -208,6 +208,12 @@ class RevisionDefinition {
         return $_this;
     }
 
+    public function setConstrain($table,$column,$condition) {
+        if(isset($this->conditions[$table]))
+            $this->conditions[$table].=' AND ';
+        $this->conditions[$table]=$column." IN (".  implode(",", array_keys($condition)).")";
+    }
+
 
     public function hasCondition($table) {
         return isset($this->conditions[$table]) && $this->conditions[$table]!="";
