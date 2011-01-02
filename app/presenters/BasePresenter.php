@@ -53,7 +53,7 @@ abstract class BasePresenter extends Presenter {
     public function createComponentNavigation() {
         $nav = new Navigation();
         $nav->setupHomepage('Domů', $this->link('Default:'));
-        $nav->add('Nastavení importu', $this->link('Import:'));
+        $nav->add('Nastavení importu', $this->link('KeyDef:'));
         //$nav->add('Import', $this->link('Import:'));
         $nav->add('Správa aplikací', $this->link("App:"));
         $nav->add('Log', $this->link('Default:showLog'));
