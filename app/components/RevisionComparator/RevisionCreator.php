@@ -4,7 +4,7 @@
  *
  * @author Jan Langer, kontakt@janlanger.cz
  */
-class RevisionManipulator {
+class RevisionManipulator extends \Nette\Application\Control {
 
     /** @var MySQLDatabaseManager $manager */
     private $manager=null;
@@ -32,24 +32,55 @@ class RevisionManipulator {
     }
 
     public function update(Revision $revision) {
+        
         $comparator=new RevisonComparator(NULL, NULL);
         $comparator->setFirst(@reset(Revision::find(array('app_id'=>$revision->app_id,'db_name'=>'rozvrh_live'))));
         $comparator->setSecond($revision);
         try{
             $definition=$revision->getDefinition();
+            $structure=$comparator->compareStructure(TRUE);
             foreach($definition->getTables() as $table) {
+                
                 if($definition->getSchema($table)=='data') {
-                    if(!count($comparator->compareStructure(TRUE))) { //0 diferencies - same tables
-                        dump($comparator->compareData());
+                    
+                    if(!isset($structure[$table])) { //0 diferencies - same tables
+
+                        if(count($comparator->compareData()) < $definition->getMaxChanges($table) || $definition->getMaxChanges($table)<0) {
+                            $this->synchronizeData($table, $revision);
+                        }
+                        else {
+                            //TODO - informovani
+                            $this->getPresenter()->getApplication()->getService('ILogger')->logMessage("Too many changes in table ".$table.", revision ".$revision->alias,  Logger::NOTICE, 'Update-CLI');
+                        }
+                    }
+                    else {
+                        $this->getPresenter()->getApplication()->getService('ILogger')->logMessage("Structure of ".$table." has changed, revision ".$revision->alias,  Logger::NOTICE, 'Update-CLI');
                     }
                 }
                 elseif($definition->getSchema($table)=='structure') {
-
+                    try {
+                        $tables=$this->manager->getTableInfo($this->live_database, $definition);
+                        $this->manager->dropTable($revision->db_name.'.'.$table);
+                        $this->manager->copyTable($table, $tables[$table], $this->live_database, $revision->db_name, $revision->getDefinition()->getCondition($table));
+                    } catch (DatabaseManagerException $e) {
+                        $this->getPresenter()->getApplication()->getService('ILogger')->logMessage("Copy of ".$table." failed, revision ".$revision->alias.', '.$e->getMessage(),  Logger::NOTICE, 'Update-CLI');
+                    }
                 }
             }
         } catch (Exception $e) {
             throw $e;
         }
+    }
+
+    private function synchronizeData($table, $revision) {
+        $definition=$revision->getDefinition();
+
+        $this->manager->updateTable($table,  
+                array_keys($definition->getColumns($table)),
+                $definition->getCondition($table) ,
+                $this->live_database,
+                $revision->db_name);
+
     }
 
 }

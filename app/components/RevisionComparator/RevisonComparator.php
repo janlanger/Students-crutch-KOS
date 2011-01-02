@@ -83,6 +83,8 @@ class RevisonComparator extends \Nette\Application\Control {
     public function compareData() {
         $data=array();
          $this->template->columns=array();
+         $rev1=$this->first->getTables();
+         $rev2=$this->second->getTables();
          $tables=array_unique(array_merge(array_keys($this->first->getTables()),  array_keys($this->second->getTables())));
         foreach($tables as $table) {
             if(isset($rev1[$table]) && isset($rev2[$table])) {

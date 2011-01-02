@@ -32,7 +32,7 @@ class Parser{
     public function initReader() {
         if ($this->reader == NULL) {
             if ($this->file == "") {
-                throw new \InvalidStateException("Unknown file to proccess.");
+                throw new \InvalidStateException("Unknown file to proccess. ".$this->file);
             }
 
             $this->reader = new XMLReader();

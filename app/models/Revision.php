@@ -240,6 +240,10 @@ class RevisionDefinition {
         return $this->tables;
     }
 
+    public function getMaxChanges($table) {
+        return $this->max_changes[$table];
+    }
+
 
 }
 

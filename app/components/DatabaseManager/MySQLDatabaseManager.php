@@ -159,6 +159,29 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         dibi::query("USE [$name]");
     }
 
+    public function getTableInfo($db,  RevisionDefinition $def) {
+        $structure = $this->getDatabaseStructure($db);
+        $tables=array_fill_keys($def->getTables(), array());
+            foreach (array_flip($def->getTables()) as $table => $items) {
+                $tables[$table]['name']=$table;
+                $tables[$table]['columns']=$def->getColumns($table);
+            }
+            foreach (array_flip($def->getTables()) as $table => $items) {
+                if(isset($structure[$table]['primary'])) {
+                    $tables[$table]['primary']=$structure[$table]['primary'];
+                }
+                if(isset($structure[$table]['foreign'])) {
+                    foreach($structure[$table]['foreign'] as $column=>$reference) {
+                        $col=explode(".",$reference);
+                        if(isset($tables[$table]['columns'][$column]) && isset($tables[$col[0]]['columns'][$col[1]])) {
+                            $tables[$table]['foreign'][$column]=$reference;
+                        }
+                    }
+                }
+            }
+            return $tables;
+    }
+
     public function createRevision($fromDb, $toDb, RevisionDefinition $def) {
         try {
             $this->createDatabase($toDb);
@@ -211,6 +234,12 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
         }
     }
 
+    public function dropTable($table) {
+        dibi::query("SET foreign_key_checks = 0;");
+        dibi::query("DROP TABLE IF EXISTS [" . $table . "]");
+        dibi::query("SET foreign_key_checks = 1;");
+    }
+
     public function copyTable($table, $items, $fromDb, $toDb, $condition) {
         try {
             $columns=array_keys($items['columns']);
@@ -239,6 +268,21 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
             
         } catch (DibiException $e) {
             throw new DatabaseManagerException("Unable to copy table. " . $e->getMessage(), NULL, $e);
+        }
+    }
+
+    public function updateTable($table,$columns,$condition, $from, $to) {
+        try{
+            dibi::begin();
+            dibi::query("SET foreign_key_checks = 0;");
+            dibi::query('DELETE FROM '.$to.'.'.$table);
+            dibi::query("INSERT INTO [$to.$table] (".implode(", ",$columns).")
+                SELECT ".implode(",",$columns)." FROM [$from.$table]".($condition!=NULL?' WHERE '.$condition:''));
+            dibi::query("SET foreign_key_checks = 1;");
+            dibi::commit();
+        } catch (DibiException $e) {
+            dibi::rollback();
+            throw new DatabaseManagerException($e->getMessage(), NULL, $e);
         }
     }
 

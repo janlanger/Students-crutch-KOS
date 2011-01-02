@@ -28,7 +28,8 @@ class Logger {
 
         $message=iconv('ASCII', 'ASCII//IGNORE', $message); //removes all non-ASCII characters
         if(strlen($message)>255) {
-            trigger_error('Log message was longer than 255 characters. Truncated.', E_USER_NOTICE);
+            //trigger_error('Log message was longer than 255 characters. Truncated.', E_USER_NOTICE);
+            $message=substr($message, 0,255);
         }
         dibi::insert($this->log_table, array(
                     'message' => $message,

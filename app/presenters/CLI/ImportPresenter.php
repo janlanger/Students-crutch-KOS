@@ -75,6 +75,7 @@ class ImportPresenter extends CliPresenter {
     }
 
     private function proccessImport($file) {
+        
         try {
             \Nette\Debug::timer("importer-total");
             $importer = Nette\Environment::getService('IImporter');
@@ -95,7 +96,7 @@ class ImportPresenter extends CliPresenter {
     public function actionUpdate() {
 
         $manager=$this->getApplication()->getService('IDatabaseManager');
-        $creator=new RevisionManipulator();
+        $creator=new RevisionManipulator($this, 'manipulator');
         $creator->setManager($manager);
         $creator->setLive_database(\Nette\Environment::getConfig('xml')->liveDatabase);
 
@@ -112,7 +113,7 @@ class ImportPresenter extends CliPresenter {
                 }
             }
         }
-        $this->terminate();
+        
         $toUpdate=Revision::getToUpdate();
         if(count($toUpdate)) {
             foreach ($toUpdate as $revision) {
