@@ -28,8 +28,9 @@ class UsersModel extends \Nette\Object implements IAuthenticator
 	 */
 	public function authenticate(array $credentials)
 	{
-		$username = $credentials[self::USERNAME];
-		$password = sha1($credentials[self::PASSWORD]);
+
+		$username = (isset($credentials[self::USERNAME])?$credentials[self::USERNAME]:NULL);
+		$password = (isset($credentials[self::PASSWORD])?sha1($credentials[self::PASSWORD]):NULL);
 
 		$row = dibi::fetch('SELECT * FROM [:main:users] WHERE [username]=%s', $username);
 

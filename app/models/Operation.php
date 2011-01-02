@@ -38,7 +38,6 @@ class Operation extends Model {
     }
 
     public static function getSQL($where) {
-        \Nette\Debug::$showLocation=TRUE;
         $q = dibi::select("[name],[sql],[params],[return],[fetchType],[assocKey]")
                 ->from("[:main:operations_def]")
                 ->innerJoin("[:main:operations_sql]")

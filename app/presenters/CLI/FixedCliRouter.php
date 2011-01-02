@@ -66,7 +66,7 @@ class FixedCliRouter extends \Nette\Application\CliRouter {
         elseif($presenter!="") {
             $defaults=  $this->getDefaults();
             $params['action'] =$presenter;
-            $presenter = $defaults['presenter'];
+            $presenter = isset($defaults['presenter'])?$defaults['presenter']:'';
         }
 
         return new PresenterRequest(

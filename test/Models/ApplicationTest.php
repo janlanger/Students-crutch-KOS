@@ -41,6 +41,8 @@ class ApplicationTest extends PHPUnit_Framework_TestCase {
         $this->assertGreaterThan(0,$this->object->app_id,'Test saving');
     }
 
+
+
     /**
      * @todo Implement testFind().
      */
@@ -53,7 +55,21 @@ class ApplicationTest extends PHPUnit_Framework_TestCase {
         $this->assertInstanceOf('Application',$this->object,'Test application find');
     }
 
-    
+    public function testUpdate() {
+        $this->object=@reset(Application::find(array(
+            'name'=>'test',
+            'login'=>'test',
+            'admin_email'=>'test'
+        )));
+        $this->object->name='testt';
+        $this->object->save();
+        $object=@reset(Application::find(array(
+            'name'=>'testt',
+            'login'=>'test',
+            'admin_email'=>'test'
+        )));
+        $this->assertInstanceOf('Application',$object,'Test application update');
+    }
 
     
 
@@ -62,7 +78,7 @@ class ApplicationTest extends PHPUnit_Framework_TestCase {
      */
     public function testDelete() {
         $data=(Application::find(array(
-            'name'=>'test',
+            'name'=>'testt',
             'login'=>'test',
             'admin_email'=>'test'
         )));
@@ -70,7 +86,7 @@ class ApplicationTest extends PHPUnit_Framework_TestCase {
         $data=@reset($data);
         $data->delete();
         $this->assertEquals(0,count(Application::find(array(
-            'name'=>'test',
+            'name'=>'testt',
             'login'=>'test',
             'admin_email'=>'test'
         ))));
