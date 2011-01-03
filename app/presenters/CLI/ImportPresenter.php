@@ -34,7 +34,7 @@ class ImportPresenter extends CliPresenter {
         $this->terminate();
     }
 
-    public function processDownload() {
+    private function processDownload() {
         try {
             $params = $this->getRequest()->getParams();
 
@@ -94,7 +94,12 @@ class ImportPresenter extends CliPresenter {
     }
 
     public function actionUpdate() {
+        $this->processUpdate();
 
+        $this->terminate();
+    }
+
+    private function processUpdate() {
         $manager=$this->getApplication()->getService('IDatabaseManager');
         $creator=new RevisionManipulator($this, 'manipulator');
         $creator->setManager($manager);
@@ -120,7 +125,6 @@ class ImportPresenter extends CliPresenter {
                 $creator->update($revision);
             }
         }
-        $this->terminate();
     }
 
 }

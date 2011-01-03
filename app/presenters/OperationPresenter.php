@@ -23,11 +23,12 @@ class OperationPresenter extends BasePresenter {
 
         if ($app_id > 0) {
             $app = @reset(Application::find(array("app_id" => $app_id)));
-        }
+        
         $this['header']->addTitle("Správa WS rozhraní aplikace " . $app['name']);
 
         $this->template->operations = Operation::getWithSQLs(array("app_id" => $app_id));
         $this->template->revisions = Revision::find(array("app_id" => $app_id));
+        }
     }
 
     /*     * **************************** OPERATION ********************************* */
@@ -154,12 +155,15 @@ class OperationPresenter extends BasePresenter {
 
     public function actionEditSql($sql_id) {
         $operation = (OperationSQL::find(array('sql_id' => $sql_id)));
-
         $this->template->setFile(\Nette\Environment::expand("%appDir%/templates/Operation/defineSql.latte"));
+        
+        
         $this->template->edit = TRUE;
-        $this->template->params = unserialize($operation->params);
+        
 
         $form = $this['editSQLForm'];
+        if(is_object($operation)) {
+        $this->template->params = unserialize($operation->params);
         $form->setDefaults(array(
             'sql' => $operation->sql,
             'sql_id' => $sql_id,
@@ -169,20 +173,22 @@ class OperationPresenter extends BasePresenter {
         if ($operation->fetchType != 'assoc') {
             $form['assocKey']->setDisabled();
         }
+        }
     }
 
     public function actionDefineSql($met_id, $rev_id) {
         $this->template->edit = FALSE;
         $operation = @reset(Operation::find(array('met_id' => $met_id)));
-        $this->template->params = unserialize($operation->params);
-
+        
         $form = $this['addSQLForm'];
         $form['met_id']->setDefaultValue($met_id);
         $form['rev_id']->setDefaultValue($rev_id);
+if(is_object($operation)) {
+            $this->template->params = unserialize($operation->params);
 
         if ($operation->fetchType != 'assoc') {
             $form['assocKey']->setDisabled();
-        }
+        }}
     }
 
     protected function createComponentAddSQLForm($name) {

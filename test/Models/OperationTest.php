@@ -45,7 +45,6 @@ class OperationTest extends PHPUnit_Framework_TestCase {
             'fetchType'=>'single'
             ));
         $this->assertInstanceOf('Operation',$object);
-        dump($object);
         $object->save();
         $this->assertEquals(1,count(Operation::find(array(
                 "app_id"=>@reset(Application::find())->app_id,

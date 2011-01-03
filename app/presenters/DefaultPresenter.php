@@ -23,7 +23,7 @@ class DefaultPresenter extends BasePresenter {
         $this['header']->addTitle('Log');
     }
 
-    protected function createComponentLogGrid($name) {
+    public function createComponentLogGrid($name) {
         $grid=new Datagrid($this, $name);
         $grid->setDataTable(':main:log');
         $grid->setColumns(array('timestamp'=>'Čas','severity'=>'Z.','component'=>'Komponenta','message'=>'Zpráva'));
@@ -41,58 +41,5 @@ class DefaultPresenter extends BasePresenter {
         
     }
 
-/*    public function actionDownload() {
-        $this['header']->addTitle('Stažení XML');
-    }
-
-    public function createComponentDownloadForm() {
-        $form = new \Nette\Application\AppForm($this, 'downloadForm');
-        $form->addText('url', 'URL souboru')
-                        ->setType('url')
-                        ->setRequired('URL musí být vyplněno.')
-                        ->getControlPrototype()->class[] = 'long';
-        $form->addText('login', 'Fakultní login');
-        $form->addPassword('password', 'Heslo');
-
-        $form->addCheckbox('check', 'Zkontrolovat nejdříve jestli je k dispozici novější verze.')->setDefaultValue(TRUE);
-
-        $form->addSubmit('download', 'Stáhnout')->onClick[] = callback($this, 'downloadFile');
-
-        $config = \Nette\Environment::getConfig('xml');
-
-        $form->setDefaults(array(
-            'url' => $config['remoteURL']
-        ));
-        return $form;
-    }
-
-    public function downloadFile(\Nette\Forms\SubmitButton $button) {
-
-        $values = $button->getForm()->getValues();
-        try {
-            $downloader = $this['downloader'];
-            $downloader->setUrl($values['url'])
-                    ->setLogin($values['login'])
-                    ->setPassword($values['password'])
-                    ->setLocalRepository(\Nette\Environment::getConfig('xml')->localRepository);
-
-            if ($values['check'] == TRUE) {
-                if ($downloader->checkForNewer() == IDownloader::NOT_MODIFIED) {
-                    $this->flashMessage('V úložišti není k dispozici žádný novější soubor.');
-                    return;
-                }
-            }
-
-            $res = $downloader->download();
-            $this->flashMessage('Soubor stažen (' . $res['file'] . ', velikost:' . NTemplateHelpers::bytes($res['size']) . ', celkový čas:' . round($res['time'], 2) . ' sec)', 'success');
-            $this->redirect('this');
-        } catch (IOException $e) {
-            $this->flashMessage($e->getMessage(), 'error');
-        }
-    }
-
-    protected function createComponentDownloader() {
-        return $this->getApplication()->getContext()->getService('IDownloader');
-    }*/
 
 }

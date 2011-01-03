@@ -1,1 +1,1 @@
-d:\web\_pear\phpunit.bat --configuration configuration.xml ./
+d:\web\_pear\phpunit.bat --coverage-html ./report --configuration configuration.xml ./
