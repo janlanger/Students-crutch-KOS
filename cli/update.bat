@@ -1,0 +1,1 @@
+php -f ../www/index.php update
