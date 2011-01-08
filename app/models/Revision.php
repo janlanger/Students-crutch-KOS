@@ -131,7 +131,39 @@ class Revision extends Model {
         }
     }
 
-    
+    public function setValues($values) {
+        if (dibi::select('count(*)')->from(":main:revision")
+                        ->where("app_id=%s", $this->app_id)
+                        ->and('alias=%s', $values['name'])
+                        ->and('[alias]!=%s', $this->alias)
+                        ->execute()->fetchSingle()) {
+            throw new ModelException('Revizi s tímto názvem nelze vytvořit. Pravděpodobně již existuje.');
+        }
+
+        if ($values['isMain']) {
+            if (dibi::select('count(*)')->from(":main:revision")
+                            ->where("app_id=%s", $this->app_id)
+                            ->and('isMain=%b', $values['isMain'])
+                            ->and("[alias]!=%s", $this->alias)
+                            ->execute()->fetchSingle()) {
+                throw new ModelException('Nelze vytvořit více revizí označených jako výchozí.');
+            }
+        }
+        $this->alias = $values['name'];
+        $this->isMain = $values['isMain'];
+        return $this;
+    }
+
+    public function save() {
+        try {
+            dibi::update(":main:revision", array(
+                "alias"=>$this->alias,
+                "isMain"=>$this->isMain
+            ))->where("rev_id=%i",$this->rev_id)->execute();
+        } catch (DibiException $e) {
+            throw new ModelException('Nepodařilo se uložit data.', NULL, $e);
+        }
+    }
 
     public function getDefinition() {
         if($this->definition==NULL) {

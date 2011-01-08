@@ -23,8 +23,8 @@ class RevisionPresenter extends BasePresenter {
         $this['createForm']; //inits tamplate
     }
 
-    public function actionEdit($rev_id) {
-        $this['header']->addTitle('Úprava revize');
+    public function actionDetail($rev_id) {
+        $this['header']->addTitle('Detail revize');
         $rev = Revision::find(array("app_id" => $this->app_id, "rev_id" => $rev_id));
         if (count($rev) != 1) {
             $this->flashMessage('Neznámá revize.', 'error');
@@ -91,10 +91,10 @@ class RevisionPresenter extends BasePresenter {
 
         $grid = new Datagrid($this, $name);
         $grid->setDataTable(":main:revision");
-        $grid->setColumns(array("rev_id" => 'ID#', 'alias' => 'Alias','exist'=>'Vytvořena', 'created_time' => 'Čas vytvoření', 'isMain' => 'Výchozí'));
+        $grid->setColumns(array("rev_id" => 'ID#', 'alias' => 'Alias','exist'=>'Vytvořena',/* 'created_time' => 'Čas vytvoření', */'isMain' => 'Výchozí'));
         $grid->getSql()->columns=array("rev_id" , 'db_name', 'alias', 'db_name'=>'exist', 'created_time', 'isMain');
         $grid->getSql()->where(array("app_id" => $this->app_id));
-        $grid->setColumnFormat('created_time', DatagridFormatter::DATE);
+        //$grid->setColumnFormat('created_time', DatagridFormatter::DATE);
         $grid->setColumnFormat('isMain', DatagridFormatter::CHECKBOX_YES_NO);
         $grid->setColumnFormat('exist', DatagridFormatter::CALLBACK, function ($record) {
             $db=\Nette\Environment::getService("IDatabaseManager");
@@ -109,7 +109,7 @@ class RevisionPresenter extends BasePresenter {
             echo $img;
         });
 
-        $grid->addAction(array('action' => 'Revision:edit', 'param' => 'rev_id'), 'Upravit', 'edit');
+        $grid->addAction(array('action' => 'Revision:detail', 'param' => 'rev_id'), 'Detail', 'edit');
         $grid->addAction(array('action' => 'Revision:delete', 'param' => 'rev_id'), 'Smazat', 'delete')
                 ->setConfirmQuestion('Smazat', 'Opravdu chcete smazat tuto revizi? Bude odstraněna celá svázaná databáze.')
                 ->setValidator(function($row, $action) {
