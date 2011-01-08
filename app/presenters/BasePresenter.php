@@ -39,7 +39,7 @@ abstract class BasePresenter extends Presenter {
         $header = new HeaderControl($this, 'header');
         $header->setDocType(HeaderControl::HTML_4_TRANSITIONAL);
         $header->setLanguage(HeaderControl::CZECH);
-        $header->setTitle('Studentova berlička - KOS')
+        $header->setTitle('Studentova Berlička III - KOS')
                 ->setTitleSeparator(' :: ');
 
         $header->addCss('/css/screen.css');

@@ -221,3 +221,39 @@ form fieldset {
     border: none;
     border-top: 1px solid black;
 }
+.main-page .link {
+    border: 1px solid #666666;
+    background-color: #cccccc;
+    float: left;
+    width: 270px;
+    padding: 5px;
+    min-height: 70px;
+    margin:10px;
+    padding-left: 70px;
+    background-repeat: no-repeat;
+    background-position: 10px center;
+    
+}
+.main-page{
+    max-width: 1101px;
+    margin: 0px auto;
+}
+.main-page .link.setup {
+    background-image: url('/images/icons/Settings_48x48.png');
+}
+.main-page .link.applications {
+    background-image: url('/images/icons/application.png');
+}
+.main-page .link.log {
+    background-image: url('/images/icons/log.png');
+}
+.main-page .link p{
+    font-size: 0.8em;
+    margin: 0px;
+}
+.main-page .link a{
+    color:black;
+    font-size: 1.3em;
+    font-weight: bold;
+    
+}

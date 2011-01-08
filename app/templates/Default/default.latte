@@ -2,11 +2,23 @@
 
 {block content}
 
+<div class="main-page">
+    <div class="link applications">
+        <a href="{link App:}">Aplikace</a>
+        <p>Správa klientských aplikací, jejich revizí, tester SOAP služby.</p>
+    </div>
 
+    <div class="link setup">
+        <a href="{link KeyDef:}">Nastavení importu</a>
+        <p>Definice cizích klíčů použitých při importu.</p>
+    </div>
 
-Zvolte něco z menu.
-
-
+    <div class="link log">
+        <a href="{link App:}">Log</a>
+        <p>Log zpráv a chybových hlášení vzniklých při zpracování importu a SOAP.</p>
+    </div>
+</div>
+<br clear="all" />
 <h3>Stav prostředí</h3>
 <table class="checker">
     <tr>
@@ -22,8 +34,16 @@ Zvolte něco z menu.
         <td>Memory limit: {=ini_get("memory_limit")}</td>
     </tr>
     <tr>
-        <td class="{if class_exists("DOMDocument")}ok{else}err{/if}">&nbsp;</td>
-        <td>XML/DOM support</td>
+        <td class="{if class_exists("XMLReader")}ok{else}err{/if}">&nbsp;</td>
+        <td>XML/SAX support</td>
+    </tr>
+    <tr>
+        <td class="{if extension_loaded("curl")}ok{else}err{/if}">&nbsp;</td>
+        <td>CURL extension</td>
+    </tr>
+    <tr>
+        <td class="{if extension_loaded("mbstring")}ok{else}err{/if}">&nbsp;</td>
+        <td>MbString extension</td>
     </tr>
     <tr>
         <td class="{if extension_loaded("soap")}ok{else}err{/if}">&nbsp;</td>
