@@ -92,7 +92,7 @@ class Revision extends Model {
                     'columns'=>  serialize($items['columns']),
                     'condition' => $items['condition'],
                     "schema" => $items['schema'],
-                    'max_changes' => (isset($items['max_changes'])?$items['max_changes']:0)
+                    'max_changes' => (isset($items['max-changes'])?(int) $items['max-changes']:0)
                 ))->execute();
             }
             dibi::insert(":main:revision_to_create", array("rev_id"=>$rev_id))->execute();
@@ -211,7 +211,7 @@ class RevisionDefinition {
     public function setConstrain($table,$column,$condition) {
         if(isset($this->conditions[$table]))
             $this->conditions[$table].=' AND ';
-        $this->conditions[$table]=$column." IN (".  implode(",", array_keys($condition)).")";
+        $this->conditions[$table].=$column." IN (".  implode(",", array_keys($condition)).")";
     }
 
 
