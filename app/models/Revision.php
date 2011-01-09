@@ -209,7 +209,7 @@ class RevisionDefinition {
     }
 
     public function setConstrain($table,$column,$condition) {
-        if(isset($this->conditions[$table]))
+        if(isset($this->conditions[$table]) && $this->conditions[$table]!='')
             $this->conditions[$table].=' AND ';
         $this->conditions[$table].=$column." IN (".  implode(",", array_keys($condition)).")";
     }
