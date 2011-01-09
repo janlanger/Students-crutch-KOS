@@ -98,8 +98,8 @@ class RevisonComparator extends \Nette\Application\Control {
     }
 
     private function compareTable($table,$columns) {
-        $data1=dibi::select($columns)->from($this->first->db_name.".".$table);
-        $data2=dibi::select($columns)->from($this->second->db_name.".".$table);
+        $data1=dibi::select($columns)->from("[".$this->first->db_name.".".$table."]");
+        $data2=dibi::select($columns)->from("[".$this->second->db_name.".".$table."]");
         if($this->first->getDefinition()->hasCondition($table)) {
             $data2->where($this->first->getDefinition()->getCondition($table));
         }
