@@ -215,7 +215,7 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
                             }
                             else {
                                 
-                                $def->setConstrain($table,$column,dibi::select($c[1])->from("[$toDb.".$c[0]."]")->fetchAssoc($c[1]));
+                               // $def->setConstrain($table,$column,dibi::select($c[1])->from("[$toDb.".$c[0]."]")->fetchAssoc($c[1]));
                             }
                         }
                     }
@@ -242,6 +242,7 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
 
     public function copyTable($table, $items, $fromDb, $toDb, $condition) {
         try {
+            
             $columns=array_keys($items['columns']);
             
             $sql="CREATE TABLE [$toDb.$table]";
@@ -262,6 +263,17 @@ class MySQLDatabaseManager extends \Nette\Object implements IDatabaseManager {
             if($keys) {
                 $sql.="($keys)";
             }
+
+            if(isset($items['foreign'])) {
+                foreach($items['foreign'] as $key => $ref) {
+                    $col=explode(".",$ref);
+                    if($condition!="") {
+                        $condition.=' AND ';
+                    }
+                    $condition.="[$key] IN (SELECT [$col[1]] FROM [$toDb.$col[0]])";
+                }
+            }
+
             $sql.=" SELECT ".implode(",",$columns)." FROM [$fromDb.$table]".($condition!=NULL?' WHERE '.$condition:'');
 
             dibi::query($sql);

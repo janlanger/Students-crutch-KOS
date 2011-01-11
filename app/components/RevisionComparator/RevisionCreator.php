@@ -39,7 +39,7 @@ class RevisionManipulator extends \Nette\Application\Control {
             $definition = $revision->getDefinition();
             $structure = $comparator->compareStructure(TRUE);
             $dataCompare = $comparator->compareData();
-            $tablesInfo = $this->manager->getTableInfo($this->live_database, $definition);
+            $tablesInfo = $this->manager->getTableInfo($revision->db_name, $definition);
 
             foreach ($definition->getTables() as $table) {
 
@@ -62,7 +62,8 @@ class RevisionManipulator extends \Nette\Application\Control {
                         $this->manager->dropTable($revision->db_name . '.' . $table);
                         $this->manager->copyTable($table, $tablesInfo[$table], $this->live_database, $revision->db_name, $revision->getDefinition()->getCondition($table));
                     } catch (DatabaseManagerException $e) {
-                        $this->getPresenter()->getApplication()->getService('ILogger')->logMessage("Copy of " . $table . " failed, revision " . $revision->alias . ', ' . $e->getMessage(), Logger::NOTICE, 'Update-CLI');
+                        throw $e;
+                        $this->getPresenter()->getApplication()->getService('ILogger')->logMessage("Copy of " . $table . " failed, revision " . $revision->alias . ', ' . $e->getMessage(), Logger::CRITICAL, 'Update-CLI');
                     }
                 }
             }
