@@ -241,7 +241,7 @@ class RevisionDefinition {
     }
 
     public function getMaxChanges($table) {
-        return $this->max_changes[$table];
+        return (int) $this->max_changes[$table];
     }
 
 

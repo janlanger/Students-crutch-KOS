@@ -39,18 +39,22 @@ class RevisionManipulator extends \Nette\Application\Control {
         try{
             $definition=$revision->getDefinition();
             $structure=$comparator->compareStructure(TRUE);
+            $dataCompare=$comparator->compareData();
+            $tablesInfo=$this->manager->getTableInfo($this->live_database, $definition);
+
             foreach($definition->getTables() as $table) {
                 
                 if($definition->getSchema($table)=='data') {
                     
                     if(!isset($structure[$table])) { //0 diferencies - same tables
-
-                        if(count($comparator->compareData()) < $definition->getMaxChanges($table) || $definition->getMaxChanges($table)<0) {
+                        if(count($dataCompare[$table])!= 0) {
+                        if(count($dataCompare[$table]) <= $definition->getMaxChanges($table) || $definition->getMaxChanges($table)<0) {
                             $this->synchronizeData($table, $revision);
                         }
                         else {
                             //TODO - informovani
                             $this->getPresenter()->getApplication()->getService('ILogger')->logMessage("Too many changes in table ".$table.", revision ".$revision->alias,  Logger::NOTICE, 'Update-CLI');
+                        }
                         }
                     }
                     else {
@@ -59,9 +63,8 @@ class RevisionManipulator extends \Nette\Application\Control {
                 }
                 elseif($definition->getSchema($table)=='structure') {
                     try {
-                        $tables=$this->manager->getTableInfo($this->live_database, $definition);
                         $this->manager->dropTable($revision->db_name.'.'.$table);
-                        $this->manager->copyTable($table, $tables[$table], $this->live_database, $revision->db_name, $revision->getDefinition()->getCondition($table));
+                        $this->manager->copyTable($table, $tablesInfo[$table], $this->live_database, $revision->db_name, $revision->getDefinition()->getCondition($table));
                     } catch (DatabaseManagerException $e) {
                         $this->getPresenter()->getApplication()->getService('ILogger')->logMessage("Copy of ".$table." failed, revision ".$revision->alias.', '.$e->getMessage(),  Logger::NOTICE, 'Update-CLI');
                     }
