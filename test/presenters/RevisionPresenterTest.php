@@ -54,12 +54,12 @@ class RevisionPresenterTest extends PHPUnit_Framework_TestCase {
     /**
      * @todo Implement testActionEdit().
      */
-    public function testActionEdit() {
-        $request = new \Nette\Application\PresenterRequest("Revision", "HEAD", array("action"=>'edit',"app_id"=>$this->app_id,'rev_id'=>$this->rev_id));
+    public function testActionDetail() {
+        $request = new \Nette\Application\PresenterRequest("Revision", "HEAD", array("action"=>'detail',"app_id"=>$this->app_id,'rev_id'=>$this->rev_id));
         $response = $this->object->run($request);
         $this->assertInstanceOf('Nette\\Application\\RenderResponse', $response);
 
-        $request = new \Nette\Application\PresenterRequest("Revision", "HEAD", array("action"=>'edit',"app_id"=>$this->app_id));
+        $request = new \Nette\Application\PresenterRequest("Revision", "HEAD", array("action"=>'detail',"app_id"=>$this->app_id));
         $response = $this->object->run($request);
         $this->assertInstanceOf('Nette\\Application\\RedirectingResponse', $response);
     }
