@@ -19,8 +19,18 @@
     </div>
 </div>
 <br clear="all" />
+<b>Poznámka ke stávajícímu testovacímu režimu:</b>
+<ul>
+  <li>Import aktuálních dat z rz.xml probíhá pouze ručně (není nastavena automa$
+  <li>Automaticky, každý den po 5 hodině ráno probíhá pouze vytváření a update $
+</ul>
+<br>
+<a href="https://github.com/Quinix/Students-crutch-KOS">GIT repozitář se zdrojovými kódy</a><br />
+<a href="https://dip.felk.cvut.cz/browse/pdfcache/langeja1_2011bach.pdf">Bakalářka - studijní materiál pro použití :-)</a>
+<br />
+<div style="float:left; width: 300px;">
 <h3>Stav prostředí</h3>
-<table class="checker">
+<table class="checker" style="">
     <tr>
         <td class="info">&nbsp;</td>
         <td>{=$_SERVER['SERVER_SOFTWARE']}</td>
@@ -50,3 +60,27 @@
         <td>SOAP extension</td>
     </tr>
 </table>
+</div>
+<div style="float:left;">
+<h3>Ukázka kódu klienta:</h3>
+<pre class="jush-php">
+&lt;?php
+header('Content-type: text/plain'); //kvuli srozumitelnejsimu zobrazeni vystupu var_dump
+
+$soap = new SoapClient(NULL, array(
+    "location" => 'http://kos.janlanger.cz/soap/',
+    "uri" => 'http://kos.janlanger.cz/soap/'));	//pripojeni k servise
+try {
+    $soap->authenticate('berlicka', 'test'); //identifikace a prihlaseni klienta
+    $soap->useRevision('live'); //vyber revize (nepovinne, pokud se neuvede, pouzije se vychozi revize)
+
+    $return = ($soap->getAllClasses()); //ziskani odpovedi metody s nazev getAllClases
+    var_dump($return);
+
+} catch (SoapFault $e) {
+    echo $soap->getLastError();
+}
+
+?&gt;
+</pre>
+</div>
